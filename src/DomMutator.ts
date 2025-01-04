@@ -1,5 +1,6 @@
 import { ThreadloafState } from "./ThreadloafState";
 import { MessageInfo } from "./MessageInfo";
+import { ContextMenuManager } from "./ContextMenuManager";
 
 /**
  * Handles DOM manipulation and UI element creation for the Threadloaf interface.
@@ -9,9 +10,11 @@ import { MessageInfo } from "./MessageInfo";
  */
 export class DomMutator {
     private state: ThreadloafState;
+    private contextMenuManager: ContextMenuManager;
 
-    constructor(state: ThreadloafState) {
+    constructor(state: ThreadloafState, contextMenuManager: ContextMenuManager) {
         this.state = state;
+        this.contextMenuManager = contextMenuManager;
     }
 
     public addScrollerStyle(scrollerClass: string): void {
@@ -167,6 +170,10 @@ export class DomMutator {
             // Highlight both the original message and the clicked preview
             applyHighlight(originalElement);
             applyHighlight(el);
+        });
+
+        el.addEventListener("contextmenu", (event) => {
+            this.contextMenuManager.handleContextMenu(event, message);
         });
 
         return el;
