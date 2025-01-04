@@ -18,7 +18,7 @@ export class ThreadRenderer {
     private messageParser: MessageParser;
     private messageTreeBuilder: MessageTreeBuilder;
     private lastUrl: string = "";
-    private lastSplitPercent: number = 45; // Store the split position, default to 45%
+    private lastSplitPercent: number = 60; // Store the split position, default to 60%
 
     constructor(
         state: ThreadloafState,
@@ -348,17 +348,18 @@ export class ThreadRenderer {
             const splitterHeightPercent = (splitterHeight / contentParent.getBoundingClientRect().height) * 100;
             const halfSplitterPercent = splitterHeightPercent / 2;
 
-            // Update the container position (bottom pane) - stop below the splitter
-            newThreadloafContainer.style.top = `calc(${clampedPercent}% + ${splitterHeight / 2}px)`;
+            // Update the container position (top pane) - stop above the splitter
+            newThreadloafContainer.style.top = `0`;
+            newThreadloafContainer.style.bottom = `calc(${bottomPercent}% + ${splitterHeight / 2}px)`;
 
-            // Update the main element position (top pane) and splitter
+            // Update the main element position (bottom pane) and splitter
             styleElement.textContent = `
                 div.${contentClass} > main {
                     position: absolute;
-                    top: 0;
+                    top: calc(${clampedPercent}% + ${splitterHeight / 2}px);
                     left: 0;
                     right: 0;
-                    bottom: calc(${100 - clampedPercent}% + ${splitterHeight / 2}px);
+                    bottom: 0;
                     height: auto !important;
                 }
 

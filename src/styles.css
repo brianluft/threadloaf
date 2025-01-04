@@ -13,10 +13,10 @@
     font-family: "gg sans", "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
     color: var(--text-normal);
     position: absolute;
-    bottom: 0;
+    top: 0;
     left: 0;
     right: 0;
-    top: 45%;
+    bottom: 40%;
     overflow: hidden;
     z-index: 0;
     display: flex;
