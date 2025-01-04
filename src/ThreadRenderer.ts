@@ -275,7 +275,7 @@ export class ThreadRenderer {
         styleElement.textContent = `
             div.${contentClass} > main {
                 position: absolute;
-                top: 50%;
+                top: 66%;
                 left: 0;
                 right: 0;
                 bottom: 0;
