@@ -18,7 +18,7 @@ export class ThreadRenderer {
     private messageParser: MessageParser;
     private messageTreeBuilder: MessageTreeBuilder;
     private lastUrl: string = "";
-    private lastSplitPercent: number = 34; // Store the split position, default to 34%
+    private lastSplitPercent: number = 45; // Store the split position, default to 45%
 
     constructor(
         state: ThreadloafState,

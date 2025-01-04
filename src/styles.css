@@ -3,7 +3,7 @@
     left: 0;
     right: 0;
     height: 24px;
-    background: var(--background-primary);
+    background: color-mix(in oklab, var(--background-primary) 90%, var(--text-normal) 10%);
     cursor: row-resize;
     z-index: 1;
     transition: background-color 0.1s;
@@ -17,7 +17,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    top: 34%;
+    top: 45%;
     overflow: hidden;
     z-index: 0;
     display: flex;
@@ -45,7 +45,8 @@
 /* Thread content styles */
 #threadloaf-content {
     padding: 16px;
-    padding-top: 55px;
+    padding-top: 16px;
+    padding-bottom: 100px;
     overflow-y: auto !important;
     overflow-x: hidden;
     flex-grow: 1;
