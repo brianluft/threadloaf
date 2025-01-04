@@ -11,6 +11,7 @@ export class MessageParser {
     public parseMessages(threadContainer: HTMLElement | null): MessageInfo[] {
         if (!threadContainer) return [];
         let lastAuthor: string | undefined;
+        let lastAuthorColor: string | undefined;
 
         const messages = Array.from(threadContainer.querySelectorAll('li[id^="chat-messages-"]')).map((el) => {
             try {
@@ -75,27 +76,34 @@ export class MessageParser {
                 // If not a system message, proceed with regular message parsing
                 const headerEl = contentsEl.querySelector('[class^="header_"]');
                 let author: string | undefined;
+                let authorColor: string | undefined;
                 let timestampEl: Element | null = null;
 
                 if (headerEl) {
                     // Standard message parsing with header
-                    author = headerEl
-                        .querySelector('[id^="message-username-"] > span[class^="username_"]')
-                        ?.textContent?.trim();
+                    const usernameEl = headerEl.querySelector(
+                        '[id^="message-username-"] > span[class^="username_"]',
+                    ) as HTMLElement;
+                    author = usernameEl?.textContent?.trim();
+                    // Capture the author's color from the style attribute
+                    authorColor = usernameEl?.style.color;
                     timestampEl = headerEl.querySelector("time");
                     if (author) {
                         lastAuthor = author;
+                        lastAuthorColor = authorColor;
                     }
                 } else {
                     // Check for system messages first
                     const messageWrapper = contentsEl.closest('[class*="systemMessage_"]');
                     if (messageWrapper) {
                         // First try to find username element directly
-                        const usernameEl = messageWrapper.querySelector('[class*="username_"]');
+                        const usernameEl = messageWrapper.querySelector('[class*="username_"]') as HTMLElement;
                         if (usernameEl) {
                             author = usernameEl.textContent?.trim();
+                            authorColor = usernameEl.style.color;
                             if (author) {
                                 lastAuthor = author;
+                                lastAuthorColor = authorColor;
                             }
                         } else {
                             // For continuation messages, get username from aria-labelledby
@@ -109,10 +117,12 @@ export class MessageParser {
                                     // Look up the username element in the thread container
                                     const referenceUsernameEl = threadContainer.querySelector(
                                         `#${usernameId} [class*="username_"]`,
-                                    );
+                                    ) as HTMLElement;
                                     author = referenceUsernameEl?.textContent?.trim();
+                                    authorColor = referenceUsernameEl?.style.color;
                                     if (author) {
                                         lastAuthor = author;
+                                        lastAuthorColor = authorColor;
                                     }
                                 }
                             }
@@ -122,6 +132,7 @@ export class MessageParser {
                         // Check for follow-up messages in cozy mode
                         timestampEl = contentsEl.querySelector('span[class*="timestamp_"] time');
                         author = lastAuthor;
+                        authorColor = lastAuthorColor;
                     }
                 }
 
@@ -319,6 +330,7 @@ export class MessageParser {
                     parentPreview,
                     children: [],
                     originalElement: el as HTMLElement,
+                    authorColor,
                 };
             } catch (error) {
                 console.error("Error parsing message:", error);

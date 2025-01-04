@@ -89,7 +89,6 @@ export class DomMutator {
         // Get text and normalize whitespace
         contentPreview.textContent = temp.textContent?.replace(/\s+/g, " ").trim() || "";
 
-        contentPreview.style.color = color;
         if (isBold) {
             contentPreview.style.fontWeight = "bold";
         }
@@ -101,6 +100,10 @@ export class DomMutator {
         const authorSpan = document.createElement("span");
         authorSpan.classList.add("message-author");
         authorSpan.textContent = message.author;
+        authorSpan.style.color = color;
+        if (isBold) {
+            authorSpan.style.fontWeight = "bold";
+        }
 
         previewContainer.appendChild(contentPreview);
         previewContainer.appendChild(separator);

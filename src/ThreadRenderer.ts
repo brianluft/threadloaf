@@ -126,7 +126,12 @@ export class ThreadRenderer {
 
         colorSortedMessages.forEach((msg, index) => {
             let color;
-            if (index === 0) {
+            if (msg.authorColor) {
+                // Use the author's color from Discord if available
+                color = msg.authorColor;
+                messageColors.set(msg.id, color);
+                messageBold.set(msg.id, index === 0); // Still bold the newest message
+            } else if (index === 0) {
                 // Newest message gets text-normal color and bold
                 color = "var(--text-normal)";
                 messageColors.set(msg.id, color);
