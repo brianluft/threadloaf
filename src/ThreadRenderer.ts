@@ -461,12 +461,9 @@ export class ThreadRenderer {
                 // If we can't find the reference message, scroll to newest
                 this.scrollToNewestMessage();
             }
-        } else if (isNewThread) {
-            // If we've changed threads, scroll to newest
+        } else if (isNewThread || this.state.pendingScrollToNewest) {
+            // If we've changed threads or have a pending scroll request, scroll to newest
             this.scrollToNewestMessage();
-        } else {
-            // Set flag to scroll to newest once messages are loaded
-            this.state.pendingScrollToNewest = { shouldExpand: false };
         }
 
         // Try to hide header again after rendering
@@ -475,6 +472,8 @@ export class ThreadRenderer {
 
     private scrollToNewestMessage(): void {
         if (!this.state.newestMessageId) {
+            // If we don't have any messages yet, set the flag to try again later
+            this.state.pendingScrollToNewest = { shouldExpand: false };
             return;
         }
 
@@ -486,7 +485,7 @@ export class ThreadRenderer {
         if (newestMessage) {
             // Scroll to show it (without animation), aligned to top
             newestMessage.scrollIntoView({ behavior: "auto", block: "start" });
-            // Clear any pending scroll
+            // Clear the flag since we successfully scrolled
             this.state.pendingScrollToNewest = null;
         } else {
             // Message not found, set flag to try again later
