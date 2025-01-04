@@ -188,6 +188,7 @@ export class ThreadRenderer {
                 // Create indent spacers
                 for (let i = 0; i < depth; i++) {
                     const spacer = document.createElement("div");
+                    spacer.classList.add("thread-line-spacer");
                     spacer.style.display = "inline-block";
                     spacer.style.width = `${getIncrementalIndent(i + 1)}px`;
                     spacer.style.flexShrink = "0"; // Prevent spacer from shrinking

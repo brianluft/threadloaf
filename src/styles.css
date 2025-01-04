@@ -154,3 +154,7 @@ div.threadloaf-message span.message-reactions img {
     padding: 0 5px 0 5px;
     border-radius: 2px;
 }
+
+.thread-line-spacer {
+    /* No visual styles yet - just a placeholder for future tree lines */
+}
