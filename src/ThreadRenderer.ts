@@ -18,6 +18,7 @@ export class ThreadRenderer {
     private messageParser: MessageParser;
     private messageTreeBuilder: MessageTreeBuilder;
     private lastUrl: string = "";
+    private lastSplitPercent: number = 66; // Store the split position, default to 66%
 
     constructor(
         state: ThreadloafState,
@@ -84,6 +85,10 @@ export class ThreadRenderer {
         const newThreadloafContainer = document.createElement("div");
         newThreadloafContainer.id = "threadloaf-container";
         newThreadloafContainer.appendChild(threadContent);
+
+        // Create the splitter (but don't attach it yet)
+        const splitter = document.createElement("div");
+        splitter.id = "threadloaf-splitter";
 
         // Parse messages and build tree
         const rawMessages = this.messageParser.parseMessages(this.state.threadContainer);
@@ -272,24 +277,97 @@ export class ThreadRenderer {
             styleElement.id = "threadloaf-main-style";
             document.head.appendChild(styleElement);
         }
-        styleElement.textContent = `
-            div.${contentClass} > main {
-                position: absolute;
-                top: 66%;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                height: auto !important;
-            }
-        `;
+
+        // Add drag handling
+        let isDragging = false;
+        let startY = 0;
+        let startHeight = 0;
+
+        // Helper function to update all positions consistently
+        const updatePositions = (splitPercent: number) => {
+            const clampedPercent = Math.min(Math.max(splitPercent, 10), 90);
+            const bottomPercent = 100 - clampedPercent;
+            const splitterHeight = 24; // Match the CSS height
+            const splitterHeightPercent = (splitterHeight / contentParent.getBoundingClientRect().height) * 100;
+            const halfSplitterPercent = splitterHeightPercent / 2;
+
+            // Update the container position (top pane) - stop above the splitter
+            newThreadloafContainer.style.bottom = `calc(${bottomPercent}% + ${splitterHeight / 2}px)`;
+
+            // Update the main element position (bottom pane) and splitter
+            styleElement.textContent = `
+                div.${contentClass} > main {
+                    position: absolute;
+                    top: calc(${clampedPercent}% + ${splitterHeight / 2}px);
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    height: auto !important;
+                }
+
+                #threadloaf-splitter {
+                    position: absolute;
+                    top: ${clampedPercent}%;
+                    left: 0;
+                    right: 0;
+                    transform: translateY(-50%);
+                }
+            `;
+
+            // Store the position for future renders
+            this.lastSplitPercent = clampedPercent;
+        };
+
+        const onMouseDown = (e: MouseEvent) => {
+            isDragging = true;
+            startY = e.clientY;
+            const containerRect = newThreadloafContainer.getBoundingClientRect();
+            startHeight = containerRect.height;
+            splitter.classList.add("dragging");
+            document.body.style.cursor = "row-resize";
+            document.body.style.userSelect = "none";
+        };
+
+        const onMouseMove = (e: MouseEvent) => {
+            if (!isDragging) return;
+
+            const parentRect = contentParent.getBoundingClientRect();
+
+            // Calculate new split position directly from mouse position
+            const splitPosition = e.clientY - parentRect.top;
+            const splitPercent = (splitPosition / parentRect.height) * 100;
+
+            updatePositions(splitPercent);
+        };
+
+        const onMouseUp = () => {
+            if (!isDragging) return;
+            isDragging = false;
+            splitter.classList.remove("dragging");
+            document.body.style.cursor = "";
+            document.body.style.userSelect = "";
+        };
+
+        splitter.addEventListener("mousedown", onMouseDown);
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+
+        // Set initial positions using the stored split percentage
+        updatePositions(this.lastSplitPercent);
 
         contentParent.style.position = "relative";
 
         if (isNewContainer) {
-            // First render - just append the new container
+            // First render - append both container and splitter
             contentParent.appendChild(newThreadloafContainer);
+            contentParent.appendChild(splitter);
         } else {
+            const existingSplitter = document.getElementById("threadloaf-splitter");
+            if (existingSplitter) {
+                existingSplitter.remove();
+            }
             threadloafContainer!.replaceWith(newThreadloafContainer);
+            contentParent.appendChild(splitter);
         }
 
         // First, handle expanded posts
