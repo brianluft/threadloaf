@@ -399,8 +399,8 @@ export class ThreadRenderer {
         ) as HTMLElement;
 
         if (newestMessage) {
-            // Scroll to show it (without animation)
-            newestMessage.scrollIntoView({ behavior: "auto", block: "center" });
+            // Scroll to show it (without animation), aligned to top
+            newestMessage.scrollIntoView({ behavior: "auto", block: "start" });
             // Clear any pending scroll
             this.state.pendingScrollToNewest = null;
         } else {

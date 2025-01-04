@@ -119,8 +119,8 @@ export class DomMutator {
 
             const originalElement = message.originalElement as HTMLElement;
 
-            // Scroll the original message into view instantly
-            originalElement.scrollIntoView({ behavior: "auto", block: "center" });
+            // Scroll the original message into view instantly, aligned to top
+            originalElement.scrollIntoView({ behavior: "auto", block: "start" });
 
             // Function to apply highlight effect
             const applyHighlight = (element: HTMLElement) => {
