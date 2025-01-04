@@ -211,7 +211,7 @@ export class MessageParser {
 
                     // Replace spoiler content
                     tempContainer.querySelectorAll('span[class*="spoilerContent_"]').forEach((spoiler) => {
-                        const ch = String.fromCodePoint(129944);
+                        const ch = String.fromCodePoint(9601);
                         spoiler.replaceWith(ch + ch + ch + ch);
                     });
 
