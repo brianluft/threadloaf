@@ -71,9 +71,10 @@ export class DomMutator {
         // Remove reactions
         temp.querySelectorAll('[class*="reactions_"]').forEach((el) => el.remove());
 
-        // Replace spoiler content with 🮘🮘🮘🮘
+        // Replace spoiler content
         temp.querySelectorAll('span[class*="spoilerContent_"]').forEach((spoiler) => {
-            spoiler.replaceWith("🮘🮘🮘🮘");
+            const ch = String.fromCodePoint(129944);
+            spoiler.replaceWith(ch + ch + ch + ch);
         });
 
         // Replace emoji images with their alt text

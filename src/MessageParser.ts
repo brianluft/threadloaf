@@ -209,9 +209,10 @@ export class MessageParser {
                     const tempContainer = document.createElement("div");
                     tempContainer.innerHTML = messageContentEl.innerHTML;
 
-                    // Replace spoiler content with 🮘🮘🮘🮘
+                    // Replace spoiler content
                     tempContainer.querySelectorAll('span[class*="spoilerContent_"]').forEach((spoiler) => {
-                        spoiler.replaceWith("🮘🮘🮘🮘");
+                        const ch = String.fromCodePoint(129944);
+                        spoiler.replaceWith(ch + ch + ch + ch);
                     });
 
                     // Convert line breaks to spaces for preview

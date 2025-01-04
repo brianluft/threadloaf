@@ -246,7 +246,9 @@ export class ThreadRenderer {
                     `.thread-line-spacer[data-row-index="${rowIndex}"][data-cell-index="${depth - 1}"]`,
                 ) as HTMLElement;
                 if (forkCell) {
-                    forkCell.dataset.line = isLastChild(message) ? "└" : "├";
+                    forkCell.dataset.line = isLastChild(message)
+                        ? String.fromCodePoint(9492)
+                        : String.fromCodePoint(9500);
                 }
             });
 
@@ -263,12 +265,12 @@ export class ThreadRenderer {
                     if (!cell) continue;
 
                     const line = cell.dataset.line;
-                    if (line === "├") {
+                    if (line === String.fromCodePoint(9500)) {
                         isDrawingLine = true;
-                    } else if (line === "└") {
+                    } else if (line === String.fromCodePoint(9492)) {
                         isDrawingLine = false;
                     } else if (isDrawingLine) {
-                        cell.dataset.line = "│";
+                        cell.dataset.line = String.fromCodePoint(9474);
                     }
                 }
             }
