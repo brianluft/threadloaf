@@ -6,6 +6,36 @@
     background: color-mix(in oklab, var(--background-primary) 90%, var(--text-normal) 10%);
     cursor: row-resize;
     transition: background-color 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 60px;
+}
+
+#threadloaf-splitter::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 4px;
+    background: currentColor;
+    border-radius: 2px;
+    pointer-events: none;
+}
+
+#threadloaf-splitter .collapse-button {
+    color: var(--text-normal);
+    transition: opacity 0.2s, color 0.2s;
+    padding: 2px;
+    border-radius: 4px;
+    position: relative;
+    z-index: 1;
+}
+
+#threadloaf-splitter .collapse-button:hover:not([style*="opacity: 0.3"]) {
+    background: color-mix(in oklab, var(--background-primary) 80%, var(--text-normal) 20%);
 }
 
 #threadloaf-container {
@@ -21,18 +51,6 @@
     z-index: 0;
     display: flex;
     flex-direction: column;
-}
-
-#threadloaf-splitter::before {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 30px;
-    height: 4px;
-    background: currentColor;
-    border-radius: 2px;
 }
 
 /* Thread content styles */

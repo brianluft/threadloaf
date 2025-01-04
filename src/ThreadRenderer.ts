@@ -375,11 +375,14 @@ export class ThreadRenderer {
 
         // Helper function to update all positions consistently
         const updatePositions = (splitPercent: number) => {
-            const clampedPercent = Math.min(Math.max(splitPercent, 10), 90);
-            const bottomPercent = 100 - clampedPercent;
             const splitterHeight = 24; // Match the CSS height
             const splitterHeightPercent = (splitterHeight / contentParent.getBoundingClientRect().height) * 100;
             const halfSplitterPercent = splitterHeightPercent / 2;
+
+            // Add half splitter height to the minimum position to align top edge
+            const minPosition = halfSplitterPercent;
+            const clampedPercent = Math.min(Math.max(splitPercent, minPosition), 90);
+            const bottomPercent = 100 - clampedPercent;
 
             // Update the container position (top pane) - stop above the splitter
             newThreadloafContainer.style.top = `0`;
@@ -397,11 +400,20 @@ export class ThreadRenderer {
                 }
 
                 #threadloaf-splitter {
-                    position: absolute;
                     top: ${clampedPercent}%;
-                    left: 0;
-                    right: 0;
                     transform: translateY(-50%);
+                }
+
+                #threadloaf-splitter .collapse-button:first-child {
+                    cursor: pointer;
+                    opacity: ${clampedPercent >= 90 ? "1" : clampedPercent <= minPosition ? "0.3" : "1"};
+                    pointer-events: ${clampedPercent >= 90 ? "auto" : clampedPercent <= minPosition ? "none" : "auto"};
+                }
+
+                #threadloaf-splitter .collapse-button:last-child {
+                    cursor: pointer;
+                    opacity: ${clampedPercent <= minPosition ? "1" : clampedPercent >= 90 ? "0.3" : "1"};
+                    pointer-events: ${clampedPercent <= minPosition ? "auto" : clampedPercent >= 90 ? "none" : "auto"};
                 }
             `;
 
@@ -483,6 +495,51 @@ export class ThreadRenderer {
 
         // Try to hide header again after rendering
         this.domMutator.findAndHideHeader();
+
+        // Create collapse buttons
+        const upButton = document.createElement("div");
+        upButton.className = "collapse-button";
+        upButton.textContent = String.fromCodePoint(0x1f781);
+        upButton.title = "Collapse top panel";
+        upButton.style.fontSize = "16px";
+
+        const downButton = document.createElement("div");
+        downButton.className = "collapse-button";
+        downButton.textContent = String.fromCodePoint(0x1f783);
+        downButton.title = "Collapse bottom panel";
+        downButton.style.fontSize = "16px";
+
+        // Add click handlers
+        let previousSplitPercent = this.lastSplitPercent;
+        const splitterHeight = 24; // Match the CSS height
+        const splitterHeightPercent = (splitterHeight / contentParent.getBoundingClientRect().height) * 100;
+        const minPosition = splitterHeightPercent / 2;
+
+        upButton.addEventListener("click", () => {
+            if (this.lastSplitPercent >= 90) {
+                // If bottom is collapsed, restore to previous position
+                updatePositions(previousSplitPercent);
+            } else if (this.lastSplitPercent > minPosition) {
+                // Normal collapse to top
+                previousSplitPercent = this.lastSplitPercent;
+                updatePositions(minPosition);
+            }
+        });
+
+        downButton.addEventListener("click", () => {
+            if (this.lastSplitPercent <= minPosition) {
+                // If top is collapsed, restore to previous position
+                updatePositions(previousSplitPercent);
+            } else if (this.lastSplitPercent < 90) {
+                // Normal collapse to bottom
+                previousSplitPercent = this.lastSplitPercent;
+                updatePositions(90);
+            }
+        });
+
+        // Add buttons to splitter
+        splitter.appendChild(upButton);
+        splitter.appendChild(downButton);
     }
 
     private scrollToNewestMessage(): void {
