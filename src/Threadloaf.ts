@@ -84,67 +84,6 @@ export class Threadloaf {
     }
 
     private setupKeyboardNavigation(): void {
-        document.addEventListener(
-            "keydown",
-            (e) => {
-                // Only handle A/Z if we have an expanded post
-                const expandedPost = document.querySelector(".threadloaf-message.expanded");
-                if (!expandedPost) return;
-
-                // Don't handle navigation if we're typing in an input
-                const activeElement = document.activeElement;
-                if (
-                    activeElement &&
-                    (activeElement.tagName === "INPUT" ||
-                        activeElement.tagName === "TEXTAREA" ||
-                        activeElement.getAttribute("contenteditable") === "true")
-                ) {
-                    return;
-                }
-
-                if (e.key.toLowerCase() === "a" || e.key.toLowerCase() === "z") {
-                    // Prevent the keypress from being handled by Discord
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-
-                    // Keep focus on body to prevent Discord from focusing the text input
-                    document.body.focus();
-
-                    // Find all messages
-                    const allMessages = Array.from(document.querySelectorAll(".threadloaf-message"));
-                    const currentIndex = allMessages.indexOf(expandedPost as HTMLElement);
-
-                    // Calculate target index
-                    let targetIndex = currentIndex;
-                    if (e.key.toLowerCase() === "a" && currentIndex > 0) {
-                        targetIndex = currentIndex - 1;
-                    } else if (e.key.toLowerCase() === "z" && currentIndex < allMessages.length - 1) {
-                        targetIndex = currentIndex + 1;
-                    }
-
-                    if (targetIndex !== currentIndex) {
-                        // Collapse current post
-                        expandedPost.classList.remove("expanded");
-                        const currentPreview = expandedPost.querySelector(".preview-container") as HTMLElement;
-                        const currentFull = expandedPost.querySelector(".full-content") as HTMLElement;
-                        if (currentPreview) currentPreview.style.display = "flex";
-                        if (currentFull) currentFull.style.display = "none";
-
-                        // Expand target post
-                        const targetPost = allMessages[targetIndex] as HTMLElement;
-                        targetPost.classList.add("expanded");
-                        const targetPreview = targetPost.querySelector(".preview-container") as HTMLElement;
-                        const targetFull = targetPost.querySelector(".full-content") as HTMLElement;
-                        if (targetPreview) targetPreview.style.display = "none";
-                        if (targetFull) targetFull.style.display = "block";
-
-                        // Scroll target into view
-                        targetPost.scrollIntoView({ behavior: "smooth", block: "center" });
-                    }
-                }
-            },
-            true,
-        ); // Use capture phase to handle event before Discord
+        // Remove keyboard navigation since we no longer have expanded messages
     }
 }

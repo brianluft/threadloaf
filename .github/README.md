@@ -9,10 +9,11 @@ Threadloaf is a Chrome extension that enhances Discord's thread view with a more
 - **Thread View**: Toggle between traditional chat view and an enhanced thread view with a single click
 - **Message Threading**: Automatically organizes messages into threaded conversations based on replies and timing
 - **Visual Hierarchy**: Recent messages are highlighted with brighter colors, making it easy to track new activity
-- **Keyboard Navigation**: Use 'A' and 'Z' keys to quickly navigate between expanded messages
+- **Quick Navigation**: Click any message in the thread view to instantly jump to it in the chat view
+- **Visual Feedback**: Messages are briefly highlighted when clicked to help you track where you've jumped to
 - **Rich Content Support**: Fully supports Discord's rich content including emojis, images, and embeds
-- **Message Preview**: See message previews in a compact format, with full content available on click
-- **Smart Navigation**: Navigate between parent/child messages and chronologically with arrow buttons
+- **Message Preview**: See message previews in a compact format that maintains readability
+- **Adjustable Split**: Drag to resize the thread view and chat view to your preferred proportions
 
 ## Installation
 
@@ -25,20 +26,9 @@ Threadloaf is a Chrome extension that enhances Discord's thread view with a more
 ### Basic Navigation
 
 - Click the "Thread" button to switch to thread view
-- Click any message to expand it and see the full content
+- Click any message preview to instantly jump to that message in the chat view
+- Drag the splitter bar to adjust the size of the thread and chat views
 - Click the "Chat" button to return to Discord's standard chat view
-
-### Keyboard Shortcuts
-
-- Press `A` to move to the previous message when a message is expanded
-- Press `Z` to move to the next message when a message is expanded
-
-### Message Navigation
-
-When a message is expanded, use the arrow buttons to:
-- ← Move to the previous message chronologically
-- → Move to the next message chronologically
-- ↑ Jump to the parent message (if the current message is a reply)
 
 ## Build from Source
 

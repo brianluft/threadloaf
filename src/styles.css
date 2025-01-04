@@ -45,7 +45,6 @@
 /* Thread content styles */
 #threadloaf-content {
     padding: 16px;
-    padding-bottom: 100px;
     padding-top: 55px;
     overflow-y: auto !important;
     overflow-x: hidden;
@@ -73,11 +72,6 @@ div[class*="chat_"] {
     max-width: 100%;
 }
 
-.threadloaf-message.expanded {
-    background: rgba(255, 255, 255, 0.05);
-    border: 0.1px solid #7c7870;
-}
-
 .preview-container {
     padding: 2px 12px;
     display: inline-flex;
@@ -93,6 +87,17 @@ div[class*="chat_"] {
 
 .preview-container:hover {
     background: rgba(255, 255, 255, 0.05);
+}
+
+.message-content.preview {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 0 1 auto;
+}
+
+.message-content.preview img {
+    display: none;
 }
 
 .pill-container {
@@ -122,13 +127,6 @@ div[class*="chat_"] {
 
 .comment-number {
     display: none;
-}
-
-.message-content.preview {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    min-width: 0;
-    flex: 0 1 auto;
 }
 
 .message-author {
@@ -202,10 +200,6 @@ div[class*="chat_"] {
     margin-bottom: 12px;
     white-space: normal;
     line-height: 1.3;
-}
-
-.message-content.preview img {
-    display: none;
 }
 
 .embeds-container {
