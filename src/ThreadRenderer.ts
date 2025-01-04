@@ -13,6 +13,9 @@ import { UserOptionsProvider } from "./UserOptionsProvider";
  * between the message tree structure and DOM representation.
  */
 export class ThreadRenderer {
+    private static readonly SPLITTER_HEIGHT = 24; // Match the CSS height
+    private static readonly DEFAULT_POSITION = 60; // Default split position
+
     private state: ThreadloafState;
     private domParser: DomParser;
     private domMutator: DomMutator;
@@ -20,7 +23,9 @@ export class ThreadRenderer {
     private messageTreeBuilder: MessageTreeBuilder;
     private optionsProvider: UserOptionsProvider;
     private lastUrl: string = "";
-    private lastSplitPercent: number = 60; // Store the split position, default to 60%
+    private lastSplitPercent: number = ThreadRenderer.DEFAULT_POSITION;
+    private previousSplitPercent: number = ThreadRenderer.DEFAULT_POSITION;
+    private isCollapsed: boolean = false;
 
     constructor(
         state: ThreadloafState,
@@ -38,6 +43,143 @@ export class ThreadRenderer {
         this.optionsProvider = optionsProvider;
     }
 
+    private updatePositions(splitPercent: number): void {
+        const contentParent = document.querySelector('div[class^="content_"]') as HTMLElement;
+        if (!contentParent) return;
+
+        const splitterHeightPercent =
+            (ThreadRenderer.SPLITTER_HEIGHT / contentParent.getBoundingClientRect().height) * 100;
+        const halfSplitterPercent = splitterHeightPercent / 2;
+        const minPosition = halfSplitterPercent;
+
+        console.log("updatePositions called with:", {
+            splitPercent,
+            minPosition,
+            currentLastSplitPercent: this.lastSplitPercent,
+        });
+
+        // Add half splitter height to the minimum position to align top edge
+        const clampedPercent = Math.min(Math.max(splitPercent, minPosition), 90);
+
+        console.log("Position calculations:", {
+            splitterHeight: ThreadRenderer.SPLITTER_HEIGHT,
+            splitterHeightPercent,
+            halfSplitterPercent,
+            minPosition,
+            clampedPercent,
+        });
+
+        const bottomPercent = 100 - clampedPercent;
+
+        // Update the container position (top pane) - stop above the splitter
+        const container = document.getElementById("threadloaf-container");
+        if (container) {
+            container.style.top = "0";
+            container.style.bottom = `calc(${bottomPercent}% + ${ThreadRenderer.SPLITTER_HEIGHT / 2}px)`;
+        }
+
+        // Update the main element position (bottom pane) and splitter
+        let styleElement = document.getElementById("threadloaf-main-style");
+        if (!styleElement) {
+            styleElement = document.createElement("style");
+            styleElement.id = "threadloaf-main-style";
+            document.head.appendChild(styleElement);
+        }
+
+        const contentClass = Array.from(contentParent.classList).find((cls) => cls.startsWith("content_"));
+        if (!contentClass) return;
+
+        styleElement.textContent = `
+            div.${contentClass} > main {
+                position: absolute;
+                top: calc(${clampedPercent}% + ${ThreadRenderer.SPLITTER_HEIGHT / 2}px);
+                left: 0;
+                right: 0;
+                bottom: 0;
+                height: auto !important;
+            }
+
+            #threadloaf-splitter {
+                top: ${clampedPercent}%;
+                transform: translateY(-50%);
+            }
+
+            #threadloaf-splitter .collapse-button:first-child {
+                cursor: pointer;
+                opacity: ${clampedPercent >= 90 ? "1" : clampedPercent <= minPosition ? "0.3" : "1"};
+                pointer-events: ${clampedPercent >= 90 ? "auto" : clampedPercent <= minPosition ? "none" : "auto"};
+            }
+
+            #threadloaf-splitter .collapse-button:last-child {
+                cursor: pointer;
+                opacity: ${clampedPercent <= minPosition ? "1" : clampedPercent >= 90 ? "0.3" : "1"};
+                pointer-events: ${clampedPercent <= minPosition ? "auto" : clampedPercent >= 90 ? "none" : "auto"};
+            }
+        `;
+
+        // Store the position for future renders
+        this.lastSplitPercent = clampedPercent;
+
+        // Save the position for this URL
+        const options = this.optionsProvider.getOptions();
+        options.splitterPositions[window.location.href] = clampedPercent;
+        this.optionsProvider.setOptions(options).catch(console.error);
+    }
+
+    public isBottomPaneCollapsed(): boolean {
+        return this.isCollapsed;
+    }
+
+    public collapseBottomPane(): void {
+        if (!this.isCollapsed && this.lastSplitPercent > 2) {
+            this.previousSplitPercent = this.lastSplitPercent;
+            // When collapsing bottom, move splitter to bottom (100% minus half splitter height)
+            const contentParent = document.querySelector('div[class^="content_"]') as HTMLElement;
+            if (!contentParent) return;
+            const splitterHeightPercent =
+                (ThreadRenderer.SPLITTER_HEIGHT / contentParent.getBoundingClientRect().height) * 100;
+            const bottomPosition = 100 - splitterHeightPercent / 2;
+            this.updatePositions(bottomPosition);
+            this.isCollapsed = true;
+        }
+    }
+
+    public uncollapseBottomPane(): void {
+        if (this.isCollapsed) {
+            const targetPosition =
+                this.previousSplitPercent > 2 && this.previousSplitPercent < 90
+                    ? this.previousSplitPercent
+                    : ThreadRenderer.DEFAULT_POSITION;
+            this.updatePositions(targetPosition);
+            this.isCollapsed = false;
+        }
+    }
+
+    public collapseTopPane(): void {
+        if (!this.isCollapsed && this.lastSplitPercent < 90) {
+            this.previousSplitPercent = this.lastSplitPercent;
+            // When collapsing top, move splitter to top (just half splitter height)
+            const contentParent = document.querySelector('div[class^="content_"]') as HTMLElement;
+            if (!contentParent) return;
+            const splitterHeightPercent =
+                (ThreadRenderer.SPLITTER_HEIGHT / contentParent.getBoundingClientRect().height) * 100;
+            const topPosition = splitterHeightPercent / 2;
+            this.updatePositions(topPosition);
+            this.isCollapsed = true;
+        }
+    }
+
+    public uncollapseTopPane(): void {
+        if (this.isCollapsed) {
+            const targetPosition =
+                this.previousSplitPercent > 2 && this.previousSplitPercent < 90
+                    ? this.previousSplitPercent
+                    : ThreadRenderer.DEFAULT_POSITION;
+            this.updatePositions(targetPosition);
+            this.isCollapsed = false;
+        }
+    }
+
     // Render the thread UI
     public renderThread(): void {
         if (!this.state.threadContainer) return;
@@ -46,6 +188,13 @@ export class ThreadRenderer {
         const currentUrl = window.location.href;
         const isNewThread = currentUrl !== this.lastUrl;
         this.lastUrl = currentUrl;
+
+        // When changing threads, either use saved position or default to 60%
+        if (isNewThread) {
+            const options = this.optionsProvider.getOptions();
+            const savedPosition = options.splitterPositions[currentUrl];
+            this.lastSplitPercent = savedPosition ?? ThreadRenderer.DEFAULT_POSITION;
+        }
 
         // Check if we're in a DM channel
         const isDMChannel = currentUrl.includes("/channels/@me");
@@ -112,6 +261,11 @@ export class ThreadRenderer {
         const newThreadloafContainer = document.createElement("div");
         newThreadloafContainer.id = "threadloaf-container";
         newThreadloafContainer.appendChild(threadContent);
+
+        // Set initial inline styles for sizing
+        const bottomPercent = 100 - this.lastSplitPercent;
+        newThreadloafContainer.style.top = "0";
+        newThreadloafContainer.style.bottom = `calc(${bottomPercent}% + ${ThreadRenderer.SPLITTER_HEIGHT / 2}px)`;
 
         // Create the splitter (but don't attach it yet)
         const splitter = document.createElement("div");
@@ -374,25 +528,46 @@ export class ThreadRenderer {
         let startHeight = 0;
 
         // Helper function to update all positions consistently
-        const updatePositions = (splitPercent: number) => {
-            const splitterHeight = 24; // Match the CSS height
-            const splitterHeightPercent = (splitterHeight / contentParent.getBoundingClientRect().height) * 100;
+        this.updatePositions = (splitPercent: number): void => {
+            const contentParent = document.querySelector('div[class^="content_"]') as HTMLElement;
+            if (!contentParent) return;
+
+            const splitterHeightPercent =
+                (ThreadRenderer.SPLITTER_HEIGHT / contentParent.getBoundingClientRect().height) * 100;
             const halfSplitterPercent = splitterHeightPercent / 2;
+            const minPosition = halfSplitterPercent;
+
+            console.log("updatePositions called with:", {
+                splitPercent,
+                minPosition,
+                currentLastSplitPercent: this.lastSplitPercent,
+            });
 
             // Add half splitter height to the minimum position to align top edge
-            const minPosition = halfSplitterPercent;
             const clampedPercent = Math.min(Math.max(splitPercent, minPosition), 90);
+
+            console.log("Position calculations:", {
+                splitterHeight: ThreadRenderer.SPLITTER_HEIGHT,
+                splitterHeightPercent,
+                halfSplitterPercent,
+                minPosition,
+                clampedPercent,
+            });
+
             const bottomPercent = 100 - clampedPercent;
 
             // Update the container position (top pane) - stop above the splitter
-            newThreadloafContainer.style.top = `0`;
-            newThreadloafContainer.style.bottom = `calc(${bottomPercent}% + ${splitterHeight / 2}px)`;
+            const container = document.getElementById("threadloaf-container");
+            if (container) {
+                container.style.top = "0";
+                container.style.bottom = `calc(${bottomPercent}% + ${ThreadRenderer.SPLITTER_HEIGHT / 2}px)`;
+            }
 
             // Update the main element position (bottom pane) and splitter
             styleElement.textContent = `
                 div.${contentClass} > main {
                     position: absolute;
-                    top: calc(${clampedPercent}% + ${splitterHeight / 2}px);
+                    top: calc(${clampedPercent}% + ${ThreadRenderer.SPLITTER_HEIGHT / 2}px);
                     left: 0;
                     right: 0;
                     bottom: 0;
@@ -419,6 +594,11 @@ export class ThreadRenderer {
 
             // Store the position for future renders
             this.lastSplitPercent = clampedPercent;
+
+            // Save the position for this URL
+            const options = this.optionsProvider.getOptions();
+            options.splitterPositions[window.location.href] = clampedPercent;
+            this.optionsProvider.setOptions(options).catch(console.error);
         };
 
         const onMouseDown = (e: MouseEvent) => {
@@ -440,7 +620,7 @@ export class ThreadRenderer {
             const splitPosition = e.clientY - parentRect.top;
             const splitPercent = (splitPosition / parentRect.height) * 100;
 
-            updatePositions(splitPercent);
+            this.updatePositions(splitPercent);
         };
 
         const onMouseUp = () => {
@@ -456,7 +636,7 @@ export class ThreadRenderer {
         document.addEventListener("mouseup", onMouseUp);
 
         // Set initial positions using the stored split percentage
-        updatePositions(this.lastSplitPercent);
+        this.updatePositions(this.lastSplitPercent);
 
         contentParent.style.position = "relative";
 
@@ -510,30 +690,36 @@ export class ThreadRenderer {
         downButton.style.fontSize = "16px";
 
         // Add click handlers
-        let previousSplitPercent = this.lastSplitPercent;
+        let previousSplitPercent = 60; // Default to 60% for the first collapse
         const splitterHeight = 24; // Match the CSS height
         const splitterHeightPercent = (splitterHeight / contentParent.getBoundingClientRect().height) * 100;
         const minPosition = splitterHeightPercent / 2;
 
         upButton.addEventListener("click", () => {
-            if (this.lastSplitPercent >= 90) {
-                // If bottom is collapsed, restore to previous position
-                updatePositions(previousSplitPercent);
-            } else if (this.lastSplitPercent > minPosition) {
-                // Normal collapse to top
-                previousSplitPercent = this.lastSplitPercent;
-                updatePositions(minPosition);
+            console.log("Up button clicked:", {
+                lastSplitPercent: this.lastSplitPercent,
+                previousSplitPercent: this.previousSplitPercent,
+                isCollapsed: this.isCollapsed,
+            });
+
+            if (this.isCollapsed) {
+                this.uncollapseBottomPane();
+            } else {
+                this.collapseTopPane();
             }
         });
 
         downButton.addEventListener("click", () => {
-            if (this.lastSplitPercent <= minPosition) {
-                // If top is collapsed, restore to previous position
-                updatePositions(previousSplitPercent);
-            } else if (this.lastSplitPercent < 90) {
-                // Normal collapse to bottom
-                previousSplitPercent = this.lastSplitPercent;
-                updatePositions(90);
+            console.log("Down button clicked:", {
+                lastSplitPercent: this.lastSplitPercent,
+                previousSplitPercent: this.previousSplitPercent,
+                isCollapsed: this.isCollapsed,
+            });
+
+            if (this.isCollapsed) {
+                this.uncollapseTopPane();
+            } else {
+                this.collapseBottomPane();
             }
         });
 

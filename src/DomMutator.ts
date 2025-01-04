@@ -2,6 +2,11 @@ import { ThreadloafState } from "./ThreadloafState";
 import { MessageInfo } from "./MessageInfo";
 import { ContextMenuManager } from "./ContextMenuManager";
 
+export interface CollapseHandlers {
+    isBottomPaneCollapsed: () => boolean;
+    uncollapseBottomPane: () => void;
+}
+
 /**
  * Handles DOM manipulation and UI element creation for the Threadloaf interface.
  * Responsible for creating message elements, managing styles, hiding Discord's
@@ -11,10 +16,15 @@ import { ContextMenuManager } from "./ContextMenuManager";
 export class DomMutator {
     private state: ThreadloafState;
     private contextMenuManager: ContextMenuManager;
+    private collapseHandlers: CollapseHandlers | null = null;
 
     constructor(state: ThreadloafState, contextMenuManager: ContextMenuManager) {
         this.state = state;
         this.contextMenuManager = contextMenuManager;
+    }
+
+    public setCollapseHandlers(handlers: CollapseHandlers): void {
+        this.collapseHandlers = handlers;
     }
 
     public addScrollerStyle(scrollerClass: string): void {
@@ -150,9 +160,6 @@ export class DomMutator {
 
             const originalElement = message.originalElement as HTMLElement;
 
-            // Scroll the original message into view instantly, aligned to top
-            originalElement.scrollIntoView({ behavior: "auto", block: "start" });
-
             // Function to apply highlight effect
             const applyHighlight = (element: HTMLElement) => {
                 element.style.transition = "background-color 0.5s";
@@ -166,6 +173,21 @@ export class DomMutator {
                     }, 500);
                 }, 1000);
             };
+
+            // If the bottom pane is collapsed, uncollapse it and wait before scrolling
+            if (this.collapseHandlers?.isBottomPaneCollapsed()) {
+                this.collapseHandlers.uncollapseBottomPane();
+                // Wait longer for the pane expansion and layout to stabilize
+                setTimeout(() => {
+                    originalElement.scrollIntoView({ behavior: "auto", block: "start" });
+                    applyHighlight(originalElement);
+                    applyHighlight(el);
+                }, 250);
+                return;
+            }
+
+            // If not collapsed, scroll and highlight immediately
+            originalElement.scrollIntoView({ behavior: "auto", block: "start" });
 
             // Highlight both the original message and the clicked preview
             applyHighlight(originalElement);

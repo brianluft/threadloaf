@@ -27,6 +27,13 @@ import { UserOptionsProvider } from "./UserOptionsProvider";
         messageTreeBuilder,
         userOptionsProvider,
     );
+
+    // Set up collapse handlers after creating ThreadRenderer
+    domMutator.setCollapseHandlers({
+        isBottomPaneCollapsed: () => threadRenderer.isBottomPaneCollapsed(),
+        uncollapseBottomPane: () => threadRenderer.uncollapseBottomPane(),
+    });
+
     new Threadloaf(state, domParser, domMutator, threadRenderer);
     runTests();
 })();
