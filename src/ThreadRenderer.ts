@@ -43,6 +43,17 @@ export class ThreadRenderer {
         const isNewThread = currentUrl !== this.lastUrl;
         this.lastUrl = currentUrl;
 
+        // Check if we're in a DM channel
+        const isDMChannel = currentUrl.includes("/channels/@me");
+        if (isDMChannel) {
+            // Hide thread container and splitter for DMs
+            const threadContainer = document.getElementById("threadloaf-container");
+            const splitter = document.getElementById("threadloaf-splitter");
+            if (threadContainer) threadContainer.style.display = "none";
+            if (splitter) splitter.style.display = "none";
+            return;
+        }
+
         // Store scroll position before re-render
         const existingThreadContent = document.getElementById("threadloaf-content");
 
