@@ -4,6 +4,7 @@ import { DomMutator } from "./DomMutator";
 import { MessageParser } from "./MessageParser";
 import { MessageTreeBuilder } from "./MessageTreeBuilder";
 import { MessageInfo } from "./MessageInfo";
+import { UserOptionsProvider } from "./UserOptionsProvider";
 
 /**
  * Manages the rendering of threaded message views in the Discord interface.
@@ -17,6 +18,7 @@ export class ThreadRenderer {
     private domMutator: DomMutator;
     private messageParser: MessageParser;
     private messageTreeBuilder: MessageTreeBuilder;
+    private optionsProvider: UserOptionsProvider;
     private lastUrl: string = "";
     private lastSplitPercent: number = 60; // Store the split position, default to 60%
 
@@ -26,12 +28,14 @@ export class ThreadRenderer {
         domMutator: DomMutator,
         messageParser: MessageParser,
         messageTreeBuilder: MessageTreeBuilder,
+        optionsProvider: UserOptionsProvider,
     ) {
         this.state = state;
         this.domParser = domParser;
         this.domMutator = domMutator;
         this.messageParser = messageParser;
         this.messageTreeBuilder = messageTreeBuilder;
+        this.optionsProvider = optionsProvider;
     }
 
     // Render the thread UI

@@ -1,7 +1,7 @@
 {
   "scripts": {
     "build": "npm run format && npm run bundle && cp -rf manifest.json styles.css threadloaf-128.jpg popup.html test-data ../dist/",
-    "bundle": "esbuild content_script.ts --bundle --outfile=../dist/content_script.js --format=iife --platform=browser --sourcemap",
+    "bundle": "esbuild content_script.ts --bundle --outfile=../dist/content_script.js --format=iife --platform=browser --sourcemap && esbuild popup.ts --bundle --outfile=../dist/popup.js --format=iife --platform=browser --sourcemap",
     "format": "prettier --write \"**/*.ts\""
   },
   "devDependencies": {

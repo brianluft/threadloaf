@@ -10,7 +10,7 @@
         "default_popup": "popup.html",
         "default_icon": "threadloaf-128.jpg"
     },
-    "permissions": [],
+    "permissions": ["storage"],
     "content_scripts": [
       {
         "matches": ["*://discord.com/channels/*"],

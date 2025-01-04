@@ -9,6 +9,7 @@
             overflow-y: scroll;
             font-family: system-ui, -apple-system, sans-serif;
             line-height: 1.4;
+            padding: 1em;
         }
         h1 {
             font-size: 1.5em;
@@ -27,9 +28,24 @@
             word-wrap: break-word;
             font-size: 0.9em;
         }
+        .option-row {
+            display: flex;
+            align-items: center;
+            margin: 0.5em 0;
+        }
+        .option-row label {
+            margin-left: 0.5em;
+        }
     </style>
+    <script src="popup.js"></script>
 </head>
 <body>
+    <h1>Options</h1>
+    <div class="option-row">
+        <input type="checkbox" id="showThreadViewOnlyInForumChannels">
+        <label for="showThreadViewOnlyInForumChannels">Show thread view only in forum channels</label>
+    </div>
+
     <h1>Licenses</h1>
     <details>
         <summary>threadloaf</summary>
