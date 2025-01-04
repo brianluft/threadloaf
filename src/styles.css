@@ -100,6 +100,30 @@ div[class*="chat_"] {
     display: none;
 }
 
+.message-author {
+    color: var(--mention-foreground);
+    flex: 0 0 auto;
+}
+
+.separator {
+    color: var(--text-normal);
+    flex: 0 0 auto;
+}
+
+.message-reactions {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+    flex: 0 0 auto;
+}
+
+.message-reactions img {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+}
+
 .pill-container {
     display: none;
 }
@@ -127,18 +151,6 @@ div[class*="chat_"] {
 
 .comment-number {
     display: none;
-}
-
-.message-author {
-    color: var(--mention-foreground);
-    flex: 0 0 auto;
-    padding-right: 12px;
-}
-
-.separator {
-    color: var(--text-normal);
-    flex: 0 0 auto;
-    margin: 0 4px;
 }
 
 .expanded-header {
@@ -300,4 +312,11 @@ div#threadloaf-container span.mention, div#threadloaf-container span.mention:hov
     cursor: default;
     background: inherit;
     color: inherit;
+}
+
+/* Light background behind reactions in the thread view */
+div.threadloaf-message span.message-reactions img {
+    background: color-mix(in oklab, var(--background-primary) 90%, var(--text-normal) 10%);
+    padding: 0 5px 0 5px;
+    border-radius: 2px;
 }

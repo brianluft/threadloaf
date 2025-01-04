@@ -162,6 +162,16 @@ export class MessageParser {
 
                 // Find reactions container
                 const reactionsEl = el.querySelector('[class*="reactions_"]');
+                let reactionsHtml: string | undefined;
+                if (reactionsEl) {
+                    const reactionsClone = reactionsEl.cloneNode(true) as HTMLElement;
+                    // Remove the "add reaction" button
+                    const addReactionBtn = reactionsClone.querySelector('div[class*="reactionBtn_"]');
+                    if (addReactionBtn) {
+                        addReactionBtn.remove();
+                    }
+                    reactionsHtml = reactionsClone.outerHTML;
+                }
 
                 // Debug image detection in both content and accessories
                 const contentImages = messageContentEl.querySelectorAll("img:not([class*='emoji_'])");
@@ -331,6 +341,7 @@ export class MessageParser {
                     children: [],
                     originalElement: el as HTMLElement,
                     authorColor,
+                    reactionsHtml,
                 };
             } catch (error) {
                 console.error("Error parsing message:", error);

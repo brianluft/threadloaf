@@ -11,4 +11,5 @@ export interface MessageInfo {
     originalElement?: HTMLElement; // Reference to the original Discord message element
     isError?: boolean; // Whether this is an error message
     authorColor?: string; // Optional color for the author's name from Discord's UI
+    reactionsHtml?: string; // HTML content of reactions
 }

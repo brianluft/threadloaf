@@ -92,6 +92,8 @@ export class DomMutator {
         if (isBold) {
             contentPreview.style.fontWeight = "bold";
         }
+        // Apply age-based shading to message content
+        contentPreview.style.color = color;
 
         const separator = document.createElement("span");
         separator.classList.add("separator");
@@ -100,14 +102,31 @@ export class DomMutator {
         const authorSpan = document.createElement("span");
         authorSpan.classList.add("message-author");
         authorSpan.textContent = message.author;
-        authorSpan.style.color = color;
+        authorSpan.style.color = message.authorColor || "var(--text-normal)";
         if (isBold) {
             authorSpan.style.fontWeight = "bold";
+        }
+
+        // Add reactions if present
+        const reactionsSpan = document.createElement("span");
+        reactionsSpan.classList.add("message-reactions");
+        if (message.reactionsHtml) {
+            const temp = document.createElement("div");
+            temp.innerHTML = message.reactionsHtml;
+
+            // Get all reaction images, limit to first 3
+            const reactionImages = Array.from(temp.querySelectorAll('[class*="reaction_"] img')).slice(0, 3);
+
+            reactionImages.forEach((img) => {
+                const imgClone = img.cloneNode(true) as HTMLElement;
+                reactionsSpan.appendChild(imgClone);
+            });
         }
 
         previewContainer.appendChild(contentPreview);
         previewContainer.appendChild(separator);
         previewContainer.appendChild(authorSpan);
+        previewContainer.appendChild(reactionsSpan);
 
         el.appendChild(previewContainer);
         el.dataset.msgId = message.id;
