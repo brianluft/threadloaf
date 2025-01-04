@@ -37,12 +37,9 @@ export class ThreadRenderer {
     public renderThread(): void {
         if (!this.state.threadContainer) return;
 
-        console.log("Starting renderThread");
-
         // Check if we've changed threads by comparing URLs
         const currentUrl = window.location.href;
         const isNewThread = currentUrl !== this.lastUrl;
-        console.log("URL check - Current:", currentUrl, "Last:", this.lastUrl, "Is new thread:", isNewThread);
         this.lastUrl = currentUrl;
 
         // Store scroll position before re-render
@@ -90,11 +87,9 @@ export class ThreadRenderer {
 
         // Parse messages and build tree
         const rawMessages = this.messageParser.parseMessages(this.state.threadContainer);
-        console.log("Number of raw messages parsed:", rawMessages.length);
 
         // Build the tree (which includes coalescing)
         const rootMessages = this.messageTreeBuilder.buildMessageTree(rawMessages);
-        console.log("Number of root messages after building tree:", rootMessages.length);
 
         // Flatten the tree to get all messages in display order
         const getAllMessages = (messages: MessageInfo[]): MessageInfo[] => {
@@ -227,7 +222,6 @@ export class ThreadRenderer {
                 .map((el) => el.getAttribute("data-msg-id"))
                 .filter((id): id is string => id !== null),
         );
-        console.log("Previous message IDs:", [...previousMessageIds]);
 
         threadContent.appendChild(renderMessages(rootMessages));
 
@@ -236,20 +230,6 @@ export class ThreadRenderer {
             Array.from(document.querySelectorAll(".threadloaf-message"))
                 .map((el) => el.getAttribute("data-msg-id"))
                 .filter((id): id is string => id !== null),
-        );
-        console.log("Current message IDs:", [...currentMessageIds]);
-
-        const hasCompletelyDifferentMessages =
-            currentMessageIds.size > 0 && // We have some messages
-            ![...currentMessageIds].some((id) => previousMessageIds.has(id)); // None of the current messages were in the previous set
-
-        console.log(
-            "Has completely different messages:",
-            hasCompletelyDifferentMessages,
-            "\n  Current size:",
-            currentMessageIds.size,
-            "\n  Any overlap:",
-            [...currentMessageIds].some((id) => previousMessageIds.has(id)),
         );
 
         // Always show both views
@@ -260,11 +240,7 @@ export class ThreadRenderer {
         let contentParent: HTMLElement | null = null;
         let contentClass: string | null = null;
 
-        console.log("Starting search for content div from:", this.state.threadContainer);
-
         while (currentElement) {
-            console.log("Checking element:", currentElement);
-
             // Check if this is a div with content_* class and has a main child
             if (
                 currentElement.tagName === "DIV" &&
@@ -278,7 +254,6 @@ export class ThreadRenderer {
                 currentElement.querySelector("main")
             ) {
                 contentParent = currentElement as HTMLElement;
-                console.log("Found content div with main child:", contentParent);
                 break;
             }
 
@@ -351,11 +326,9 @@ export class ThreadRenderer {
             }
         } else if (isNewThread) {
             // If we've changed threads, scroll to newest
-            console.log("New thread detected, scrolling to newest");
             this.scrollToNewestMessage(false);
         } else {
             // Set flag to scroll to newest once messages are loaded
-            console.log("Setting pending scroll flag");
             this.state.pendingScrollToNewest = { shouldExpand: false };
         }
 
@@ -365,7 +338,6 @@ export class ThreadRenderer {
 
     private scrollToNewestMessage(shouldExpand: boolean = false): void {
         if (!this.state.newestMessageId) {
-            console.log("Attempted to scroll to newest but no newest message ID found");
             return;
         }
 
@@ -375,7 +347,6 @@ export class ThreadRenderer {
         ) as HTMLElement;
 
         if (newestMessage) {
-            console.log("Scrolling to newest message:", this.state.newestMessageId);
             if (shouldExpand) {
                 // Expand the newest message
                 newestMessage.classList.add("expanded");
@@ -390,10 +361,6 @@ export class ThreadRenderer {
             // Clear any pending scroll
             this.state.pendingScrollToNewest = null;
         } else {
-            console.log(
-                "Newest message element not found in DOM, setting pending scroll flag. Message ID:",
-                this.state.newestMessageId,
-            );
             // Message not found, set flag to try again later
             this.state.pendingScrollToNewest = { shouldExpand };
         }
