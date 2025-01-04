@@ -46,15 +46,33 @@ export class ThreadRenderer {
         // Store scroll position before re-render
         const existingThreadContent = document.getElementById("threadloaf-content");
 
-        // Store position of most recent message relative to viewport
+        // Store position of newest visible message relative to viewport
         let recentMessageId: string | null = null;
         let recentMessageViewportOffset: number | null = null;
         if (existingThreadContent) {
-            const allMessages = Array.from(existingThreadContent.querySelectorAll(".threadloaf-message"));
-            const mostRecentMessage = allMessages[allMessages.length - 1] as HTMLElement;
-            if (mostRecentMessage) {
-                recentMessageId = mostRecentMessage.getAttribute("data-msg-id");
-                const rect = mostRecentMessage.getBoundingClientRect();
+            const allMessages = Array.from(
+                existingThreadContent.querySelectorAll(".threadloaf-message"),
+            ) as HTMLElement[];
+            // Find the newest visible message by checking which messages are in the viewport
+            const viewportMessages = allMessages.filter((msg) => {
+                const rect = msg.getBoundingClientRect();
+                return rect.top >= 0 && rect.bottom <= window.innerHeight;
+            });
+            if (viewportMessages.length > 0) {
+                // Among visible messages, find the one with the highest message number
+                const newestVisible = viewportMessages.reduce((newest, current) => {
+                    const currentNum = parseInt(current.getAttribute("data-msg-number") || "0", 10);
+                    const newestNum = parseInt(newest.getAttribute("data-msg-number") || "0", 10);
+                    return currentNum > newestNum ? current : newest;
+                });
+                recentMessageId = newestVisible.getAttribute("data-msg-id");
+                const rect = newestVisible.getBoundingClientRect();
+                recentMessageViewportOffset = rect.top;
+            } else if (allMessages.length > 0) {
+                // If no messages are visible, use the last message as fallback
+                const lastMessage = allMessages[allMessages.length - 1];
+                recentMessageId = lastMessage.getAttribute("data-msg-id");
+                const rect = lastMessage.getBoundingClientRect();
                 recentMessageViewportOffset = rect.top;
             }
         }
@@ -439,6 +457,9 @@ export class ThreadRenderer {
                 if (scrollContainer) {
                     scrollContainer.scrollTop += currentOffset - recentMessageViewportOffset;
                 }
+            } else {
+                // If we can't find the reference message, scroll to newest
+                this.scrollToNewestMessage();
             }
         } else if (isNewThread) {
             // If we've changed threads, scroll to newest
