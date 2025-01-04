@@ -1,6 +1,5 @@
 import { DomMutator } from "./DomMutator";
 import { ThreadloafState } from "./ThreadloafState";
-import { DebouncedMutationObserver } from "./DebouncedMutationObserver";
 
 /*
  * IMPORTANT: Discord Class/ID Naming Pattern
@@ -66,64 +65,59 @@ export class DomParser {
 
     // Attach a MutationObserver to monitor DOM changes
     public setupMutationObserver(renderThread: () => void): void {
-        this.state.observer = new DebouncedMutationObserver(
-            (mutations) => {
-                let shouldRerender = false;
+        this.state.observer = new MutationObserver((mutations) => {
+            let shouldRerender = false;
 
-                for (const mutation of mutations) {
-                    // Check for new messages
-                    const hasNewMessages = Array.from(mutation.addedNodes).some(
-                        (node) =>
-                            node instanceof HTMLElement &&
-                            (node.matches('li[id^="chat-messages-"]') ||
-                                node.querySelector('li[id^="chat-messages-"]')),
-                    );
+            for (const mutation of mutations) {
+                // Check for new messages
+                const hasNewMessages = Array.from(mutation.addedNodes).some(
+                    (node) =>
+                        node instanceof HTMLElement &&
+                        (node.matches('li[id^="chat-messages-"]') || node.querySelector('li[id^="chat-messages-"]')),
+                );
 
-                    // Check for reactions changes - handle both cozy and compact modes
-                    const hasReactionChanges = (() => {
-                        if (!(mutation.target instanceof HTMLElement)) {
-                            return false;
-                        }
-
-                        // First find the containing message li element
-                        const messageLi = mutation.target.closest('li[id^="chat-messages-"]');
-                        if (!messageLi) {
-                            return false;
-                        }
-
-                        // Check if the mutation affects a reactions container anywhere within this message
-                        return !!messageLi.querySelector('[class*="reactions_"]');
-                    })();
-
-                    // Check for message content edits
-                    const hasMessageEdits =
-                        (mutation.target instanceof HTMLElement &&
-                            mutation.target.matches('[id^="message-content-"]')) ||
-                        (mutation.target instanceof HTMLElement && mutation.target.closest('[id^="message-content-"]'));
-
-                    if (hasNewMessages || hasReactionChanges || hasMessageEdits) {
-                        shouldRerender = true;
-                        break;
+                // Check for reactions changes - handle both cozy and compact modes
+                const hasReactionChanges = (() => {
+                    if (!(mutation.target instanceof HTMLElement)) {
+                        return false;
                     }
-                }
 
-                if (shouldRerender) {
-                    const newThreadContainer = this.findThreadContainer();
-                    if (newThreadContainer) {
-                        this.state.threadContainer = newThreadContainer;
-                        renderThread();
+                    // First find the containing message li element
+                    const messageLi = mutation.target.closest('li[id^="chat-messages-"]');
+                    if (!messageLi) {
+                        return false;
                     }
-                }
-            },
-            {
-                childList: true,
-                subtree: true,
-                characterData: true, // Needed for text content changes
-                attributes: true, // Needed for reaction changes
-            },
-        );
 
-        this.state.observer.observe(this.state.appContainer!);
+                    // Check if the mutation affects a reactions container anywhere within this message
+                    return !!messageLi.querySelector('[class*="reactions_"]');
+                })();
+
+                // Check for message content edits
+                const hasMessageEdits =
+                    (mutation.target instanceof HTMLElement && mutation.target.matches('[id^="message-content-"]')) ||
+                    (mutation.target instanceof HTMLElement && mutation.target.closest('[id^="message-content-"]'));
+
+                if (hasNewMessages || hasReactionChanges || hasMessageEdits) {
+                    shouldRerender = true;
+                    break;
+                }
+            }
+
+            if (shouldRerender) {
+                const newThreadContainer = this.findThreadContainer();
+                if (newThreadContainer) {
+                    this.state.threadContainer = newThreadContainer;
+                    renderThread();
+                }
+            }
+        });
+
+        this.state.observer.observe(this.state.appContainer!, {
+            childList: true,
+            subtree: true,
+            characterData: true, // Needed for text content changes
+            attributes: true, // Needed for reaction changes
+        });
     }
 
     public checkIfTopLoaded(): boolean {
