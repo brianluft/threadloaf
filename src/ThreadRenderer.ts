@@ -17,6 +17,7 @@ export class ThreadRenderer {
     private domMutator: DomMutator;
     private messageParser: MessageParser;
     private messageTreeBuilder: MessageTreeBuilder;
+    private lastUrl: string = "";
 
     constructor(
         state: ThreadloafState,
@@ -35,6 +36,14 @@ export class ThreadRenderer {
     // Render the thread UI
     public renderThread(): void {
         if (!this.state.threadContainer) return;
+
+        console.log("Starting renderThread");
+
+        // Check if we've changed threads by comparing URLs
+        const currentUrl = window.location.href;
+        const isNewThread = currentUrl !== this.lastUrl;
+        console.log("URL check - Current:", currentUrl, "Last:", this.lastUrl, "Is new thread:", isNewThread);
+        this.lastUrl = currentUrl;
 
         // Store scroll position before re-render
         const existingThreadContent = document.getElementById("threadloaf-content");
@@ -79,126 +88,13 @@ export class ThreadRenderer {
         newThreadloafContainer.id = "threadloaf-container";
         newThreadloafContainer.appendChild(threadContent);
 
-        // Create floating toggle button
-        const createFloatButton = (isThreadView: boolean) => {
-            const existingButton = document.getElementById("threadloaf-float-button");
-            if (existingButton) {
-                existingButton.remove();
-            }
-
-            const floatButton = document.createElement("div");
-            floatButton.id = "threadloaf-float-button";
-
-            // Create Load Up button as a separate element
-            const loadUpButton = this.createLoadUpButton();
-            loadUpButton.style.marginRight = "8px"; // Change margin to right side
-
-            // Create Newest button
-            const newestButton = this.createNewestButton();
-            newestButton.style.marginLeft = "8px";
-
-            // Create toggle container
-            const toggleContainer = document.createElement("div");
-            toggleContainer.className = "toggle-container";
-
-            // Create Chat option
-            const chatOption = document.createElement("button");
-            chatOption.className = `toggle-option ${!isThreadView ? "active" : ""}`;
-            chatOption.textContent = "Chat";
-
-            // Create Thread option
-            const threadOption = document.createElement("button");
-            threadOption.className = `toggle-option ${isThreadView ? "active" : ""}`;
-            threadOption.textContent = "Thread";
-
-            const handleClick = (newIsThreadView: boolean) => {
-                if (newIsThreadView === isThreadView) return; // No change needed
-
-                this.state.isThreadViewActive = newIsThreadView; // Update the view state
-
-                if (newIsThreadView) {
-                    // Switch to thread view
-                    if (this.state.threadContainer) {
-                        this.state.threadContainer.style.display = "none";
-                        // Re-add our scroll override
-                        const scrollerElement = this.state.threadContainer.closest('div[class*="scroller_"]');
-                        if (scrollerElement) {
-                            const scrollerClass = Array.from(scrollerElement.classList).find((className) =>
-                                className.startsWith("scroller_"),
-                            );
-                            if (scrollerClass) {
-                                this.domMutator.addScrollerStyle(scrollerClass);
-                            }
-                        }
-                    }
-                    // Re-render thread to get latest messages
-                    this.renderThread();
-                    createFloatButton(true);
-                    // Scroll to newest message
-                    this.scrollToNewestMessage();
-                } else {
-                    // Switch to normal view
-                    if (this.state.threadContainer) {
-                        this.state.threadContainer.style.display = "block";
-                        // Remove our scroll override
-                        const scrollerElement = this.state.threadContainer.closest('div[class*="scroller_"]');
-                        if (scrollerElement) {
-                            const scrollerClass = Array.from(scrollerElement.classList).find((className) =>
-                                className.startsWith("scroller_"),
-                            );
-                            if (scrollerClass) {
-                                this.domMutator.removeScrollerStyle(scrollerClass);
-                            }
-                            // Scroll chat view to bottom
-                            scrollerElement.scrollTop = scrollerElement.scrollHeight;
-                        }
-                    }
-                    // Clean up threadloaf container when switching to chat view
-                    const threadloafContainer = document.getElementById("threadloaf-container");
-                    if (threadloafContainer) {
-                        threadloafContainer.remove();
-                    }
-                    createFloatButton(false);
-                }
-            };
-
-            chatOption.onclick = () => handleClick(false);
-            threadOption.onclick = () => handleClick(true);
-
-            // Append buttons in the right order
-            toggleContainer.appendChild(chatOption);
-            toggleContainer.appendChild(threadOption);
-            floatButton.appendChild(loadUpButton); // Move load button to start
-            floatButton.appendChild(toggleContainer);
-            floatButton.appendChild(newestButton); // Add newest button at the end
-            document.body.appendChild(floatButton);
-
-            // Position the button initially
-            this.updateFloatButtonPosition();
-
-            // Set up resize observer for the channel container
-            const channelContainer = this.state.threadContainer?.closest('div[class*="chat_"]');
-            if (channelContainer) {
-                const resizeObserver = new ResizeObserver(() => {
-                    this.updateFloatButtonPosition();
-                });
-                resizeObserver.observe(channelContainer);
-            }
-
-            // Also handle window resize
-            window.addEventListener("resize", () => {
-                this.updateFloatButtonPosition();
-            });
-        };
-
-        // Initial floating button creation
-        createFloatButton(this.state.isThreadViewActive);
-
         // Parse messages and build tree
         const rawMessages = this.messageParser.parseMessages(this.state.threadContainer);
+        console.log("Number of raw messages parsed:", rawMessages.length);
 
         // Build the tree (which includes coalescing)
         const rootMessages = this.messageTreeBuilder.buildMessageTree(rawMessages);
+        console.log("Number of root messages after building tree:", rootMessages.length);
 
         // Flatten the tree to get all messages in display order
         const getAllMessages = (messages: MessageInfo[]): MessageInfo[] => {
@@ -325,195 +221,153 @@ export class ThreadRenderer {
             return container;
         };
 
+        // Store the previous set of message IDs before we update
+        const previousMessageIds = new Set(
+            Array.from(document.querySelectorAll(".threadloaf-message"))
+                .map((el) => el.getAttribute("data-msg-id"))
+                .filter((id): id is string => id !== null),
+        );
+        console.log("Previous message IDs:", [...previousMessageIds]);
+
         threadContent.appendChild(renderMessages(rootMessages));
 
-        // Hide original thread container and append/update custom UI
-        if (this.state.isThreadViewActive) {
-            this.state.threadContainer.style.display = "none";
-            const parentElement = this.state.threadContainer.parentElement;
-            if (parentElement) {
-                parentElement.style.position = "relative";
+        // Check if we have a completely different set of messages
+        const currentMessageIds = new Set(
+            Array.from(document.querySelectorAll(".threadloaf-message"))
+                .map((el) => el.getAttribute("data-msg-id"))
+                .filter((id): id is string => id !== null),
+        );
+        console.log("Current message IDs:", [...currentMessageIds]);
 
-                if (isNewContainer) {
-                    // First render - just append the new container
-                    parentElement.appendChild(newThreadloafContainer);
-                } else {
-                    threadloafContainer!.replaceWith(newThreadloafContainer);
-                }
+        const hasCompletelyDifferentMessages =
+            currentMessageIds.size > 0 && // We have some messages
+            ![...currentMessageIds].some((id) => previousMessageIds.has(id)); // None of the current messages were in the previous set
 
-                // First, handle expanded posts
-                if (expandedMessageId) {
-                    // Restore previously expanded message
-                    const messageToExpand = document.querySelector(
-                        `[data-msg-id="${expandedMessageId}"]`,
-                    ) as HTMLElement;
-                    if (messageToExpand) {
-                        messageToExpand.classList.add("expanded");
-                        const previewContainer = messageToExpand.querySelector(".preview-container") as HTMLElement;
-                        const fullContentContainer = messageToExpand.querySelector(".full-content") as HTMLElement;
-                        if (previewContainer) previewContainer.style.display = "none";
-                        if (fullContentContainer) fullContentContainer.style.display = "block";
+        console.log(
+            "Has completely different messages:",
+            hasCompletelyDifferentMessages,
+            "\n  Current size:",
+            currentMessageIds.size,
+            "\n  Any overlap:",
+            [...currentMessageIds].some((id) => previousMessageIds.has(id)),
+        );
 
-                        // Restore expanded message's position relative to viewport
-                        if (expandedMessageViewportOffset !== null) {
-                            const newRect = messageToExpand.getBoundingClientRect();
-                            const currentOffset = newRect.top;
-                            const scrollContainer = document.getElementById("threadloaf-content");
-                            if (scrollContainer) {
-                                scrollContainer.scrollTop += currentOffset - expandedMessageViewportOffset;
-                            }
-                        }
+        // Always show both views
+        this.state.threadContainer.style.display = "block";
+
+        // Find the content div by traversing up from thread container
+        let currentElement = this.state.threadContainer.parentElement;
+        let contentParent: HTMLElement | null = null;
+        let contentClass: string | null = null;
+
+        console.log("Starting search for content div from:", this.state.threadContainer);
+
+        while (currentElement) {
+            console.log("Checking element:", currentElement);
+
+            // Check if this is a div with content_* class and has a main child
+            if (
+                currentElement.tagName === "DIV" &&
+                Array.from(currentElement.classList).some((cls) => {
+                    if (cls.startsWith("content_")) {
+                        contentClass = cls;
+                        return true;
                     }
-                } else if (recentMessageId && recentMessageViewportOffset !== null) {
-                    // Restore position of most recent message
-                    const recentMessage = document.querySelector(`[data-msg-id="${recentMessageId}"]`) as HTMLElement;
-                    if (recentMessage) {
-                        const newRect = recentMessage.getBoundingClientRect();
-                        const currentOffset = newRect.top;
-                        const scrollContainer = document.getElementById("threadloaf-content");
-                        if (scrollContainer) {
-                            scrollContainer.scrollTop += currentOffset - recentMessageViewportOffset;
-                        }
-                    }
-                } else if (!existingThreadContent) {
-                    // Scroll to newest message on initial render without expanding it
-                    setTimeout(() => {
-                        this.scrollToNewestMessage(false);
-                    }, 0);
-                }
-
-                // Check if we have a pending scroll to newest
-                setTimeout(() => {
-                    if (this.state.pendingScrollToNewest !== null) {
-                        this.scrollToNewestMessage(this.state.pendingScrollToNewest.shouldExpand);
-                    }
-                }, 0);
+                    return false;
+                }) &&
+                currentElement.querySelector("main")
+            ) {
+                contentParent = currentElement as HTMLElement;
+                console.log("Found content div with main child:", contentParent);
+                break;
             }
+
+            currentElement = currentElement.parentElement;
+        }
+
+        if (!contentParent || !contentClass) {
+            console.error("Could not find parent div with class content_* and main child, cannot render threadloaf");
+            return;
+        }
+
+        // Update or create the style element for main positioning
+        let styleElement = document.getElementById("threadloaf-main-style");
+        if (!styleElement) {
+            styleElement = document.createElement("style");
+            styleElement.id = "threadloaf-main-style";
+            document.head.appendChild(styleElement);
+        }
+        styleElement.textContent = `
+            div.${contentClass} > main {
+                position: absolute;
+                top: 50%;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                height: auto !important;
+            }
+        `;
+
+        contentParent.style.position = "relative";
+
+        if (isNewContainer) {
+            // First render - just append the new container
+            contentParent.appendChild(newThreadloafContainer);
         } else {
-            this.state.threadContainer.style.display = "block";
-            // Remove any existing threadloaf container
-            const existingContainer = document.getElementById("threadloaf-container");
-            if (existingContainer) {
-                existingContainer.remove();
+            threadloafContainer!.replaceWith(newThreadloafContainer);
+        }
+
+        // First, handle expanded posts
+        if (expandedMessageId) {
+            // Restore previously expanded message
+            const messageToExpand = document.querySelector(`[data-msg-id="${expandedMessageId}"]`) as HTMLElement;
+            if (messageToExpand) {
+                messageToExpand.classList.add("expanded");
+                const previewContainer = messageToExpand.querySelector(".preview-container") as HTMLElement;
+                const fullContentContainer = messageToExpand.querySelector(".full-content") as HTMLElement;
+                if (previewContainer) previewContainer.style.display = "none";
+                if (fullContentContainer) fullContentContainer.style.display = "block";
+
+                // Restore expanded message's position relative to viewport
+                if (expandedMessageViewportOffset !== null) {
+                    const newRect = messageToExpand.getBoundingClientRect();
+                    const currentOffset = newRect.top;
+                    const scrollContainer = document.getElementById("threadloaf-content");
+                    if (scrollContainer) {
+                        scrollContainer.scrollTop += currentOffset - expandedMessageViewportOffset;
+                    }
+                }
             }
+        } else if (recentMessageId && recentMessageViewportOffset !== null && !isNewThread) {
+            // Only restore position if we haven't changed threads
+            const recentMessage = document.querySelector(`[data-msg-id="${recentMessageId}"]`) as HTMLElement;
+            if (recentMessage) {
+                const newRect = recentMessage.getBoundingClientRect();
+                const currentOffset = newRect.top;
+                const scrollContainer = document.getElementById("threadloaf-content");
+                if (scrollContainer) {
+                    scrollContainer.scrollTop += currentOffset - recentMessageViewportOffset;
+                }
+            }
+        } else if (isNewThread) {
+            // If we've changed threads, scroll to newest
+            console.log("New thread detected, scrolling to newest");
+            this.scrollToNewestMessage(false);
+        } else {
+            // Set flag to scroll to newest once messages are loaded
+            console.log("Setting pending scroll flag");
+            this.state.pendingScrollToNewest = { shouldExpand: false };
         }
 
         // Try to hide header again after rendering
         this.domMutator.findAndHideHeader();
     }
 
-    private createLoadUpButton(): HTMLButtonElement {
-        const loadUpButton = document.createElement("button");
-        loadUpButton.className = "load-up-button";
-        loadUpButton.textContent = "🠉";
-        loadUpButton.title = "Load earlier messages";
-        loadUpButton.disabled = this.state.isTopLoaded;
-
-        let isLoading = false;
-        loadUpButton.onclick = async () => {
-            if (isLoading) return;
-
-            const scrollerElement = this.state.threadContainer?.closest('div[class*="scroller_"]');
-            if (!scrollerElement) return;
-
-            isLoading = true;
-            this.state.isLoadingMore = true; // Set flag before loading
-            loadUpButton.disabled = this.state.isTopLoaded;
-
-            // If we're in thread view, temporarily switch to chat view
-            const wasInThreadView = this.state.isThreadViewActive;
-            if (wasInThreadView) {
-                // Switch to chat view
-                this.state.threadContainer!.style.display = "block";
-                const threadloafContainer = document.getElementById("threadloaf-container");
-                if (threadloafContainer) {
-                    threadloafContainer.remove();
-                }
-                // Remove our scroll override
-                const scrollerClass = Array.from(scrollerElement.classList).find((className) =>
-                    className.startsWith("scroller_"),
-                );
-                if (scrollerClass) {
-                    this.domMutator.removeScrollerStyle(scrollerClass);
-                }
-            }
-
-            // Scroll and dispatch event
-            scrollerElement.scrollTo({ top: 0 });
-            const scrollEvent = new Event("scroll", {
-                bubbles: true,
-                cancelable: true,
-            });
-            scrollerElement.dispatchEvent(scrollEvent);
-
-            // Wait a bit for the load to happen
-            await new Promise((resolve) => setTimeout(resolve, 500));
-
-            // Switch back to thread view if we were in it
-            if (wasInThreadView) {
-                this.state.isThreadViewActive = true;
-                this.renderThread();
-            }
-
-            // Re-enable after a delay
-            setTimeout(() => {
-                isLoading = false;
-                this.state.isLoadingMore = false;
-                loadUpButton.disabled = this.state.isTopLoaded || false;
-            }, 1000);
-        };
-
-        return loadUpButton;
-    }
-
-    private createNewestButton(): HTMLButtonElement {
-        const newestButton = document.createElement("button");
-        newestButton.className = "newest-button";
-        newestButton.textContent = "🠋";
-        newestButton.title = "Jump to newest message";
-
-        newestButton.onclick = () => {
-            if (this.state.isThreadViewActive) {
-                // In Thread mode:
-                // 1. Collapse any expanded message
-                const expandedMessage = document.querySelector(".threadloaf-message.expanded");
-                if (expandedMessage) {
-                    expandedMessage.classList.remove("expanded");
-                    const previewContainer = expandedMessage.querySelector(".preview-container") as HTMLElement;
-                    const fullContent = expandedMessage.querySelector(".full-content") as HTMLElement;
-                    if (previewContainer) previewContainer.style.display = "flex";
-                    if (fullContent) fullContent.style.display = "none";
-                }
-
-                // 2. Scroll to newest message and expand it
-                this.scrollToNewestMessage(true);
-            } else {
-                // In Chat mode: scroll the original chat container to bottom
-                if (this.state.threadContainer) {
-                    const scrollerElement = this.state.threadContainer.closest('div[class*="scroller_"]');
-                    if (scrollerElement) {
-                        scrollerElement.scrollTop = scrollerElement.scrollHeight;
-                    }
-                }
-            }
-        };
-
-        return newestButton;
-    }
-
-    private updateFloatButtonPosition(): void {
-        const floatButton = document.getElementById("threadloaf-float-button");
-        const channelContainer = this.state.threadContainer?.closest('div[class*="chat_"]');
-
-        if (floatButton && channelContainer) {
-            const channelRect = channelContainer.getBoundingClientRect();
-            const channelCenter = channelRect.left + channelRect.width / 2;
-            floatButton.style.left = `${channelCenter}px`;
-        }
-    }
-
     private scrollToNewestMessage(shouldExpand: boolean = false): void {
-        if (!this.state.newestMessageId) return;
+        if (!this.state.newestMessageId) {
+            console.log("Attempted to scroll to newest but no newest message ID found");
+            return;
+        }
 
         // Find the newest message by its ID
         const newestMessage = document.querySelector(
@@ -521,6 +375,7 @@ export class ThreadRenderer {
         ) as HTMLElement;
 
         if (newestMessage) {
+            console.log("Scrolling to newest message:", this.state.newestMessageId);
             if (shouldExpand) {
                 // Expand the newest message
                 newestMessage.classList.add("expanded");
@@ -535,6 +390,10 @@ export class ThreadRenderer {
             // Clear any pending scroll
             this.state.pendingScrollToNewest = null;
         } else {
+            console.log(
+                "Newest message element not found in DOM, setting pending scroll flag. Message ID:",
+                this.state.newestMessageId,
+            );
             // Message not found, set flag to try again later
             this.state.pendingScrollToNewest = { shouldExpand };
         }

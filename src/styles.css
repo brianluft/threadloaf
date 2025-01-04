@@ -6,47 +6,13 @@
     top: 0;
     left: 0;
     right: 0;
-    bottom: 16px;
-    overflow-y: hidden;
+    bottom: 50%;
+    overflow-y: auto;
     overflow-x: hidden;
     z-index: 0;
     display: flex;
     flex-direction: column;
-}
-
-/* Floating re-enable button */
-#threadloaf-float-button {
-    position: fixed;
-    top: 56px;
-    left: 50%;
-    z-index: 999;
-    padding: 0;
-    color: white;
-    font-size: 15px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    transform: translate(-50%, 0);
-    line-height: 100%;
-}
-
-.toggle-container {
-    display: flex;
-    overflow: hidden;
-}
-
-.toggle-option {
-    padding: 8px 0;
-    width: 75px;
-    background: transparent;
-    border: none;
-    color: var(--text-normal);
-    cursor: pointer;
-}
-
-.toggle-option.active {
-    background: var(--text-normal);
-    color: var(--background-primary);
+    border-bottom: 1px solid var(--border-faint);
 }
 
 /* Thread content styles */
@@ -296,33 +262,15 @@ div[class*="chat_"] {
 }
 
 .toggle-container, .load-up-button, .newest-button {
-    background: var(--background-secondary);
-    border: 3px solid var(--border-faint);
-    border-radius: 20px;
+    display: none;
 }
 
 .toggle-option {
-    height: 34px;
+    display: none;
 }
 
-.load-up-button, .newest-button {
-    height: 40px;
-    width: 60px;
-    color: var(--text-normal);
-    cursor: pointer;
-    visibility: visible;
-    opacity: 1;
-}
-
-.toggle-container:hover, .load-up-button:hover:not(:disabled), .newest-button:hover:not(:disabled) {
-    color: var(--text-normal);
-    border-color: var(--border-strong);
-}
-
-.load-up-button:disabled, .newest-button:disabled {
-    color: var(--text-muted);
-    cursor: not-allowed;
-    border: 3px solid var(--background-secondary);
+#threadloaf-float-button {
+    display: none;
 }
 
 /* Mentions aren't clickable in our thread view, so don't make it seem like they are.
