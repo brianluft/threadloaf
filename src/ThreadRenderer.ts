@@ -167,6 +167,27 @@ export class ThreadRenderer {
             // Get flattened list of [message, depth] pairs
             const flatMessages = flattenMessages(messages, depth);
 
+            // Create a map of message ID to row index
+            const messageRowIndices = new Map<string, number>();
+            flatMessages.forEach(([msg], index) => {
+                messageRowIndices.set(msg.id, index);
+            });
+
+            // Helper to find if a message is the last child of its parent
+            const isLastChild = (msg: MessageInfo): boolean => {
+                if (!msg.parentId) return true;
+                const parent = allMessages.find((m) => m.id === msg.parentId);
+                if (!parent || !parent.children) return true;
+                return parent.children[parent.children.length - 1].id === msg.id;
+            };
+
+            // Helper to find the row range of direct children
+            const getChildRowRange = (msg: MessageInfo): [number, number] | null => {
+                if (!msg.children || msg.children.length === 0) return null;
+                const childIndices = msg.children.map((child) => messageRowIndices.get(child.id)!);
+                return [Math.min(...childIndices), Math.max(...childIndices)];
+            };
+
             // Calculate incremental indents
             const MAX_INDENT = 350;
             const FIRST_LEVEL_INDENT = 40;
@@ -179,18 +200,20 @@ export class ThreadRenderer {
             };
 
             // Create message elements
-            flatMessages.forEach(([message, depth]) => {
+            flatMessages.forEach(([message, depth], rowIndex) => {
                 const messageContainer = document.createElement("div");
                 messageContainer.style.display = "flex";
                 messageContainer.style.alignItems = "flex-start";
                 messageContainer.style.minWidth = "0"; // Allow container to shrink below children's natural width
 
                 // Create indent spacers
-                for (let i = 0; i < depth; i++) {
+                for (let cellIndex = 0; cellIndex < depth; cellIndex++) {
                     const spacer = document.createElement("div");
                     spacer.classList.add("thread-line-spacer");
+                    spacer.dataset.rowIndex = rowIndex.toString();
+                    spacer.dataset.cellIndex = cellIndex.toString();
                     spacer.style.display = "inline-block";
-                    spacer.style.width = `${getIncrementalIndent(i + 1)}px`;
+                    spacer.style.width = `${getIncrementalIndent(cellIndex + 1)}px`;
                     spacer.style.flexShrink = "0"; // Prevent spacer from shrinking
                     spacer.style.alignSelf = "stretch";
                     messageContainer.appendChild(spacer);
@@ -212,6 +235,43 @@ export class ThreadRenderer {
                 messageContainer.appendChild(messageEl);
                 container.appendChild(messageContainer);
             });
+
+            // Set box-drawing characters after all messages are rendered
+            // First pass: set fork characters
+            flatMessages.forEach(([message, depth], rowIndex) => {
+                if (depth === 0) return; // Skip root messages
+
+                // Draw the fork character
+                const forkCell = container.querySelector(
+                    `.thread-line-spacer[data-row-index="${rowIndex}"][data-cell-index="${depth - 1}"]`,
+                ) as HTMLElement;
+                if (forkCell) {
+                    forkCell.dataset.line = isLastChild(message) ? "└" : "├";
+                }
+            });
+
+            // Second pass: draw vertical lines between forks
+            // For each column (except the last one which only has horizontal lines)
+            const maxDepth = Math.max(...flatMessages.map(([_, depth]) => depth));
+            for (let col = 0; col < maxDepth - 1; col++) {
+                let isDrawingLine = false;
+                // Go through each row in this column
+                for (let row = 0; row < flatMessages.length; row++) {
+                    const cell = container.querySelector(
+                        `.thread-line-spacer[data-row-index="${row}"][data-cell-index="${col}"]`,
+                    ) as HTMLElement;
+                    if (!cell) continue;
+
+                    const line = cell.dataset.line;
+                    if (line === "├") {
+                        isDrawingLine = true;
+                    } else if (line === "└") {
+                        isDrawingLine = false;
+                    } else if (isDrawingLine) {
+                        cell.dataset.line = "│";
+                    }
+                }
+            }
 
             return container;
         };
