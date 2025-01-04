@@ -153,7 +153,7 @@ export class DomMutator {
             // Function to apply highlight effect
             const applyHighlight = (element: HTMLElement) => {
                 element.style.transition = "background-color 0.5s";
-                element.style.backgroundColor = "color-mix(in oklab, var(--text-normal) 10%, transparent)";
+                element.style.backgroundColor = "color-mix(in oklab, var(--text-normal) 30%, transparent)";
 
                 setTimeout(() => {
                     element.style.backgroundColor = "";
