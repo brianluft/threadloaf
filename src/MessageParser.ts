@@ -205,8 +205,17 @@ export class MessageParser {
                         }
                     }
                 } else {
+                    // Create a temporary container to handle spoilers and line breaks
+                    const tempContainer = document.createElement("div");
+                    tempContainer.innerHTML = messageContentEl.innerHTML;
+
+                    // Replace spoiler content with 🮘🮘🮘🮘
+                    tempContainer.querySelectorAll('span[class*="spoilerContent_"]').forEach((spoiler) => {
+                        spoiler.replaceWith("🮘🮘🮘🮘");
+                    });
+
                     // Convert line breaks to spaces for preview
-                    textContent = textContent.replace(/\s*[\r\n]+\s*/g, " ").trim();
+                    textContent = tempContainer.textContent?.replace(/\s*[\r\n]+\s*/g, " ").trim() || "";
 
                     // Add embed indicators to the preview if present
                     if (totalImages > 0) {
