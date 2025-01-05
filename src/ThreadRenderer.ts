@@ -26,6 +26,8 @@ export class ThreadRenderer {
     private lastSplitPercent: number = ThreadRenderer.DEFAULT_POSITION;
     private previousSplitPercent: number = ThreadRenderer.DEFAULT_POSITION;
     private isCollapsed: boolean = false;
+    private startY: number = 0;
+    private startHeight: number = 0;
 
     constructor(
         state: ThreadloafState,
@@ -450,7 +452,6 @@ export class ThreadRenderer {
                     messageColors.get(message.id) || "",
                     messageBold.get(message.id) || false,
                     message.messageNumber || 0,
-                    allMessages.length,
                 );
                 messageEl.style.minWidth = "0"; // Allow message to shrink
                 messageEl.style.flexShrink = "1"; // Allow message to shrink
@@ -595,9 +596,9 @@ export class ThreadRenderer {
 
         const onMouseDown = (e: MouseEvent) => {
             isDragging = true;
-            startY = e.clientY;
+            this.startY = e.clientY;
             const containerRect = newThreadloafContainer.getBoundingClientRect();
-            startHeight = containerRect.height;
+            this.startHeight = containerRect.height;
             splitter.classList.add("dragging");
             document.body.style.cursor = "row-resize";
             document.body.style.userSelect = "none";
