@@ -18,7 +18,7 @@ export class DomMutator {
     private contextMenuManager: ContextMenuManager;
     private collapseHandlers: CollapseHandlers | null = null;
 
-    constructor(state: ThreadloafState, contextMenuManager: ContextMenuManager) {
+    public constructor(state: ThreadloafState, contextMenuManager: ContextMenuManager) {
         this.state = state;
         this.contextMenuManager = contextMenuManager;
     }

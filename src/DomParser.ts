@@ -27,7 +27,7 @@ export class DomParser {
     private domMutator: DomMutator;
     private state: ThreadloafState;
 
-    constructor(domMutator: DomMutator, state: ThreadloafState) {
+    public constructor(domMutator: DomMutator, state: ThreadloafState) {
         this.domMutator = domMutator;
         this.state = state;
     }

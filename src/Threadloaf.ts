@@ -16,7 +16,12 @@ export class Threadloaf {
     private domMutator: DomMutator;
     private threadRenderer: ThreadRenderer;
 
-    constructor(state: ThreadloafState, domParser: DomParser, domMutator: DomMutator, threadRenderer: ThreadRenderer) {
+    public constructor(
+        state: ThreadloafState,
+        domParser: DomParser,
+        domMutator: DomMutator,
+        threadRenderer: ThreadRenderer,
+    ) {
         this.state = state;
         this.domParser = domParser;
         this.domMutator = domMutator;

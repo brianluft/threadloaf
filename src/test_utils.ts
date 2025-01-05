@@ -8,10 +8,13 @@
  * test conditions and throw descriptive errors on failure.
  */
 
-export type Test = { name: string; fn: () => void | Promise<void> };
+export interface Test {
+    name: string;
+    fn: () => void | Promise<void>;
+}
 
 export class AssertionError extends Error {
-    constructor(message: string) {
+    public constructor(message: string) {
         super(message);
         this.name = "AssertionError";
     }

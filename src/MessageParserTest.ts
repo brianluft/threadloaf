@@ -4,7 +4,7 @@ import { MessageParser } from "./MessageParser";
 export class MessageParserTest {
     private parser: MessageParser;
 
-    constructor() {
+    public constructor() {
         this.parser = new MessageParser();
     }
 
@@ -17,7 +17,7 @@ export class MessageParserTest {
         return container.firstChild as HTMLElement;
     }
 
-    async getTests(): Promise<Test[]> {
+    public async getTests(): Promise<Test[]> {
         return [
             {
                 name: "parse cozy-non-reply.html",

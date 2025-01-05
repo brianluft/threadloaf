@@ -5,17 +5,17 @@ export class UserOptions {
     public showThreadViewOnlyInForumChannels = true;
     public splitterPositions: { [url: string]: number } = {};
 
-    constructor(init?: Partial<UserOptions>) {
+    public constructor(init?: Partial<UserOptions>) {
         Object.assign(this, init);
     }
 
     /**
      * Converts a plain object (from storage) into a fully typed `UserOptions` instance.
      */
-    static fromPlainObject(obj: unknown): UserOptions {
+    public static fromPlainObject(obj: unknown): UserOptions {
         // Provide safe defaults if any properties are missing
         const defaultOptions = new UserOptions();
-        if (typeof obj === "object" && obj != null) {
+        if (typeof obj === "object" && obj !== null) {
             return new UserOptions({
                 showThreadViewOnlyInForumChannels:
                     (obj as UserOptions).showThreadViewOnlyInForumChannels ??

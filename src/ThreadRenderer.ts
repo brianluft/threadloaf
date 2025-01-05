@@ -27,7 +27,7 @@ export class ThreadRenderer {
     private previousSplitPercent = ThreadRenderer.DEFAULT_POSITION;
     private isCollapsed = false;
 
-    constructor(
+    public constructor(
         state: ThreadloafState,
         domParser: DomParser,
         domMutator: DomMutator,
@@ -236,7 +236,7 @@ export class ThreadRenderer {
             if (splitter) splitter.style.display = "none";
 
             // Reset main chat view to full size
-            let styleElement = document.getElementById("threadloaf-main-style");
+            const styleElement = document.getElementById("threadloaf-main-style");
             if (styleElement) {
                 styleElement.textContent = `
                     div.${contentClass} > main {

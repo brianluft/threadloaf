@@ -1,19 +1,19 @@
 import { MessageParserTest } from "./MessageParserTest";
 import { Test } from "./test_utils";
 
-type TestSuite = {
+interface TestSuite {
     name: string;
     tests: Test[];
-};
+}
 
 class TestRunner {
     private suites: TestSuite[] = [];
 
-    registerSuite(name: string, tests: Test[]): void {
+    public registerSuite(name: string, tests: Test[]): void {
         this.suites.push({ name, tests });
     }
 
-    async runAll(): Promise<{ passed: number; failed: number }> {
+    public async runAll(): Promise<{ passed: number; failed: number }> {
         console.log("🧪 Running all test suites...\n");
         let totalPassed = 0;
         let totalFailed = 0;
