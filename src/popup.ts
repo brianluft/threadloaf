@@ -1,8 +1,9 @@
 import { UserOptionsProvider } from "./UserOptionsProvider";
 
 document.addEventListener("DOMContentLoaded", async () => {
-    const optionsProvider = UserOptionsProvider.getInstance();
-    const options = await optionsProvider.getOptions();
+    const userOptions = await UserOptionsProvider.loadInitialOptions();
+    const optionsProvider = UserOptionsProvider.getInstance(userOptions);
+    const options = optionsProvider.getOptions();
 
     // Set initial checkbox state
     const checkbox = document.getElementById("showThreadViewOnlyInForumChannels") as HTMLInputElement;

@@ -228,7 +228,7 @@ export class ThreadRenderer {
 
         // Check if we're in a DM channel
         const isDMChannel = currentUrl.includes("/channels/@me");
-        if (isDMChannel) {
+        if (isDMChannel || this.isChatOnlyChannel()) {
             // Hide thread container and splitter for DMs
             const threadContainer = document.getElementById("threadloaf-container");
             const splitter = document.getElementById("threadloaf-splitter");
@@ -763,6 +763,20 @@ export class ThreadRenderer {
         } else {
             // Message not found, set flag to try again later
             this.state.pendingScrollToNewest = { shouldExpand: false };
+        }
+    }
+
+    private isChatOnlyChannel(): boolean {
+        console.log("Options:", this.optionsProvider.getOptions());
+        if (this.optionsProvider.getOptions().showThreadViewOnlyInForumChannels) {
+            // With this option, non-forum channels are chat only.
+            const forumChannelNameEl = document.querySelector(
+                "div[class^='base_'] div[class^='chat_'] div[class^='subtitleContainer_'] div[class^='titleWrapper_'] h2[class*='parentChannelName_']",
+            );
+            return !forumChannelNameEl;
+        } else {
+            // Otherwise, all channels are chat + thread.
+            return false;
         }
     }
 }
