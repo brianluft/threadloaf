@@ -196,6 +196,36 @@ export class ThreadRenderer {
             this.lastSplitPercent = savedPosition ?? ThreadRenderer.DEFAULT_POSITION;
         }
 
+        // Find the content div by traversing up from thread container
+        let currentElement = this.state.threadContainer.parentElement;
+        let contentParent: HTMLElement | null = null;
+        let contentClass: string | null = null;
+
+        while (currentElement) {
+            // Check if this is a div with content_* class and has a main child
+            if (
+                currentElement.tagName === "DIV" &&
+                Array.from(currentElement.classList).some((cls) => {
+                    if (cls.startsWith("content_")) {
+                        contentClass = cls;
+                        return true;
+                    }
+                    return false;
+                }) &&
+                currentElement.querySelector("main")
+            ) {
+                contentParent = currentElement as HTMLElement;
+                break;
+            }
+
+            currentElement = currentElement.parentElement;
+        }
+
+        if (!contentParent || !contentClass) {
+            console.error("Could not find parent div with class content_* and main child, cannot render threadloaf");
+            return;
+        }
+
         // Check if we're in a DM channel
         const isDMChannel = currentUrl.includes("/channels/@me");
         if (isDMChannel) {
@@ -204,6 +234,21 @@ export class ThreadRenderer {
             const splitter = document.getElementById("threadloaf-splitter");
             if (threadContainer) threadContainer.style.display = "none";
             if (splitter) splitter.style.display = "none";
+
+            // Reset main chat view to full size
+            let styleElement = document.getElementById("threadloaf-main-style");
+            if (styleElement) {
+                styleElement.textContent = `
+                    div.${contentClass} > main {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        height: auto !important;
+                    }
+                `;
+            }
             return;
         }
 
@@ -483,36 +528,6 @@ export class ThreadRenderer {
 
         // Always show both views
         this.state.threadContainer.style.display = "block";
-
-        // Find the content div by traversing up from thread container
-        let currentElement = this.state.threadContainer.parentElement;
-        let contentParent: HTMLElement | null = null;
-        let contentClass: string | null = null;
-
-        while (currentElement) {
-            // Check if this is a div with content_* class and has a main child
-            if (
-                currentElement.tagName === "DIV" &&
-                Array.from(currentElement.classList).some((cls) => {
-                    if (cls.startsWith("content_")) {
-                        contentClass = cls;
-                        return true;
-                    }
-                    return false;
-                }) &&
-                currentElement.querySelector("main")
-            ) {
-                contentParent = currentElement as HTMLElement;
-                break;
-            }
-
-            currentElement = currentElement.parentElement;
-        }
-
-        if (!contentParent || !contentClass) {
-            console.error("Could not find parent div with class content_* and main child, cannot render threadloaf");
-            return;
-        }
 
         // Update or create the style element for main positioning
         let styleElement = document.getElementById("threadloaf-main-style");
