@@ -52,22 +52,8 @@ export class ThreadRenderer {
         const halfSplitterPercent = splitterHeightPercent / 2;
         const minPosition = halfSplitterPercent;
 
-        console.log("updatePositions called with:", {
-            splitPercent,
-            minPosition,
-            currentLastSplitPercent: this.lastSplitPercent,
-        });
-
         // Add half splitter height to the minimum position to align top edge
         const clampedPercent = Math.min(Math.max(splitPercent, minPosition), 90);
-
-        console.log("Position calculations:", {
-            splitterHeight: ThreadRenderer.SPLITTER_HEIGHT,
-            splitterHeightPercent,
-            halfSplitterPercent,
-            minPosition,
-            clampedPercent,
-        });
 
         const bottomPercent = 100 - clampedPercent;
 
@@ -528,22 +514,8 @@ export class ThreadRenderer {
             const halfSplitterPercent = splitterHeightPercent / 2;
             const minPosition = halfSplitterPercent;
 
-            console.log("updatePositions called with:", {
-                splitPercent,
-                minPosition,
-                currentLastSplitPercent: this.lastSplitPercent,
-            });
-
             // Add half splitter height to the minimum position to align top edge
             const clampedPercent = Math.min(Math.max(splitPercent, minPosition), 90);
-
-            console.log("Position calculations:", {
-                splitterHeight: ThreadRenderer.SPLITTER_HEIGHT,
-                splitterHeightPercent,
-                halfSplitterPercent,
-                minPosition,
-                clampedPercent,
-            });
 
             const bottomPercent = 100 - clampedPercent;
 
@@ -685,12 +657,6 @@ export class ThreadRenderer {
 
         // Add click handlers
         upButton.addEventListener("click", () => {
-            console.log("Up button clicked:", {
-                lastSplitPercent: this.lastSplitPercent,
-                previousSplitPercent: this.previousSplitPercent,
-                isCollapsed: this.isCollapsed,
-            });
-
             if (this.isCollapsed) {
                 this.uncollapseBottomPane();
             } else {
@@ -699,12 +665,6 @@ export class ThreadRenderer {
         });
 
         downButton.addEventListener("click", () => {
-            console.log("Down button clicked:", {
-                lastSplitPercent: this.lastSplitPercent,
-                previousSplitPercent: this.previousSplitPercent,
-                isCollapsed: this.isCollapsed,
-            });
-
             if (this.isCollapsed) {
                 this.uncollapseTopPane();
             } else {
@@ -741,7 +701,6 @@ export class ThreadRenderer {
     }
 
     private isChatOnlyChannel(): boolean {
-        console.log("Options:", this.optionsProvider.getOptions());
         if (this.optionsProvider.getOptions().showThreadViewOnlyInForumChannels) {
             // With this option, non-forum channels are chat only.
             const forumChannelNameEl = document.querySelector(
