@@ -332,12 +332,27 @@ export class MessageParser {
                     }
                 }
 
+                // Search for the regex "chrome-extension://[a-z]+/" and replace it with "https://discord.com/".
+                let htmlContent = fullContent.innerHTML;
+                htmlContent = htmlContent.replace(/chrome-extension:\/\/[a-z]+/g, "https://discord.com");
+                reactionsHtml = reactionsHtml?.replace(/chrome-extension:\/\/[a-z]+/g, "https://discord.com");
+                if (parentPreview) {
+                    parentPreview.content = parentPreview.content.replace(
+                        /chrome-extension:\/\/[a-z]+/g,
+                        "https://discord.com",
+                    );
+                }
+
+                if (htmlContent.includes("chrome-extension://")) {
+                    console.log("htmlContent", htmlContent);
+                }
+
                 return {
                     id,
                     author,
                     timestamp,
                     content: textContent,
-                    htmlContent: fullContent.innerHTML,
+                    htmlContent: htmlContent,
                     parentId,
                     parentPreview,
                     children: [],

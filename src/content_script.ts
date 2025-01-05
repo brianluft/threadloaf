@@ -6,10 +6,9 @@ import { ThreadRenderer } from "./ThreadRenderer";
 import { Threadloaf } from "./Threadloaf";
 import { DomMutator } from "./DomMutator";
 import { ContextMenuManager } from "./ContextMenuManager";
-import { runTests } from "./runTests";
 import { UserOptionsProvider } from "./UserOptionsProvider";
 
-(async function (): void {
+(async function (): Promise<void> {
     const userOptions = await UserOptionsProvider.loadInitialOptions();
     const userOptionsProvider = UserOptionsProvider.getInstance(userOptions);
 
@@ -35,5 +34,4 @@ import { UserOptionsProvider } from "./UserOptionsProvider";
     });
 
     new Threadloaf(state, domParser, domMutator, threadRenderer);
-    runTests();
 })();

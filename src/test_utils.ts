@@ -27,48 +27,56 @@ export const IGNORE = Symbol("IGNORE");
 
 // Assertion functions
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function deepEqual(actual: any, expected: any, message?: string, depth = 0): void {
+export function deepEqual(actual: any, expected: any, depth = 0): void {
     // Handle IGNORE symbol
     if (expected === IGNORE) return;
 
     // If equal, return early
     if (actual === expected) return;
 
-    const errors: string[] = [];
     const indent = "  ".repeat(depth);
 
     // Handle null/undefined cases
     if (actual === null && expected !== null) {
-        errors.push(`${indent}Expected ${formatValue(expected)}, but got null`);
+        throw new AssertionError(`${indent}Expected ${formatValue(expected)}, but got null`);
     }
     if (expected === null && actual !== null) {
-        errors.push(`${indent}Expected null, but got ${formatValue(actual)}`);
+        throw new AssertionError(`${indent}Expected null, but got ${formatValue(actual)}`);
     }
     if (actual === undefined && expected !== undefined) {
-        errors.push(`${indent}Expected ${formatValue(expected)}, but got undefined`);
+        throw new AssertionError(`${indent}Expected ${formatValue(expected)}, but got undefined`);
     }
     if (expected === undefined && actual !== undefined) {
-        errors.push(`${indent}Expected undefined, but got ${formatValue(actual)}`);
+        throw new AssertionError(`${indent}Expected undefined, but got ${formatValue(actual)}`);
     }
 
     // Handle different types
     if (typeof actual !== typeof expected) {
-        errors.push(`${indent}Type mismatch: expected ${typeof expected}, but got ${typeof actual}`);
+        throw new AssertionError(`${indent}Type mismatch: expected ${typeof expected}, but got ${typeof actual}`);
+    }
+
+    // Handle strings and include the index of the first character mismatch and the remainder of the actual and expected strings.
+    if (typeof actual === "string" && typeof expected === "string" && actual !== expected) {
+        const minLength = Math.min(actual.length, expected.length);
+        for (let i = 0; i < minLength; i++) {
+            if (actual[i] !== expected[i]) {
+                // Make a slice of the remainder of both strings starting here.
+                const actualSlice = actual.slice(i);
+                const expectedSlice = expected.slice(i);
+                throw new AssertionError(`${indent}Mismatch at index ${i}: "${actualSlice}" !== "${expectedSlice}"`);
+            }
+        }
     }
 
     // Handle arrays
     if (Array.isArray(actual) && Array.isArray(expected)) {
         if (actual.length !== expected.length) {
-            errors.push(`${indent}Array length mismatch: expected ${expected.length}, but got ${actual.length}`);
+            throw new AssertionError(
+                `${indent}Array length mismatch: expected ${expected.length}, but got ${actual.length}`,
+            );
         }
         for (let i = 0; i < Math.max(actual.length, expected.length); i++) {
-            try {
-                deepEqual(actual[i], expected[i], undefined, depth + 1);
-            } catch (error) {
-                errors.push(
-                    `${indent}Array mismatch at index ${i}: ${error instanceof Error ? error.message : String(error)}`,
-                );
-            }
+            deepEqual(actual[i], expected[i], depth + 1);
         }
     }
 
@@ -80,44 +88,25 @@ export function deepEqual(actual: any, expected: any, message?: string, depth = 
         // Check for extra or missing keys
         for (const key of actualKeys) {
             if (!expectedKeys.includes(key) && actual[key] !== undefined) {
-                errors.push(`${indent}Unexpected key "${key}" in actual object`);
+                throw new AssertionError(`${indent}Unexpected key "${key}" in actual object`);
             }
         }
         for (const key of expectedKeys) {
             if (!actualKeys.includes(key) && expected[key] !== undefined) {
-                errors.push(`${indent}Missing key "${key}" in actual object`);
+                throw new AssertionError(`${indent}Missing key "${key}" in actual object`);
             }
         }
 
         // Compare values
         for (const key of expectedKeys) {
             if (expected[key] === IGNORE) continue;
-            try {
-                deepEqual(actual[key], expected[key], undefined, depth + 1);
-            } catch (error) {
-                errors.push(
-                    `${indent}Mismatch at key "${key}": ${error instanceof Error ? error.message : String(error)}`,
-                );
-            }
+            deepEqual(actual[key], expected[key], depth + 1);
         }
     }
 
     // Handle primitives
     if (typeof actual !== "object" && actual !== expected) {
-        errors.push(`${indent}Expected ${formatValue(expected)}, but got ${formatValue(actual)}`);
-    }
-
-    // If any errors were found, throw them all together
-    if (errors.length > 0) {
-        throw new AssertionError(
-            message ||
-                `${errors.length} difference${errors.length > 1 ? "s" : ""} found:\n` +
-                    errors.map((e) => e).join("\n") +
-                    "\n\nActual:\n" +
-                    formatValue(actual) +
-                    "\n\nExpected:\n" +
-                    formatValue(expected),
-        );
+        throw new AssertionError(`${indent}Expected ${formatValue(expected)}, but got ${formatValue(actual)}`);
     }
 }
 
