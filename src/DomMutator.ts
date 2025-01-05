@@ -60,7 +60,6 @@ export class DomMutator {
         color: string,
         isBold: boolean,
         commentNumber: number,
-        totalMessages: number,
     ): HTMLElement {
         const el = document.createElement("div");
         el.classList.add("threadloaf-message");

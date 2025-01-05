@@ -23,6 +23,7 @@ export class AssertionError extends Error {
 export const IGNORE = Symbol("IGNORE");
 
 // Assertion functions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function deepEqual(actual: any, expected: any, message?: string, depth: number = 0): void {
     // Handle IGNORE symbol
     if (expected === IGNORE) return;
@@ -117,12 +118,14 @@ export function deepEqual(actual: any, expected: any, message?: string, depth: n
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assertEqual(actual: any, expected: any, message?: string): void {
     if (actual !== expected) {
         throw new AssertionError(message || `Expected ${formatValue(expected)}, but got ${formatValue(actual)}`);
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assertThrows(fn: () => any, expectedError?: string | RegExp): void {
     try {
         fn();
@@ -143,6 +146,7 @@ export function assertThrows(fn: () => any, expectedError?: string | RegExp): vo
 }
 
 // Helper functions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function formatValue(value: any): string {
     try {
         return JSON.stringify(value, null, 2);

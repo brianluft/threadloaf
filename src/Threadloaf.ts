@@ -1,5 +1,4 @@
 import { DomParser } from "./DomParser";
-import { MessageInfo } from "./MessageInfo";
 import { ThreadloafState } from "./ThreadloafState";
 import { ThreadRenderer } from "./ThreadRenderer";
 import { DomMutator } from "./DomMutator";

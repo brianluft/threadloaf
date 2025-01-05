@@ -252,13 +252,6 @@ export class MessageParser {
                         })
                         .filter((url): url is string => url !== null);
 
-                    // Handle regular images (not in wrappers)
-                    const standaloneImages = Array.from(
-                        accessoriesEl.querySelectorAll<HTMLImageElement>(
-                            'img[src]:not([data-type="emoji"]):not(.lazyImg_)',
-                        ),
-                    ).map((img) => img.src);
-
                     // Create a container for content, links, and reactions
                     const container = document.createElement("div");
                     container.appendChild(contentClone);
@@ -312,8 +305,7 @@ export class MessageParser {
                 }
 
                 // Fix all image sources in the cloned content
-                fullContent.querySelectorAll("img").forEach((img, idx) => {
-                    const originalSrc = img.src;
+                fullContent.querySelectorAll("img").forEach((img) => {
                     if (img.src) {
                         img.src = img.src; // Force a re-assignment to resolve any relative URLs
                     }

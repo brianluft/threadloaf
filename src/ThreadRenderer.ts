@@ -323,7 +323,7 @@ export class ThreadRenderer {
         const rootMessages = this.messageTreeBuilder.buildMessageTree(rawMessages);
 
         // Flatten the tree to get all messages in display order
-        const getAllMessages = (messages: MessageInfo[]): MessageInfo[] => {
+        function getAllMessages(): MessageInfo[] {
             const result: MessageInfo[] = [];
             const flatten = (msgs: MessageInfo[]) => {
                 msgs.forEach((msg) => {
@@ -335,9 +335,9 @@ export class ThreadRenderer {
             };
             flatten(rootMessages);
             return result;
-        };
+        }
 
-        const allMessages = getAllMessages(rootMessages);
+        const allMessages = getAllMessages();
 
         // Now assign numbers to all messages in display order
         allMessages.forEach((msg, index) => {
@@ -413,13 +413,6 @@ export class ThreadRenderer {
                 return parent.children[parent.children.length - 1].id === msg.id;
             };
 
-            // Helper to find the row range of direct children
-            const getChildRowRange = (msg: MessageInfo): [number, number] | null => {
-                if (!msg.children || msg.children.length === 0) return null;
-                const childIndices = msg.children.map((child) => messageRowIndices.get(child.id)!);
-                return [Math.min(...childIndices), Math.max(...childIndices)];
-            };
-
             // Calculate incremental indents
             const MAX_INDENT = 350;
             const FIRST_LEVEL_INDENT = 40;
@@ -486,7 +479,7 @@ export class ThreadRenderer {
 
             // Second pass: draw vertical lines between forks
             // For each column (except the last one which only has horizontal lines)
-            const maxDepth = Math.max(...flatMessages.map(([_, depth]) => depth));
+            const maxDepth = Math.max(...flatMessages.map((array) => array[1]));
             for (let col = 0; col < maxDepth - 1; col++) {
                 let isDrawingLine = false;
                 // Go through each row in this column
@@ -510,21 +503,7 @@ export class ThreadRenderer {
             return container;
         };
 
-        // Store the previous set of message IDs before we update
-        const previousMessageIds = new Set(
-            Array.from(document.querySelectorAll(".threadloaf-message"))
-                .map((el) => el.getAttribute("data-msg-id"))
-                .filter((id): id is string => id !== null),
-        );
-
         threadContent.appendChild(renderMessages(rootMessages));
-
-        // Check if we have a completely different set of messages
-        const currentMessageIds = new Set(
-            Array.from(document.querySelectorAll(".threadloaf-message"))
-                .map((el) => el.getAttribute("data-msg-id"))
-                .filter((id): id is string => id !== null),
-        );
 
         // Always show both views
         this.state.threadContainer.style.display = "block";
@@ -539,8 +518,6 @@ export class ThreadRenderer {
 
         // Add drag handling
         let isDragging = false;
-        let startY = 0;
-        let startHeight = 0;
 
         // Helper function to update all positions consistently
         this.updatePositions = (splitPercent: number): void => {
@@ -705,11 +682,6 @@ export class ThreadRenderer {
         downButton.style.fontSize = "16px";
 
         // Add click handlers
-        let previousSplitPercent = 60; // Default to 60% for the first collapse
-        const splitterHeight = 24; // Match the CSS height
-        const splitterHeightPercent = (splitterHeight / contentParent.getBoundingClientRect().height) * 100;
-        const minPosition = splitterHeightPercent / 2;
-
         upButton.addEventListener("click", () => {
             console.log("Up button clicked:", {
                 lastSplitPercent: this.lastSplitPercent,

@@ -70,7 +70,7 @@ export class ContextMenuManager {
     }
 
     private setupMenuObserver(): void {
-        const observer = new MutationObserver((mutations) => {
+        const observer = new MutationObserver(() => {
             // Check if menu still exists
             const menuExists = document.querySelector('div[class*="menu_"]');
             if (!menuExists) {

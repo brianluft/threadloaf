@@ -1,5 +1,4 @@
 import { deepEqual, Test, IGNORE } from "./test_utils";
-import { MessageInfo } from "./MessageInfo";
 import { MessageParser } from "./MessageParser";
 
 export class MessageParserTest {
