@@ -8,9 +8,9 @@ export class ThreadloafState {
     public threadContainer: HTMLElement | null = null;
     public observer: MutationObserver | null = null;
     public headerObserver: MutationObserver | null = null;
-    public isThreadViewActive: boolean = false;
-    public isTopLoaded: boolean = false;
-    public isLoadingMore: boolean = false;
+    public isThreadViewActive = false;
+    public isTopLoaded = false;
+    public isLoadingMore = false;
     public newestMessageId: string | null = null;
     public pendingScrollToNewest: { shouldExpand: boolean } | null = null;
 }

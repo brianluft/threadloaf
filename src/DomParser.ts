@@ -77,7 +77,7 @@ export class DomParser {
                 );
 
                 // Check for reactions changes - handle both cozy and compact modes
-                const hasReactionChanges = (() => {
+                const hasReactionChanges = ((): boolean => {
                     if (!(mutation.target instanceof HTMLElement)) {
                         return false;
                     }
@@ -112,12 +112,14 @@ export class DomParser {
             }
         });
 
-        this.state.observer.observe(this.state.appContainer!, {
-            childList: true,
-            subtree: true,
-            characterData: true, // Needed for text content changes
-            attributes: true, // Needed for reaction changes
-        });
+        if (this.state.appContainer) {
+            this.state.observer.observe(this.state.appContainer, {
+                childList: true,
+                subtree: true,
+                characterData: true, // Needed for text content changes
+                attributes: true, // Needed for reaction changes
+            });
+        }
     }
 
     public checkIfTopLoaded(): boolean {

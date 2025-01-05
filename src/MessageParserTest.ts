@@ -21,7 +21,7 @@ export class MessageParserTest {
         return [
             {
                 name: "parse cozy-non-reply.html",
-                fn: async () => {
+                fn: async (): Promise<void> => {
                     deepEqual(this.parser.parseMessages(await this.loadTestFile("cozy-non-reply.html")), [
                         {
                             id: "1323564429408997426",
@@ -39,7 +39,7 @@ export class MessageParserTest {
             },
             {
                 name: "parse compact-non-reply.html",
-                fn: async () => {
+                fn: async (): Promise<void> => {
                     deepEqual(this.parser.parseMessages(await this.loadTestFile("compact-non-reply.html")), [
                         {
                             id: "1323564429408997426",
@@ -57,7 +57,7 @@ export class MessageParserTest {
             },
             {
                 name: "parse cozy-reactions.html",
-                fn: async () => {
+                fn: async (): Promise<void> => {
                     deepEqual(this.parser.parseMessages(await this.loadTestFile("cozy-reactions.html")), [
                         {
                             id: "1323564429408997426",
@@ -77,7 +77,7 @@ export class MessageParserTest {
             },
             {
                 name: "parse compact-reactions.html",
-                fn: async () => {
+                fn: async (): Promise<void> => {
                     deepEqual(this.parser.parseMessages(await this.loadTestFile("compact-reactions.html")), [
                         {
                             id: "1323564429408997426",
@@ -97,7 +97,7 @@ export class MessageParserTest {
             },
             {
                 name: "parse cozy-parent-and-child.html",
-                fn: async () => {
+                fn: async (): Promise<void> => {
                     deepEqual(this.parser.parseMessages(await this.loadTestFile("cozy-parent-and-child.html")), [
                         {
                             id: "1323564429408997426",
@@ -131,7 +131,7 @@ export class MessageParserTest {
             },
             {
                 name: "parse compact-parent-and-child.html",
-                fn: async () => {
+                fn: async (): Promise<void> => {
                     deepEqual(this.parser.parseMessages(await this.loadTestFile("compact-parent-and-child.html")), [
                         {
                             id: "1323564429408997426",
@@ -165,7 +165,7 @@ export class MessageParserTest {
             },
             {
                 name: "parse cozy-op.html",
-                fn: async () => {
+                fn: async (): Promise<void> => {
                     deepEqual(this.parser.parseMessages(await this.loadTestFile("cozy-op.html")), [
                         {
                             id: "1323584268588285952",
@@ -183,7 +183,7 @@ export class MessageParserTest {
             },
             {
                 name: "parse compact-op.html",
-                fn: async () => {
+                fn: async (): Promise<void> => {
                     deepEqual(this.parser.parseMessages(await this.loadTestFile("compact-op.html")), [
                         {
                             id: "1323584268588285952",
@@ -201,7 +201,7 @@ export class MessageParserTest {
             },
             {
                 name: "parse cozy-change-post-title.html",
-                fn: async () => {
+                fn: async (): Promise<void> => {
                     deepEqual(this.parser.parseMessages(await this.loadTestFile("cozy-change-post-title.html")), [
                         {
                             id: "1323585208091676832",
@@ -218,7 +218,7 @@ export class MessageParserTest {
             },
             {
                 name: "parse compact-change-post-title.html",
-                fn: async () => {
+                fn: async (): Promise<void> => {
                     deepEqual(this.parser.parseMessages(await this.loadTestFile("compact-change-post-title.html")), [
                         {
                             id: "1323585208091676832",
@@ -235,7 +235,7 @@ export class MessageParserTest {
             },
             {
                 name: "parse cozy-server-boost.html",
-                fn: async () => {
+                fn: async (): Promise<void> => {
                     deepEqual(this.parser.parseMessages(await this.loadTestFile("cozy-server-boost.html")), [
                         {
                             id: "1323590100294303754",
@@ -253,7 +253,7 @@ export class MessageParserTest {
             },
             {
                 name: "parse compact-server-boost.html",
-                fn: async () => {
+                fn: async (): Promise<void> => {
                     deepEqual(this.parser.parseMessages(await this.loadTestFile("compact-server-boost.html")), [
                         {
                             id: "1323590100294303754",
@@ -271,7 +271,7 @@ export class MessageParserTest {
             },
             {
                 name: "parse cozy-automod.html",
-                fn: async () => {
+                fn: async (): Promise<void> => {
                     deepEqual(this.parser.parseMessages(await this.loadTestFile("cozy-automod.html")), [
                         {
                             id: "1322967103338447031",
@@ -289,7 +289,7 @@ export class MessageParserTest {
             },
             {
                 name: "parse compact-automod.html",
-                fn: async () => {
+                fn: async (): Promise<void> => {
                     deepEqual(this.parser.parseMessages(await this.loadTestFile("compact-automod.html")), [
                         {
                             id: "1322967103338447031",
@@ -307,7 +307,7 @@ export class MessageParserTest {
             },
             {
                 name: "parse cozy-double-post.html",
-                fn: async () => {
+                fn: async (): Promise<void> => {
                     deepEqual(this.parser.parseMessages(await this.loadTestFile("cozy-double-post.html")), [
                         {
                             id: "1323826029218762773",
@@ -336,7 +336,7 @@ export class MessageParserTest {
             },
             {
                 name: "parse compact-double-post.html",
-                fn: async () => {
+                fn: async (): Promise<void> => {
                     deepEqual(this.parser.parseMessages(await this.loadTestFile("compact-double-post.html")), [
                         {
                             id: "1323826029218762773",

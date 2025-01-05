@@ -22,12 +22,10 @@ export class ThreadRenderer {
     private messageParser: MessageParser;
     private messageTreeBuilder: MessageTreeBuilder;
     private optionsProvider: UserOptionsProvider;
-    private lastUrl: string = "";
-    private lastSplitPercent: number = ThreadRenderer.DEFAULT_POSITION;
-    private previousSplitPercent: number = ThreadRenderer.DEFAULT_POSITION;
-    private isCollapsed: boolean = false;
-    private startY: number = 0;
-    private startHeight: number = 0;
+    private lastUrl = "";
+    private lastSplitPercent = ThreadRenderer.DEFAULT_POSITION;
+    private previousSplitPercent = ThreadRenderer.DEFAULT_POSITION;
+    private isCollapsed = false;
 
     constructor(
         state: ThreadloafState,
@@ -327,7 +325,7 @@ export class ThreadRenderer {
         // Flatten the tree to get all messages in display order
         function getAllMessages(): MessageInfo[] {
             const result: MessageInfo[] = [];
-            const flatten = (msgs: MessageInfo[]) => {
+            const flatten = (msgs: MessageInfo[]): void => {
                 msgs.forEach((msg) => {
                     result.push(msg);
                     if (msg.children && msg.children.length > 0) {
@@ -382,7 +380,7 @@ export class ThreadRenderer {
         // Clear only the thread content
         threadContent.innerHTML = "";
 
-        const renderMessages = (messages: MessageInfo[], depth = 0) => {
+        const renderMessages = (messages: MessageInfo[], depth = 0): void => {
             const container = document.createElement("div");
             container.classList.add("message-thread");
 
@@ -594,17 +592,14 @@ export class ThreadRenderer {
             this.optionsProvider.setOptions(options).catch(console.error);
         };
 
-        const onMouseDown = (e: MouseEvent) => {
+        const onMouseDown = (): void => {
             isDragging = true;
-            this.startY = e.clientY;
-            const containerRect = newThreadloafContainer.getBoundingClientRect();
-            this.startHeight = containerRect.height;
             splitter.classList.add("dragging");
             document.body.style.cursor = "row-resize";
             document.body.style.userSelect = "none";
         };
 
-        const onMouseMove = (e: MouseEvent) => {
+        const onMouseMove = (e: MouseEvent): void => {
             if (!isDragging) return;
 
             const parentRect = contentParent.getBoundingClientRect();
@@ -616,7 +611,7 @@ export class ThreadRenderer {
             this.updatePositions(splitPercent);
         };
 
-        const onMouseUp = () => {
+        const onMouseUp = (): void => {
             if (!isDragging) return;
             isDragging = false;
             splitter.classList.remove("dragging");
@@ -642,7 +637,13 @@ export class ThreadRenderer {
             if (existingSplitter) {
                 existingSplitter.remove();
             }
-            threadloafContainer!.replaceWith(newThreadloafContainer);
+
+            if (!threadloafContainer) {
+                console.error("Threadloaf container not found");
+                return;
+            }
+
+            threadloafContainer.replaceWith(newThreadloafContainer);
             contentParent.appendChild(splitter);
         }
 

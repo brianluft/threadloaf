@@ -9,11 +9,11 @@ type TestSuite = {
 class TestRunner {
     private suites: TestSuite[] = [];
 
-    registerSuite(name: string, tests: Test[]) {
+    registerSuite(name: string, tests: Test[]): void {
         this.suites.push({ name, tests });
     }
 
-    async runAll() {
+    async runAll(): Promise<{ passed: number; failed: number }> {
         console.log("🧪 Running all test suites...\n");
         let totalPassed = 0;
         let totalFailed = 0;
@@ -50,7 +50,7 @@ class TestRunner {
     }
 }
 
-export async function runTests() {
+export async function runTests(): Promise<{ passed: number; failed: number }> {
     const runner = new TestRunner();
 
     runner.registerSuite("MessageParser", await new MessageParserTest().getTests());

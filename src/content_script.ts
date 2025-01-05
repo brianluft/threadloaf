@@ -9,7 +9,7 @@ import { ContextMenuManager } from "./ContextMenuManager";
 import { runTests } from "./runTests";
 import { UserOptionsProvider } from "./UserOptionsProvider";
 
-(async function () {
+(async function (): void {
     const userOptions = await UserOptionsProvider.loadInitialOptions();
     const userOptionsProvider = UserOptionsProvider.getInstance(userOptions);
 

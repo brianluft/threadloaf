@@ -24,7 +24,7 @@ export const IGNORE = Symbol("IGNORE");
 
 // Assertion functions
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function deepEqual(actual: any, expected: any, message?: string, depth: number = 0): void {
+export function deepEqual(actual: any, expected: any, message?: string, depth = 0): void {
     // Handle IGNORE symbol
     if (expected === IGNORE) return;
 

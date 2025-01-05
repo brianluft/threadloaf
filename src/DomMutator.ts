@@ -160,7 +160,7 @@ export class DomMutator {
             const originalElement = message.originalElement as HTMLElement;
 
             // Function to apply highlight effect
-            const applyHighlight = (element: HTMLElement) => {
+            const applyHighlight = (element: HTMLElement): void => {
                 element.style.transition = "background-color 0.5s";
                 element.style.backgroundColor = "color-mix(in oklab, var(--text-normal) 30%, transparent)";
 

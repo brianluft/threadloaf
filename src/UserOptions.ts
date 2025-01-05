@@ -2,7 +2,7 @@
  * Represents the fully typed options your extension manages.
  */
 export class UserOptions {
-    public showThreadViewOnlyInForumChannels: boolean = true;
+    public showThreadViewOnlyInForumChannels = true;
     public splitterPositions: { [url: string]: number } = {};
 
     constructor(init?: Partial<UserOptions>) {
