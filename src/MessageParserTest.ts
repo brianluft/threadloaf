@@ -32,6 +32,7 @@ export class MessageParserTest {
                                 '<div id="message-content-1323564429408997426" class="markup_f8f345 messageContent_f9f2ca"><span>asdf</span></div>',
                             children: [],
                             originalElement: IGNORE,
+                            authorColor: "rgb(233, 30, 99)",
                         },
                     ]);
                 },
@@ -49,6 +50,7 @@ export class MessageParserTest {
                                 '<div id="message-content-1323564429408997426" class="markup_f8f345 messageContent_f9f2ca"><span>asdf</span></div>',
                             children: [],
                             originalElement: IGNORE,
+                            authorColor: "rgb(233, 30, 99)",
                         },
                     ]);
                 },
@@ -66,6 +68,9 @@ export class MessageParserTest {
                                 '<div id="message-content-1323564429408997426" class="markup_f8f345 messageContent_f9f2ca"><span>asdf</span></div><div class="reactions_ec6b19 largeReactions_ec6b19" role="group" id="message-reactions-1323564429408997426"><div></div><div><div class="reaction_ec6b19 reactionMe_ec6b19" style="opacity: 1;"><div class="reactionInner_ec6b19" aria-expanded="false" aria-disabled="false" aria-label="sparkling heart, 1 reaction, press to remove your reaction" aria-pressed="true" role="button" tabindex="0"><div class=""></div><div><img class="emoji reactionLarge" data-type="emoji" data-name="💖" src="https://discord.com/assets/257ec62e14d4c1c89808.svg" alt="💖" draggable="false"></div><div class="reactionCount_ec6b19" style="min-width: 9px;">1</div></div></div></div><div><div class="reaction_ec6b19 reactionMe_ec6b19" style="opacity: 1;"><div class="reactionInner_ec6b19" aria-expanded="false" aria-disabled="false" aria-label="point up 2, 1 reaction, press to remove your reaction" aria-pressed="true" role="button" tabindex="0"><div class=""></div><div><img class="emoji reactionLarge" data-type="emoji" data-name="👆" src="https://discord.com/assets/db1a06e4b01639c96019.svg" alt="👆" draggable="false"></div><div class="reactionCount_ec6b19" style="min-width: 9px;">1</div></div></div></div><div><div class="reaction_ec6b19 reactionMe_ec6b19" style="opacity: 1;"><div class="reactionInner_ec6b19" aria-expanded="false" aria-disabled="false" aria-label="saluting face, 1 reaction, press to remove your reaction" aria-pressed="true" role="button" tabindex="0"><div class=""></div><div><img class="emoji reactionLarge" data-type="emoji" data-name="🫡" src="https://discord.com/assets/6aae4f996e21c1d6fd73.svg" alt="🫡" draggable="false"></div><div class="reactionCount_ec6b19" style="min-width: 9px;">1</div></div></div></div><div aria-label="Add Reaction"></div></div>',
                             children: [],
                             originalElement: IGNORE,
+                            authorColor: "rgb(233, 30, 99)",
+                            reactionsHtml:
+                                '<div class="reactions_ec6b19 largeReactions_ec6b19" role="group" id="message-reactions-1323564429408997426"><div></div><div><div class="reaction_ec6b19 reactionMe_ec6b19" style="opacity: 1;"><div class="reactionInner_ec6b19" aria-expanded="false" aria-disabled="false" aria-label="sparkling heart, 1 reaction, press to remove your reaction" aria-pressed="true" role="button" tabindex="0"><div class=""></div><div><img class="emoji reactionLarge" data-type="emoji" data-name="💖" src="/assets/257ec62e14d4c1c89808.svg" alt="💖" draggable="false"></div><div class="reactionCount_ec6b19" style="min-width: 9px;">1</div></div></div></div><div><div class="reaction_ec6b19 reactionMe_ec6b19" style="opacity: 1;"><div class="reactionInner_ec6b19" aria-expanded="false" aria-disabled="false" aria-label="point up 2, 1 reaction, press to remove your reaction" aria-pressed="true" role="button" tabindex="0"><div class=""></div><div><img class="emoji reactionLarge" data-type="emoji" data-name="👆" src="/assets/db1a06e4b01639c96019.svg" alt="👆" draggable="false"></div><div class="reactionCount_ec6b19" style="min-width: 9px;">1</div></div></div></div><div><div class="reaction_ec6b19 reactionMe_ec6b19" style="opacity: 1;"><div class="reactionInner_ec6b19" aria-expanded="false" aria-disabled="false" aria-label="saluting face, 1 reaction, press to remove your reaction" aria-pressed="true" role="button" tabindex="0"><div class=""></div><div><img class="emoji reactionLarge" data-type="emoji" data-name="🫡" src="/assets/6aae4f996e21c1d6fd73.svg" alt="🫡" draggable="false"></div><div class="reactionCount_ec6b19" style="min-width: 9px;">1</div></div></div></div><div aria-label="Add Reaction"></div></div>',
                         },
                     ]);
                 },
@@ -83,6 +88,9 @@ export class MessageParserTest {
                                 '<div id="message-content-1323564429408997426" class="markup_f8f345 messageContent_f9f2ca"><span>asdf</span></div><div class="reactions_ec6b19 largeReactions_ec6b19" role="group" id="message-reactions-1323564429408997426"><div></div><div><div class="reaction_ec6b19 reactionMe_ec6b19" style="opacity: 1;"><div class="reactionInner_ec6b19" aria-expanded="false" aria-disabled="false" aria-label="sparkling heart, 1 reaction, press to remove your reaction" aria-pressed="true" role="button" tabindex="0"><div class=""></div><div><img class="emoji reactionLarge" data-type="emoji" data-name="💖" src="https://discord.com/assets/257ec62e14d4c1c89808.svg" alt="💖" draggable="false"></div><div class="reactionCount_ec6b19" style="min-width: 9px;">1</div></div></div></div><div><div class="reaction_ec6b19 reactionMe_ec6b19" style="opacity: 1;"><div class="reactionInner_ec6b19" aria-expanded="false" aria-disabled="false" aria-label="point up 2, 1 reaction, press to remove your reaction" aria-pressed="true" role="button" tabindex="0"><div class=""></div><div><img class="emoji reactionLarge" data-type="emoji" data-name="👆" src="https://discord.com/assets/db1a06e4b01639c96019.svg" alt="👆" draggable="false"></div><div class="reactionCount_ec6b19" style="min-width: 9px;">1</div></div></div></div><div><div class="reaction_ec6b19 reactionMe_ec6b19" style="opacity: 1;"><div class="reactionInner_ec6b19" aria-expanded="false" aria-disabled="false" aria-label="saluting face, 1 reaction, press to remove your reaction" aria-pressed="true" role="button" tabindex="0"><div class=""></div><div><img class="emoji reactionLarge" data-type="emoji" data-name="🫡" src="https://discord.com/assets/6aae4f996e21c1d6fd73.svg" alt="🫡" draggable="false"></div><div class="reactionCount_ec6b19" style="min-width: 9px;">1</div></div></div></div><div aria-label="Add Reaction"></div></div>',
                             children: [],
                             originalElement: IGNORE,
+                            authorColor: "rgb(233, 30, 99)",
+                            reactionsHtml:
+                                '<div class="reactions_ec6b19 largeReactions_ec6b19" role="group" id="message-reactions-1323564429408997426"><div></div><div><div class="reaction_ec6b19 reactionMe_ec6b19" style="opacity: 1;"><div class="reactionInner_ec6b19" aria-expanded="false" aria-disabled="false" aria-label="sparkling heart, 1 reaction, press to remove your reaction" aria-pressed="true" role="button" tabindex="0"><div class=""></div><div><img class="emoji reactionLarge" data-type="emoji" data-name="💖" src="/assets/257ec62e14d4c1c89808.svg" alt="💖" draggable="false"></div><div class="reactionCount_ec6b19" style="min-width: 9px;">1</div></div></div></div><div><div class="reaction_ec6b19 reactionMe_ec6b19" style="opacity: 1;"><div class="reactionInner_ec6b19" aria-expanded="false" aria-disabled="false" aria-label="point up 2, 1 reaction, press to remove your reaction" aria-pressed="true" role="button" tabindex="0"><div class=""></div><div><img class="emoji reactionLarge" data-type="emoji" data-name="👆" src="/assets/db1a06e4b01639c96019.svg" alt="👆" draggable="false"></div><div class="reactionCount_ec6b19" style="min-width: 9px;">1</div></div></div></div><div><div class="reaction_ec6b19 reactionMe_ec6b19" style="opacity: 1;"><div class="reactionInner_ec6b19" aria-expanded="false" aria-disabled="false" aria-label="saluting face, 1 reaction, press to remove your reaction" aria-pressed="true" role="button" tabindex="0"><div class=""></div><div><img class="emoji reactionLarge" data-type="emoji" data-name="🫡" src="/assets/6aae4f996e21c1d6fd73.svg" alt="🫡" draggable="false"></div><div class="reactionCount_ec6b19" style="min-width: 9px;">1</div></div></div></div><div aria-label="Add Reaction"></div></div>',
                         },
                     ]);
                 },
@@ -100,6 +108,7 @@ export class MessageParserTest {
                                 '<div id="message-content-1323564429408997426" class="markup_f8f345 messageContent_f9f2ca"><span>asdf</span></div>',
                             children: [],
                             originalElement: IGNORE,
+                            authorColor: "rgb(233, 30, 99)",
                         },
                         {
                             id: "1323577271814197381",
@@ -115,6 +124,7 @@ export class MessageParserTest {
                             },
                             children: [],
                             originalElement: IGNORE,
+                            authorColor: "rgb(233, 30, 99)",
                         },
                     ]);
                 },
@@ -132,6 +142,7 @@ export class MessageParserTest {
                                 '<div id="message-content-1323564429408997426" class="markup_f8f345 messageContent_f9f2ca"><span>asdf</span></div>',
                             children: [],
                             originalElement: IGNORE,
+                            authorColor: "rgb(233, 30, 99)",
                         },
                         {
                             id: "1323577271814197381",
@@ -147,6 +158,7 @@ export class MessageParserTest {
                             },
                             children: [],
                             originalElement: IGNORE,
+                            authorColor: "rgb(233, 30, 99)",
                         },
                     ]);
                 },
@@ -164,6 +176,7 @@ export class MessageParserTest {
                                 '<div id="message-content-1323584268588285952" class="markup_f8f345 messageContent_f9f2ca"><span>test message</span></div>',
                             children: [],
                             originalElement: IGNORE,
+                            authorColor: "rgb(233, 30, 99)",
                         },
                     ]);
                 },
@@ -181,6 +194,7 @@ export class MessageParserTest {
                                 '<div id="message-content-1323584268588285952" class="markup_f8f345 messageContent_f9f2ca"><span>test message</span></div>',
                             children: [],
                             originalElement: IGNORE,
+                            authorColor: "rgb(233, 30, 99)",
                         },
                     ]);
                 },
@@ -304,6 +318,7 @@ export class MessageParserTest {
                                 '<div id="message-content-1323826029218762773" class="markup_f8f345 messageContent_f9f2ca"><span>test 1</span></div>',
                             children: [],
                             originalElement: IGNORE,
+                            authorColor: "rgb(233, 30, 99)",
                         },
                         {
                             id: "1323826033287233627",
@@ -314,6 +329,7 @@ export class MessageParserTest {
                                 '<div id="message-content-1323826033287233627" class="markup_f8f345 messageContent_f9f2ca"><span>test 2</span></div>',
                             children: [],
                             originalElement: IGNORE,
+                            authorColor: "rgb(233, 30, 99)",
                         },
                     ]);
                 },
@@ -331,6 +347,7 @@ export class MessageParserTest {
                                 '<div id="message-content-1323826029218762773" class="markup_f8f345 messageContent_f9f2ca"><span>test 1</span></div>',
                             children: [],
                             originalElement: IGNORE,
+                            authorColor: "rgb(233, 30, 99)",
                         },
                         {
                             id: "1323826033287233627",
@@ -341,6 +358,7 @@ export class MessageParserTest {
                                 '<div id="message-content-1323826033287233627" class="markup_f8f345 messageContent_f9f2ca"><span>test 2</span></div>',
                             children: [],
                             originalElement: IGNORE,
+                            authorColor: "rgb(233, 30, 99)",
                         },
                     ]);
                 },
