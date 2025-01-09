@@ -27,22 +27,40 @@ export class DomMutator {
         this.collapseHandlers = handlers;
     }
 
-    public addScrollerStyle(scrollerClass: string): void {
-        const styleId = `threadloaf-scroller-style-${scrollerClass}`;
-        // Remove any existing style first
-        const existingStyle = document.getElementById(styleId);
-        if (existingStyle) {
-            existingStyle.remove();
+    public addScrollerStyle(): void {
+        const elements = document.querySelectorAll<HTMLElement>('ol[class^="scrollerInner_"]');
+        const threadContainer = Array.from(elements).find((el) => {
+            return el.getAttribute("data-list-id") === "chat-messages" && el.children.length > 0;
+        });
+
+        if (!threadContainer) {
+            console.error("Thread container not found.");
+            return;
         }
 
-        const style = document.createElement("style");
-        style.id = styleId;
-        style.textContent = `
-            div.${scrollerClass} {
-                overflow-y: hidden !important;
+        const scrollerElement = threadContainer.closest('div[class*="scroller_"]');
+        if (scrollerElement) {
+            const scrollerClass = Array.from(scrollerElement.classList).find((className) =>
+                className.startsWith("scroller_"),
+            );
+            if (scrollerClass) {
+                const styleId = `threadloaf-scroller-style-${scrollerClass}`;
+                // Remove any existing style first
+                const existingStyle = document.getElementById(styleId);
+                if (existingStyle) {
+                    existingStyle.remove();
+                }
+
+                const style = document.createElement("style");
+                style.id = styleId;
+                style.textContent = `
+                    div.${scrollerClass} {
+                        margin-bottom: 16px !important;
+                    }
+                `;
+                document.head.appendChild(style);
             }
-        `;
-        document.head.appendChild(style);
+        }
     }
 
     public removeScrollerStyle(scrollerClass: string): void {
@@ -178,7 +196,9 @@ export class DomMutator {
                 this.collapseHandlers.uncollapseBottomPane();
                 // Wait longer for the pane expansion and layout to stabilize
                 setTimeout(() => {
-                    originalElement.scrollIntoView({ behavior: "auto", block: "start" });
+                    originalElement.scrollIntoView({ behavior: "auto", block: "end" });
+                    // Add 16px padding to the bottom
+                    originalElement.closest('[class*="chat_"]')?.scrollBy(0, 16);
                     applyHighlight(originalElement);
                     applyHighlight(el);
                 }, 250);
@@ -186,7 +206,9 @@ export class DomMutator {
             }
 
             // If not collapsed, scroll and highlight immediately
-            originalElement.scrollIntoView({ behavior: "auto", block: "start" });
+            originalElement.scrollIntoView({ behavior: "auto", block: "end" });
+            // Add 16px padding to the bottom
+            originalElement.closest('[class*="chat_"]')?.scrollBy(0, 16);
 
             // Highlight both the original message and the clicked preview
             applyHighlight(originalElement);

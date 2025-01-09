@@ -71,10 +71,6 @@ div[class*="chat_"] {
     height: 100% !important;
 }
 
-.thread-container {
-    position: relative;
-}
-
 #threadloaf-container > .message-thread {
     margin-left: 0;
 }
