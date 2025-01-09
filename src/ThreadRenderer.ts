@@ -366,7 +366,7 @@ export class ThreadRenderer {
         // Clear only the thread content
         threadContent.innerHTML = "";
 
-        const renderMessages = (messages: MessageInfo[], depth = 0): void => {
+        const renderMessages = (messages: MessageInfo[], depth = 0): HTMLDivElement => {
             const container = document.createElement("div");
             container.classList.add("message-thread");
 
@@ -492,6 +492,9 @@ export class ThreadRenderer {
 
         // Always show both views
         this.state.threadContainer.style.display = "block";
+
+        // Add margin to the chat view
+        this.domMutator.addScrollerStyle();
 
         // Update or create the style element for main positioning
         let styleElement = document.getElementById("threadloaf-main-style");
