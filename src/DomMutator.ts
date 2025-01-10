@@ -24,6 +24,52 @@ export class DomMutator {
         this.contextMenuManager = contextMenuManager;
     }
 
+    private scrollToAndHighlightMessage(message: MessageInfo, previewElement: HTMLElement): void {
+        if (!message.originalElement) {
+            console.error("No original element reference found for message");
+            return;
+        }
+
+        const originalElement = message.originalElement as HTMLElement;
+
+        // Function to apply highlight effect
+        const applyHighlight = (element: HTMLElement): void => {
+            element.style.transition = "background-color 0.5s";
+            element.style.backgroundColor = "color-mix(in oklab, var(--text-normal) 30%, transparent)";
+
+            setTimeout(() => {
+                element.style.backgroundColor = "";
+                // Clean up after animation
+                setTimeout(() => {
+                    element.style.transition = "";
+                }, 500);
+            }, 1000);
+        };
+
+        // If the bottom pane is collapsed, uncollapse it and wait before scrolling
+        if (this.collapseHandlers?.isBottomPaneCollapsed()) {
+            this.collapseHandlers.uncollapseBottomPane();
+            // Wait longer for the pane expansion and layout to stabilize
+            setTimeout(() => {
+                originalElement.scrollIntoView({ behavior: "auto", block: "end" });
+                // Add 16px padding to the bottom
+                originalElement.closest('[class*="chat_"]')?.scrollBy(0, 16);
+                applyHighlight(originalElement);
+                applyHighlight(previewElement);
+            }, 250);
+            return;
+        }
+
+        // If not collapsed, scroll and highlight immediately
+        originalElement.scrollIntoView({ behavior: "auto", block: "end" });
+        // Add 16px padding to the bottom
+        originalElement.closest('[class*="chat_"]')?.scrollBy(0, 16);
+
+        // Highlight both the original message and the clicked preview
+        applyHighlight(originalElement);
+        applyHighlight(previewElement);
+    }
+
     public setCollapseHandlers(handlers: CollapseHandlers): void {
         this.collapseHandlers = handlers;
     }
@@ -198,52 +244,11 @@ export class DomMutator {
         el.dataset.timestamp = message.timestamp.toString();
 
         el.addEventListener("click", () => {
-            if (!message.originalElement) {
-                console.error("No original element reference found for message");
-                return;
-            }
-
-            const originalElement = message.originalElement as HTMLElement;
-
-            // Function to apply highlight effect
-            const applyHighlight = (element: HTMLElement): void => {
-                element.style.transition = "background-color 0.5s";
-                element.style.backgroundColor = "color-mix(in oklab, var(--text-normal) 30%, transparent)";
-
-                setTimeout(() => {
-                    element.style.backgroundColor = "";
-                    // Clean up after animation
-                    setTimeout(() => {
-                        element.style.transition = "";
-                    }, 500);
-                }, 1000);
-            };
-
-            // If the bottom pane is collapsed, uncollapse it and wait before scrolling
-            if (this.collapseHandlers?.isBottomPaneCollapsed()) {
-                this.collapseHandlers.uncollapseBottomPane();
-                // Wait longer for the pane expansion and layout to stabilize
-                setTimeout(() => {
-                    originalElement.scrollIntoView({ behavior: "auto", block: "end" });
-                    // Add 16px padding to the bottom
-                    originalElement.closest('[class*="chat_"]')?.scrollBy(0, 16);
-                    applyHighlight(originalElement);
-                    applyHighlight(el);
-                }, 250);
-                return;
-            }
-
-            // If not collapsed, scroll and highlight immediately
-            originalElement.scrollIntoView({ behavior: "auto", block: "end" });
-            // Add 16px padding to the bottom
-            originalElement.closest('[class*="chat_"]')?.scrollBy(0, 16);
-
-            // Highlight both the original message and the clicked preview
-            applyHighlight(originalElement);
-            applyHighlight(el);
+            this.scrollToAndHighlightMessage(message, el);
         });
 
         el.addEventListener("contextmenu", (event) => {
+            this.scrollToAndHighlightMessage(message, el);
             this.contextMenuManager.handleContextMenu(event, message);
         });
 
