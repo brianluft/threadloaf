@@ -214,7 +214,7 @@ export class ThreadRenderer {
 
         // Check if we're in a non-thread channel
         const isDMChannel = currentUrl.includes("/channels/@me");
-        if (isDMChannel || this.isChatOnlyChannel() || this.domParser.hasSectionSibling()) {
+        if (isDMChannel || this.isChatOnlyChannel() || this.hasSectionSibling()) {
             // Hide thread container and splitter for DMs
             const threadContainer = document.getElementById("threadloaf-container");
             const splitter = document.getElementById("threadloaf-splitter");
@@ -705,5 +705,31 @@ export class ThreadRenderer {
             // Otherwise, all channels are chat + thread.
             return false;
         }
+    }
+
+    /**
+     * Checks if there is a section element as a direct child of the content container
+     * that is a sibling to our threadloaf container
+     */
+    public hasSectionSibling(): boolean {
+        const threadloafContainer = document.getElementById("threadloaf-container");
+        if (!threadloafContainer) return false;
+
+        const contentParent = threadloafContainer.parentElement;
+        if (!contentParent) return false;
+
+        // Look for any section element that is a direct child of the content container.
+        // This fixes search results.
+        const hasSection = Array.from(contentParent.children).some((child) => child.tagName === "SECTION");
+
+        // Also look for a div.container_* sibling.
+        // This fixes member lists.
+        const hasContainer = Array.from(contentParent.children).some(
+            (child) =>
+                child.tagName === "DIV" &&
+                Array.from(child.classList).some((cls: string) => cls.startsWith("container_")),
+        );
+
+        return hasSection || hasContainer;
     }
 }
