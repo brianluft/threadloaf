@@ -343,10 +343,6 @@ export class MessageParser {
                     );
                 }
 
-                if (htmlContent.includes("chrome-extension://")) {
-                    console.log("htmlContent", htmlContent);
-                }
-
                 return {
                     id,
                     author,
