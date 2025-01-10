@@ -54,8 +54,10 @@ export class DomParser {
             let shouldRerender = false;
 
             for (const mutation of mutations) {
-                // Check for new messages
-                const hasNewMessages = Array.from(mutation.addedNodes).some(
+                const changedNodes = Array.from(mutation.addedNodes).concat(Array.from(mutation.removedNodes));
+
+                // Check for message changes
+                const hasMessageChanges = changedNodes.some(
                     (node) =>
                         node instanceof HTMLElement &&
                         (node.matches('li[id^="chat-messages-"]') || node.querySelector('li[id^="chat-messages-"]')),
@@ -83,23 +85,12 @@ export class DomParser {
                     (mutation.target instanceof HTMLElement && mutation.target.closest('[id^="message-content-"]'));
 
                 // Check for section element changes in content container
-                const hasSectionChanges =
-                    Array.from(mutation.addedNodes).some(
-                        (node) => node instanceof HTMLElement && node.tagName === "SECTION",
-                    ) ||
-                    Array.from(mutation.removedNodes).some(
+                const hasSectionChanges = changedNodes.some(
                         (node) => node instanceof HTMLElement && node.tagName === "SECTION",
                     );
 
                 // Check for addition or removal of div.content_* in the content container
-                const hasContentContainerChanges =
-                    Array.from(mutation.addedNodes).some(
-                        (node) =>
-                            node instanceof HTMLElement &&
-                            node.tagName === "DIV" &&
-                            Array.from(node.classList).some((cls: string) => cls.startsWith("content_")),
-                    ) ||
-                    Array.from(mutation.removedNodes).some(
+                const hasContentContainerChanges = changedNodes.some(
                         (node) =>
                             node instanceof HTMLElement &&
                             node.tagName === "DIV" &&
@@ -107,7 +98,7 @@ export class DomParser {
                     );
 
                 if (
-                    hasNewMessages ||
+                    hasMessageChanges ||
                     hasReactionChanges ||
                     hasMessageEdits ||
                     hasSectionChanges ||
