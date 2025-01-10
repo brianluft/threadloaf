@@ -33,6 +33,7 @@ export class MessageTreeBuilder {
                     htmlContent: `<div class="ghost-message"><i>${message.parentPreview.content}</i></div>`,
                     children: [],
                     isGhost: true,
+                    isFirstMessage: false,
                 };
                 idToMessage.set(message.parentId, ghostMessage);
             }

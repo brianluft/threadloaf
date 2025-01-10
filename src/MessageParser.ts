@@ -13,7 +13,12 @@ export class MessageParser {
         let lastAuthor: string | undefined;
         let lastAuthorColor: string | undefined;
 
-        const messages = Array.from(threadContainer.querySelectorAll('li[id^="chat-messages-"]')).map((el) => {
+        // Check if we can see the channel header by looking at the second child
+        // First child is always a navigationDescription span, second would be the channel header container if visible
+        const hasChannelHeader =
+            threadContainer.children.length >= 2 && threadContainer.children[1].matches('div[class*="container_"]');
+
+        const messages = Array.from(threadContainer.querySelectorAll('li[id^="chat-messages-"]')).map((el, index) => {
             try {
                 const id = el.id.split("-").pop() || "";
 
@@ -71,6 +76,7 @@ export class MessageParser {
                         children: [],
                         originalElement: el as HTMLElement,
                         isGhost: false,
+                        isFirstMessage: hasChannelHeader && index === 0,
                     };
                 }
 
@@ -357,6 +363,7 @@ export class MessageParser {
                     authorColor,
                     reactionsHtml,
                     isGhost: false,
+                    isFirstMessage: hasChannelHeader && index === 0,
                 };
             } catch (error) {
                 console.error("Error parsing message:", error);
@@ -372,6 +379,7 @@ export class MessageParser {
                     originalElement: el as HTMLElement,
                     isError: true, // Mark this as an error message
                     isGhost: false,
+                    isFirstMessage: false,
                 };
             }
         });

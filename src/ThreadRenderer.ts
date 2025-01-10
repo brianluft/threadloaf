@@ -316,11 +316,6 @@ export class ThreadRenderer {
 
         const allMessages = getAllMessages();
 
-        // Now assign numbers to all messages in display order
-        allMessages.forEach((msg, index) => {
-            msg.messageNumber = index + 1;
-        });
-
         // Sort for color grading (newest first)
         const colorSortedMessages = [...allMessages].sort((a, b) => b.timestamp - a.timestamp);
         const messageColors = new Map<string, string>();
@@ -356,6 +351,83 @@ export class ThreadRenderer {
 
         // Clear only the thread content
         threadContent.innerHTML = "";
+
+        // Add Load More button at the top
+        const loadMoreButton = document.createElement("button");
+        loadMoreButton.classList.add("threadloaf-load-more");
+
+        // Check if any message has isFirstMessage=true
+        const hasFirstMessage = allMessages.some((msg) => msg.isFirstMessage);
+
+        loadMoreButton.textContent = hasFirstMessage ? "Top of thread" : "Load more";
+        loadMoreButton.disabled = hasFirstMessage;
+        loadMoreButton.style.width = "100%";
+        loadMoreButton.style.padding = "8px";
+        loadMoreButton.style.margin = "8px 0";
+        loadMoreButton.style.border = "none";
+        loadMoreButton.style.borderRadius = "4px";
+        loadMoreButton.style.backgroundColor = "var(--background-modifier-accent)";
+        loadMoreButton.style.color = "var(--text-normal)";
+        loadMoreButton.style.cursor = hasFirstMessage ? "default" : "pointer";
+        loadMoreButton.style.opacity = hasFirstMessage ? "0.5" : "1";
+        loadMoreButton.style.transition = "background-color 0.1s ease, opacity 0.1s ease";
+
+        // Add hover and pressed styles
+        loadMoreButton.addEventListener("mouseenter", () => {
+            if (!loadMoreButton.disabled) {
+                loadMoreButton.style.backgroundColor = "var(--background-modifier-hover)";
+            }
+        });
+        loadMoreButton.addEventListener("mouseleave", () => {
+            if (!loadMoreButton.disabled) {
+                loadMoreButton.style.backgroundColor = "var(--background-modifier-accent)";
+            }
+        });
+        loadMoreButton.addEventListener("mousedown", () => {
+            if (!loadMoreButton.disabled) {
+                loadMoreButton.style.backgroundColor = "var(--background-modifier-active)";
+            }
+        });
+        loadMoreButton.addEventListener("mouseup", () => {
+            if (!loadMoreButton.disabled) {
+                loadMoreButton.style.backgroundColor = "var(--background-modifier-hover)";
+            }
+        });
+
+        if (!hasFirstMessage) {
+            loadMoreButton.addEventListener("click", () => {
+                // Disable the button immediately
+                loadMoreButton.disabled = true;
+                loadMoreButton.style.cursor = "default";
+                loadMoreButton.style.opacity = "0.5";
+
+                console.log("Load more button clicked");
+                // Start from the thread container and traverse up to find the scroller
+                const threadContainer = this.state.threadContainer;
+                console.log("Starting from thread container:", threadContainer);
+
+                if (threadContainer) {
+                    let currentElement: HTMLElement | null = threadContainer;
+                    while (currentElement) {
+                        console.log("Checking element:", currentElement);
+                        if (Array.from(currentElement.classList).some((cls) => cls.startsWith("scroller_"))) {
+                            console.log("Found scroller element:", currentElement);
+                            currentElement.scrollTo({ top: 0, behavior: "auto" });
+                            console.log("Scroll command sent to scroller");
+                            break;
+                        }
+                        currentElement = currentElement.parentElement;
+                    }
+                    if (!currentElement) {
+                        console.log("Could not find scroller element");
+                    }
+                } else {
+                    console.log("Thread container not found");
+                }
+            });
+        }
+
+        threadContent.appendChild(loadMoreButton);
 
         const renderMessages = (messages: MessageInfo[], depth = 0): HTMLDivElement => {
             const container = document.createElement("div");
