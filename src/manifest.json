@@ -4,11 +4,19 @@
     "version": "0.5.0",
     "description": "Enhances Discord with a threaded discussion view",
     "icons": {
-        "128": "threadloaf-128.jpg"
+        "16": "threadloaf-16.png",
+        "32": "threadloaf-32.png",
+        "48": "threadloaf-48.png",
+        "128": "threadloaf-128.png"
     },
     "action": {
         "default_popup": "popup.html",
-        "default_icon": "threadloaf-128.jpg"
+        "default_icon": {
+            "16": "threadloaf-16.png",
+            "32": "threadloaf-32.png",
+            "48": "threadloaf-48.png",
+            "128": "threadloaf-128.png"
+        }
     },
     "permissions": ["storage"],
     "content_scripts": [
@@ -18,7 +26,7 @@
       }
     ],
     "web_accessible_resources": [{
-      "resources": ["styles.css", "threadloaf-128.jpg", "test-data/*"],
+      "resources": ["styles.css", "threadloaf-16.png", "threadloaf-32.png", "threadloaf-48.png", "threadloaf-128.png", "test-data/*"],
       "matches": ["*://discord.com/*"]
     }]
   }
