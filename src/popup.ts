@@ -6,13 +6,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     const optionsProvider = UserOptionsProvider.getInstance(userOptions);
     const options = optionsProvider.getOptions();
 
-    // Set initial checkbox state
-    const checkbox = document.getElementById("showThreadViewOnlyInForumChannels") as HTMLInputElement;
-    checkbox.checked = options.showThreadViewOnlyInForumChannels;
+    // Set initial checkbox states
+    const forumCheckbox = document.getElementById("showThreadViewOnlyInForumChannels") as HTMLInputElement;
+    forumCheckbox.checked = options.showThreadViewOnlyInForumChannels;
+
+    const reactionsCheckbox = document.getElementById("showReactions") as HTMLInputElement;
+    reactionsCheckbox.checked = options.showReactions;
 
     // Listen for changes
-    checkbox.addEventListener("change", async () => {
-        options.showThreadViewOnlyInForumChannels = checkbox.checked;
+    forumCheckbox.addEventListener("change", async () => {
+        options.showThreadViewOnlyInForumChannels = forumCheckbox.checked;
+        await optionsProvider.setOptions(options);
+    });
+
+    reactionsCheckbox.addEventListener("change", async () => {
+        options.showReactions = reactionsCheckbox.checked;
         await optionsProvider.setOptions(options);
     });
 

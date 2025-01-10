@@ -4,6 +4,7 @@
 export class UserOptions {
     public showThreadViewOnlyInForumChannels = true;
     public splitterPositions: { [url: string]: number } = {};
+    public showReactions = true;
 
     public constructor(init?: Partial<UserOptions>) {
         Object.assign(this, init);
@@ -21,6 +22,7 @@ export class UserOptions {
                     (obj as UserOptions).showThreadViewOnlyInForumChannels ??
                     defaultOptions.showThreadViewOnlyInForumChannels,
                 splitterPositions: (obj as UserOptions).splitterPositions ?? defaultOptions.splitterPositions,
+                showReactions: (obj as UserOptions).showReactions ?? defaultOptions.showReactions,
             });
         }
         return defaultOptions;

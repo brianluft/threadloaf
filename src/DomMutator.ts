@@ -1,6 +1,7 @@
 import { ThreadloafState } from "./ThreadloafState";
 import { MessageInfo } from "./MessageInfo";
 import { ContextMenuManager } from "./ContextMenuManager";
+import { UserOptionsProvider } from "./UserOptionsProvider";
 
 export interface CollapseHandlers {
     isBottomPaneCollapsed: () => boolean;
@@ -153,16 +154,36 @@ export class DomMutator {
         // Add reactions if present
         const reactionsSpan = document.createElement("span");
         reactionsSpan.classList.add("message-reactions");
-        if (message.reactionsHtml) {
+
+        // Get the current reaction display mode
+        const options = UserOptionsProvider.getInstance().getOptions();
+        if (message.reactionsHtml && options.showReactions) {
             const temp = document.createElement("div");
             temp.innerHTML = message.reactionsHtml;
 
             // Get all reaction images, limit to first 3
-            const reactionImages = Array.from(temp.querySelectorAll('[class*="reaction_"] img')).slice(0, 3);
+            const reactionElements = Array.from(temp.querySelectorAll('[class*="reaction_"]')).slice(0, 3);
 
-            reactionImages.forEach((img) => {
-                const imgClone = img.cloneNode(true) as HTMLElement;
-                reactionsSpan.appendChild(imgClone);
+            reactionElements.forEach((reactionEl) => {
+                const img = reactionEl.querySelector("img");
+                const count = reactionEl.querySelector('[class*="reactionCount_"]');
+
+                if (img) {
+                    const container = document.createElement("span");
+                    container.classList.add("reaction-container");
+
+                    const imgClone = img.cloneNode(true) as HTMLElement;
+                    container.appendChild(imgClone);
+
+                    if (count) {
+                        const countSpan = document.createElement("span");
+                        countSpan.classList.add("reaction-count");
+                        countSpan.textContent = count.textContent;
+                        container.appendChild(countSpan);
+                    }
+
+                    reactionsSpan.appendChild(container);
+                }
             });
         }
 

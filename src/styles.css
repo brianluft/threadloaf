@@ -165,8 +165,24 @@ div[class*="chat_"] {
 /* Light background behind reactions in the thread view */
 div.threadloaf-message span.message-reactions img {
     background: color-mix(in oklab, var(--background-primary) 90%, var(--text-normal) 10%);
-    padding: 0 5px 0 5px;
     border-radius: 2px;
+    vertical-align: middle;
+}
+
+div.threadloaf-message span.message-reactions .reaction-container {
+    background: color-mix(in oklab, var(--background-primary) 90%, var(--text-normal) 10%);
+    padding: 0 5px;
+    border-radius: 2px;
+    display: inline-flex;
+    align-items: center;
+    margin-right: 4px;
+    line-height: 100%;
+}
+
+div.threadloaf-message span.message-reactions .reaction-count {
+    font-size: 0.75em;
+    margin-left: 4px;
+    opacity: 0.8;
 }
 
 .thread-line-spacer {
