@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Threadloaf",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "description": "Enhances Discord with a threaded discussion view",
     "icons": {
         "16": "threadloaf-16.png",
