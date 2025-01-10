@@ -70,6 +70,7 @@ export class MessageParser {
                         htmlContent: containerClone.outerHTML,
                         children: [],
                         originalElement: el as HTMLElement,
+                        isGhost: false,
                     };
                 }
 
@@ -355,6 +356,7 @@ export class MessageParser {
                     originalElement: el as HTMLElement,
                     authorColor,
                     reactionsHtml,
+                    isGhost: false,
                 };
             } catch (error) {
                 console.error("Error parsing message:", error);
@@ -369,6 +371,7 @@ export class MessageParser {
                     children: [],
                     originalElement: el as HTMLElement,
                     isError: true, // Mark this as an error message
+                    isGhost: false,
                 };
             }
         });

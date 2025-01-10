@@ -81,6 +81,13 @@ export class DomMutator {
     ): HTMLElement {
         const el = document.createElement("div");
         el.classList.add("threadloaf-message");
+
+        // Add ghost message styling
+        if (message.isGhost) {
+            el.style.opacity = "0.7";
+            el.style.fontStyle = "italic";
+        }
+
         if (message.isError) {
             el.dataset.isError = "true";
         }

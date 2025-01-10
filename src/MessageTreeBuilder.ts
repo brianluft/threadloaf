@@ -17,10 +17,25 @@ export class MessageTreeBuilder {
         const idToMessage = new Map<string, MessageInfo>();
         const rootMessages: MessageInfo[] = [];
 
-        // First pass: Initialize all messages in the map
+        // First pass: Initialize all messages in the map and create ghost messages for unloaded parents
         for (const message of sortedMessages) {
             message.children = [];
             idToMessage.set(message.id, message);
+
+            // Create ghost messages for unloaded parents
+            if (message.parentId && !idToMessage.has(message.parentId) && message.parentPreview) {
+                // Create a ghost message with a timestamp 1 second before the earliest message
+                const ghostMessage: MessageInfo = {
+                    id: message.parentId,
+                    author: message.parentPreview.author,
+                    timestamp: Math.min(...sortedMessages.map((m) => m.timestamp)) - 1000,
+                    content: message.parentPreview.content,
+                    htmlContent: `<div class="ghost-message"><i>${message.parentPreview.content}</i></div>`,
+                    children: [],
+                    isGhost: true,
+                };
+                idToMessage.set(message.parentId, ghostMessage);
+            }
         }
 
         // Second pass: Build the tree
@@ -62,6 +77,15 @@ export class MessageTreeBuilder {
             // If no rules applied, this is a root message
             rootMessages.push(message);
         }
+
+        // Add ghost messages to the beginning of root messages array
+        const ghostMessages: MessageInfo[] = [];
+        for (const [, message] of idToMessage) {
+            if (message.isGhost && !rootMessages.includes(message)) {
+                ghostMessages.push(message);
+            }
+        }
+        rootMessages.unshift(...ghostMessages);
 
         return rootMessages;
     }
