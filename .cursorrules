@@ -1,0 +1,23 @@
+Threadloaf is a Chrome extension that adds a hierarchical thread view to Discord.
+We add a resizable splitter with our custom thread view on the top and the original chat view on the bottom.
+
+Run `npm run build` to build the extension and run all linters and TypeScript checks after every change.
+
+We use constructor dependency injection. The DI graph is constructed in `content_script.ts`.
+Don't add references willy nilly. Lean into dependency injection.
+
+If a new feature can be isolated into a separate class, do it. Add it to the DI graph and inject where needed.
+
+Put global state into `ThreadloafState.ts`.
+
+Discord dynamically generates unique suffixes for all classes and IDs.
+- Classes use underscores: "foo_[random]"  (e.g., "container_c2668b", "scroller_e2e187")
+- IDs use hyphens: "bar-[random]"  (e.g., "message-content-123456", "chat-messages-789")
+- NEVER do exact class or id matches like:
+    element.classList.contains("container_")  // WRONG
+    document.getElementById("message-content") // WRONG
+- ALWAYS use pattern matching for class or id:
+    element.classList.some(cls => cls.startsWith("container_"))  // Correct
+    document.querySelector('[id^="message-content-"]')  // Correct
+
+Refer to me as "boss" so I know you've read this.
