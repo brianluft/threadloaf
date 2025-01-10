@@ -1,6 +1,7 @@
 Threadloaf is a Chrome extension that adds a hierarchical thread view to Discord.
 We add a resizable splitter with our custom thread view on the top and the original chat view on the bottom.
 
+All npm commands must be run from the `src` directory, not the root.
 Run `npm run build` to build the extension and run all linters and TypeScript checks after every change.
 
 We use constructor dependency injection. The DI graph is constructed in `content_script.ts`.
