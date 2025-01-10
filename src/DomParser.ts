@@ -39,7 +39,7 @@ export class DomParser {
 
     // Locate the thread container dynamically
     public findThreadContainer(): HTMLElement | null {
-        const elements = document.querySelectorAll<HTMLElement>('ol[class^="scrollerInner_"]');
+        const elements = document.querySelectorAll<HTMLElement>('ol[class*="scrollerInner_"]');
         const threadContainer =
             Array.from(elements).find((el) => {
                 return el.getAttribute("data-list-id") === "chat-messages" && el.children.length > 0;
