@@ -212,9 +212,9 @@ export class ThreadRenderer {
             return;
         }
 
-        // Check if we're in a DM channel
+        // Check if we're in a non-thread channel
         const isDMChannel = currentUrl.includes("/channels/@me");
-        if (isDMChannel || this.isChatOnlyChannel()) {
+        if (isDMChannel || this.isChatOnlyChannel() || this.domParser.hasSectionSibling()) {
             // Hide thread container and splitter for DMs
             const threadContainer = document.getElementById("threadloaf-container");
             const splitter = document.getElementById("threadloaf-splitter");
@@ -224,16 +224,7 @@ export class ThreadRenderer {
             // Reset main chat view to full size
             const styleElement = document.getElementById("threadloaf-main-style");
             if (styleElement) {
-                styleElement.textContent = `
-                    div.${contentClass} > main {
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        right: 0;
-                        bottom: 0;
-                        height: auto !important;
-                    }
-                `;
+                styleElement.remove();
             }
             return;
         }

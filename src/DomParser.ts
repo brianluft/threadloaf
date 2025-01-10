@@ -82,7 +82,37 @@ export class DomParser {
                     (mutation.target instanceof HTMLElement && mutation.target.matches('[id^="message-content-"]')) ||
                     (mutation.target instanceof HTMLElement && mutation.target.closest('[id^="message-content-"]'));
 
-                if (hasNewMessages || hasReactionChanges || hasMessageEdits) {
+                // Check for section element changes in content container
+                const hasSectionChanges =
+                    Array.from(mutation.addedNodes).some(
+                        (node) => node instanceof HTMLElement && node.tagName === "SECTION",
+                    ) ||
+                    Array.from(mutation.removedNodes).some(
+                        (node) => node instanceof HTMLElement && node.tagName === "SECTION",
+                    );
+
+                // Check for addition or removal of div.content_* in the content container
+                const hasContentContainerChanges =
+                    Array.from(mutation.addedNodes).some(
+                        (node) =>
+                            node instanceof HTMLElement &&
+                            node.tagName === "DIV" &&
+                            Array.from(node.classList).some((cls: string) => cls.startsWith("content_")),
+                    ) ||
+                    Array.from(mutation.removedNodes).some(
+                        (node) =>
+                            node instanceof HTMLElement &&
+                            node.tagName === "DIV" &&
+                            Array.from(node.classList).some((cls: string) => cls.startsWith("content_")),
+                    );
+
+                if (
+                    hasNewMessages ||
+                    hasReactionChanges ||
+                    hasMessageEdits ||
+                    hasSectionChanges ||
+                    hasContentContainerChanges
+                ) {
                     shouldRerender = true;
                     break;
                 }
@@ -142,5 +172,31 @@ export class DomParser {
 
         const result = !!topContainer;
         return result;
+    }
+
+    /**
+     * Checks if there is a section element as a direct child of the content container
+     * that is a sibling to our threadloaf container
+     */
+    public hasSectionSibling(): boolean {
+        const threadloafContainer = document.getElementById("threadloaf-container");
+        if (!threadloafContainer) return false;
+
+        const contentParent = threadloafContainer.parentElement;
+        if (!contentParent) return false;
+
+        // Look for any section element that is a direct child of the content container.
+        // This fixes search results.
+        const hasSection = Array.from(contentParent.children).some((child) => child.tagName === "SECTION");
+
+        // Also look for a div.container_* sibling.
+        // This fixes member lists.
+        const hasContainer = Array.from(contentParent.children).some(
+            (child) =>
+                child.tagName === "DIV" &&
+                Array.from(child.classList).some((cls: string) => cls.startsWith("container_")),
+        );
+
+        return hasSection || hasContainer;
     }
 }
