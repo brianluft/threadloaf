@@ -215,3 +215,53 @@ div.threadloaf-message span.message-reactions .reaction-count {
 div[class^="chatLayerWrapper_"] div#threadloaf-container {
     background: var(--bg-overlay-chat, var(--background-primary));
 }
+
+/* Thread list */
+div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="left_"] > div[class^="body_"] {
+    display: block; /* instead of flex */
+}
+
+div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="left_"] > div[class^="body_"] > div[class^="tags_"] {
+    /* Right align the tags */
+    float: right;
+}
+
+div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="left_"] > div[class^="body_"] > div[class^="tags_"] > div[class^="pill_"] > div {
+    /* Hide the tag text */
+    display: none;
+}
+
+div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="left_"] > div[class^="body_"] > div[class^="tags_"] > div[class^="pill_"] > img {
+    /* Fix the margin of the tag icon now that the text is hidden */
+    margin: 0;
+}
+
+div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="left_"] > div > div[class^="footer_"] {
+    /* Right align the footer */
+    float: right;
+    /* Move it up to condense the card */
+    margin-top: -31px;
+    /* We overlap the message text so we need a background */
+    background: var(--bg-base-primary);
+    padding: 4px;
+    border-radius: 20px; 
+}
+
+div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="bodyMedia_"] {
+    /* Hide the image on the right side of the thread card */
+    display: none;
+}
+
+div[class^="list_"] li[class^="card_"][data-item-role="item"] > div {
+    /* Tighten the padding on the cards */
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 8px;
+    padding-bottom: 4px;
+    border-radius: 0;
+}
+
+div[class^="list_"] li[class^="card_"][data-item-role="item"] {
+    /* Tighter gap between cards */
+    padding-bottom: 4px;
+}
