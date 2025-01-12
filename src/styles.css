@@ -71,7 +71,7 @@ div[class*="chat_"] {
     height: 100% !important;
 }
 
-#threadloaf-container > .message-thread {
+#threadloaf-content > div.message-thread {
     margin-left: 0;
 }
 
@@ -79,6 +79,7 @@ div[class*="chat_"] {
     margin: 0;
     border-radius: 0;
     max-width: 100%;
+    position: relative;
 }
 
 .preview-container {
@@ -203,4 +204,9 @@ div.threadloaf-message span.message-reactions .reaction-count {
     height: 100%;
     position: relative;
     top: 2px;    
+}
+
+/* Unread message indicator */
+.threadloaf-message[data-is-unread="true"] {
+    background: linear-gradient(to right, var(--brand-500) 0%, transparent 7px);
 }

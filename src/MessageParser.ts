@@ -18,8 +18,25 @@ export class MessageParser {
         const hasChannelHeader =
             threadContainer.children.length >= 2 && threadContainer.children[1].matches('div[class*="container_"]');
 
-        const messages = Array.from(threadContainer.querySelectorAll('li[id^="chat-messages-"]')).map((el, index) => {
+        const messages: MessageInfo[] = [];
+        const messageElements = Array.from(
+            threadContainer.querySelectorAll('li[id^="chat-messages-"], div#---new-messages-bar'),
+        );
+        let unread = false;
+
+        for (let index = 0; index < messageElements.length; index++) {
+            const el = messageElements[index];
             try {
+                // We may encounter a red line indicating how far the user has read to.
+                // Messages above the red line have been read; messages below are unread.
+                // If we do see the red line, then update the `unread` state flag.
+                if (el.id === "---new-messages-bar") {
+                    unread = true;
+
+                    // This element is not itself a message, so don't do any further processing.
+                    continue;
+                }
+
                 const id = el.id.split("-").pop() || "";
 
                 const contentsEl = el.querySelector('[class^="contents_"]');
@@ -67,7 +84,7 @@ export class MessageParser {
                     const timestamp = new Date(dateTime).getTime();
 
                     // For system messages, we'll use "System" as the author
-                    return {
+                    messages.push({
                         id,
                         author: "System",
                         timestamp,
@@ -77,7 +94,9 @@ export class MessageParser {
                         originalElement: el as HTMLElement,
                         isGhost: false,
                         isFirstMessage: hasChannelHeader && index === 0,
-                    };
+                        isUnread: unread,
+                    });
+                    continue;
                 }
 
                 // If not a system message, proceed with regular message parsing
@@ -350,7 +369,7 @@ export class MessageParser {
                     );
                 }
 
-                return {
+                messages.push({
                     id,
                     author,
                     timestamp,
@@ -364,12 +383,13 @@ export class MessageParser {
                     reactionsHtml,
                     isGhost: false,
                     isFirstMessage: hasChannelHeader && index === 0,
-                };
+                    isUnread: unread,
+                });
             } catch (error) {
                 console.error("Error parsing message:", error);
                 // Create an error message that shows what went wrong
                 const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-                return {
+                messages.push({
                     id: el.id.split("-").pop() || "",
                     author: "Error",
                     timestamp: Date.now(), // Use current time for error messages
@@ -380,11 +400,12 @@ export class MessageParser {
                     isError: true, // Mark this as an error message
                     isGhost: false,
                     isFirstMessage: false,
-                };
+                    isUnread: unread,
+                });
             }
-        });
+        }
 
-        // Filter out any null messages and sort by timestamp
-        return messages.filter((msg) => msg !== null).sort((a, b) => a.timestamp - b.timestamp);
+        // Filter out any null messages
+        return messages.filter((msg) => msg !== null);
     }
 }

@@ -14,8 +14,19 @@ export interface Test {
 }
 
 export class AssertionError extends Error {
-    public constructor(message: string) {
-        super(message);
+    public constructor(
+        message: string,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        public readonly actual?: any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        public readonly expected?: any,
+    ) {
+        const fullMessage = [
+            message,
+            actual !== undefined ? `\nActual: ${formatValue(actual)}` : "",
+            expected !== undefined ? `\nExpected: ${formatValue(expected)}` : "",
+        ].join("");
+        super(fullMessage);
         this.name = "AssertionError";
     }
 }
@@ -27,32 +38,34 @@ export const IGNORE = Symbol("IGNORE");
 
 // Assertion functions
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function deepEqual(actual: any, expected: any, depth = 0): void {
+export function deepEqual(actual: any, expected: any): void {
     // Handle IGNORE symbol
     if (expected === IGNORE) return;
 
     // If equal, return early
     if (actual === expected) return;
 
-    const indent = "  ".repeat(depth);
-
     // Handle null/undefined cases
     if (actual === null && expected !== null) {
-        throw new AssertionError(`${indent}Expected ${formatValue(expected)}, but got null`);
+        throw new AssertionError(`Expected ${formatValue(expected)}, but got null`, actual, expected);
     }
     if (expected === null && actual !== null) {
-        throw new AssertionError(`${indent}Expected null, but got ${formatValue(actual)}`);
+        throw new AssertionError(`Expected null, but got ${formatValue(actual)}`, actual, expected);
     }
     if (actual === undefined && expected !== undefined) {
-        throw new AssertionError(`${indent}Expected ${formatValue(expected)}, but got undefined`);
+        throw new AssertionError(`Expected ${formatValue(expected)}, but got undefined`, actual, expected);
     }
     if (expected === undefined && actual !== undefined) {
-        throw new AssertionError(`${indent}Expected undefined, but got ${formatValue(actual)}`);
+        throw new AssertionError(`Expected undefined, but got ${formatValue(actual)}`, actual, expected);
     }
 
     // Handle different types
     if (typeof actual !== typeof expected) {
-        throw new AssertionError(`${indent}Type mismatch: expected ${typeof expected}, but got ${typeof actual}`);
+        throw new AssertionError(
+            `Type mismatch: expected ${typeof expected}, but got ${typeof actual}`,
+            actual,
+            expected,
+        );
     }
 
     // Handle strings and include the index of the first character mismatch and the remainder of the actual and expected strings.
@@ -63,7 +76,11 @@ export function deepEqual(actual: any, expected: any, depth = 0): void {
                 // Make a slice of the remainder of both strings starting here.
                 const actualSlice = actual.slice(i);
                 const expectedSlice = expected.slice(i);
-                throw new AssertionError(`${indent}Mismatch at index ${i}: "${actualSlice}" !== "${expectedSlice}"`);
+                throw new AssertionError(
+                    `Mismatch at index ${i}: "${actualSlice}" !== "${expectedSlice}"`,
+                    actual,
+                    expected,
+                );
             }
         }
     }
@@ -72,11 +89,13 @@ export function deepEqual(actual: any, expected: any, depth = 0): void {
     if (Array.isArray(actual) && Array.isArray(expected)) {
         if (actual.length !== expected.length) {
             throw new AssertionError(
-                `${indent}Array length mismatch: expected ${expected.length}, but got ${actual.length}`,
+                `Array length mismatch: expected ${expected.length}, but got ${actual.length}`,
+                actual,
+                expected,
             );
         }
         for (let i = 0; i < Math.max(actual.length, expected.length); i++) {
-            deepEqual(actual[i], expected[i], depth + 1);
+            deepEqual(actual[i], expected[i]);
         }
     }
 
@@ -88,32 +107,36 @@ export function deepEqual(actual: any, expected: any, depth = 0): void {
         // Check for extra or missing keys
         for (const key of actualKeys) {
             if (!expectedKeys.includes(key) && actual[key] !== undefined) {
-                throw new AssertionError(`${indent}Unexpected key "${key}" in actual object`);
+                throw new AssertionError(`Unexpected key "${key}" in actual object`, actual, expected);
             }
         }
         for (const key of expectedKeys) {
             if (!actualKeys.includes(key) && expected[key] !== undefined) {
-                throw new AssertionError(`${indent}Missing key "${key}" in actual object`);
+                throw new AssertionError(`Missing key "${key}" in actual object`, actual, expected);
             }
         }
 
         // Compare values
         for (const key of expectedKeys) {
             if (expected[key] === IGNORE) continue;
-            deepEqual(actual[key], expected[key], depth + 1);
+            deepEqual(actual[key], expected[key]);
         }
     }
 
     // Handle primitives
     if (typeof actual !== "object" && actual !== expected) {
-        throw new AssertionError(`${indent}Expected ${formatValue(expected)}, but got ${formatValue(actual)}`);
+        throw new AssertionError(`Expected ${formatValue(expected)}, but got ${formatValue(actual)}`, actual, expected);
     }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assertEqual(actual: any, expected: any, message?: string): void {
     if (actual !== expected) {
-        throw new AssertionError(message || `Expected ${formatValue(expected)}, but got ${formatValue(actual)}`);
+        throw new AssertionError(
+            message || `Expected ${formatValue(expected)}, but got ${formatValue(actual)}`,
+            actual,
+            expected,
+        );
     }
 }
 
@@ -126,15 +149,23 @@ export function assertThrows(fn: () => any, expectedError?: string | RegExp): vo
             const errorMessage = error instanceof Error ? error.message : String(error);
             if (expectedError instanceof RegExp) {
                 if (!expectedError.test(errorMessage)) {
-                    throw new AssertionError(`Error message "${errorMessage}" did not match pattern ${expectedError}`);
+                    throw new AssertionError(
+                        `Error message "${errorMessage}" did not match pattern ${expectedError}`,
+                        errorMessage,
+                        expectedError,
+                    );
                 }
             } else if (errorMessage !== expectedError) {
-                throw new AssertionError(`Expected error "${expectedError}", but got "${errorMessage}"`);
+                throw new AssertionError(
+                    `Expected error "${expectedError}", but got "${errorMessage}"`,
+                    errorMessage,
+                    expectedError,
+                );
             }
         }
         return;
     }
-    throw new AssertionError("Expected function to throw an error");
+    throw new AssertionError("Expected function to throw an error", undefined, "an error");
 }
 
 // Helper functions

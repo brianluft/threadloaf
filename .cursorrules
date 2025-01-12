@@ -11,6 +11,10 @@ If a new feature can be isolated into a separate class, do it. Add it to the DI 
 
 Put global state into `ThreadloafState.ts`.
 
+Avoid creating CSS dynamically in JavaScript. Instead, add new classes to `styles.css`.
+
+Our markup is a house of cards. Avoid significant changes to the existing markup.
+
 Discord dynamically generates unique suffixes for all classes and IDs.
 - Classes use underscores: "foo_[random]"  (e.g., "container_c2668b", "scroller_e2e187")
 - IDs use hyphens: "bar-[random]"  (e.g., "message-content-123456", "chat-messages-789")

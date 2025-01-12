@@ -34,6 +34,7 @@ export class MessageTreeBuilder {
                     children: [],
                     isGhost: true,
                     isFirstMessage: false,
+                    isUnread: false,
                 };
                 idToMessage.set(message.parentId, ghostMessage);
             }

@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Set up test button
     const testButton = document.getElementById("runTestsButton") as HTMLButtonElement;
-    const testResults = document.getElementById("testResults") as HTMLDivElement;
+    const testResults = document.getElementById("testResults") as HTMLElement;
 
     testButton.addEventListener("click", async () => {
         testButton.disabled = true;
@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         try {
             const results = await runTests();
-            testResults.innerHTML = results.messages.join("<br>");
+            testResults.textContent = results.messages.join("\n");
         } catch (error) {
             testResults.textContent = `Error running tests: ${error}`;
         } finally {

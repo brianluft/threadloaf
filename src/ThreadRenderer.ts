@@ -500,10 +500,10 @@ export class ThreadRenderer {
                     messageBold.get(message.id) || false,
                     message.messageNumber || 0,
                 );
+                messageEl.dataset.isUnread = message.isUnread.toString();
                 messageEl.style.minWidth = "0"; // Allow message to shrink
                 messageEl.style.flexShrink = "1"; // Allow message to shrink
                 messageEl.style.flexGrow = "1"; // Allow message to grow
-                messageEl.style.overflow = "hidden";
 
                 messageContainer.appendChild(messageEl);
                 container.appendChild(messageContainer);

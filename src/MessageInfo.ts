@@ -14,4 +14,5 @@ export interface MessageInfo {
     authorColor?: string; // Optional color for the author's name from Discord's UI
     isFirstMessage: boolean; // Whether this is the first message in the channel/thread
     reactionsHtml?: string; // HTML content of reactions
+    isUnread: boolean; // Whether this message is below the "new messages" bar
 }
