@@ -210,3 +210,8 @@ div.threadloaf-message span.message-reactions .reaction-count {
 .threadloaf-message[data-is-unread="true"] {
     background: linear-gradient(to right, var(--brand-500) 0%, transparent 7px);
 }
+
+/* Fix the background of the thread view when open in the split view */
+div[class^="chatLayerWrapper_"] div#threadloaf-container {
+    background: var(--bg-overlay-chat, var(--background-primary));
+}

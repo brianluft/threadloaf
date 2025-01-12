@@ -387,28 +387,18 @@ export class ThreadRenderer {
                 loadMoreButton.style.cursor = "default";
                 loadMoreButton.style.opacity = "0.5";
 
-                console.log("Load more button clicked");
                 // Start from the thread container and traverse up to find the scroller
                 const threadContainer = this.state.threadContainer;
-                console.log("Starting from thread container:", threadContainer);
 
                 if (threadContainer) {
                     let currentElement: HTMLElement | null = threadContainer;
                     while (currentElement) {
-                        console.log("Checking element:", currentElement);
                         if (Array.from(currentElement.classList).some((cls) => cls.startsWith("scroller_"))) {
-                            console.log("Found scroller element:", currentElement);
                             currentElement.scrollTo({ top: 0, behavior: "auto" });
-                            console.log("Scroll command sent to scroller");
                             break;
                         }
                         currentElement = currentElement.parentElement;
                     }
-                    if (!currentElement) {
-                        console.log("Could not find scroller element");
-                    }
-                } else {
-                    console.log("Thread container not found");
                 }
             });
         }
@@ -668,6 +658,7 @@ export class ThreadRenderer {
             }
 
             threadloafContainer.replaceWith(newThreadloafContainer);
+            contentParent.appendChild(newThreadloafContainer);
             contentParent.appendChild(splitter);
         }
 
@@ -755,10 +746,13 @@ export class ThreadRenderer {
     private isChatOnlyChannel(): boolean {
         if (this.optionsProvider.getOptions().showThreadViewOnlyInForumChannels) {
             // With this option, non-forum channels are chat only.
-            const forumChannelNameEl = document.querySelector(
+            const forumEl1 = document.querySelector(
                 "div[class^='base_'] div[class^='chat_'] div[class^='subtitleContainer_'] div[class^='titleWrapper_'] h2[class*='parentChannelName_']",
             );
-            return !forumChannelNameEl;
+            const forumEl2 = document.querySelector(
+                "div[class^='chatLayerWrapper_'] div[class^='upperContainer_'] div[class^='titleWrapper_']",
+            );
+            return !forumEl1 && !forumEl2;
         } else {
             // Otherwise, all channels are chat + thread.
             return false;
@@ -786,14 +780,9 @@ export class ThreadRenderer {
                 !Array.from(child.classList).some((cls) => cls.startsWith("chatContent_")),
         );
 
-        // Also look for a div.container_* sibling.
-        // This fixes member lists.
-        const hasContainer = children.some(
-            (child) =>
-                child.tagName === "DIV" &&
-                Array.from(child.classList).some((cls: string) => cls.startsWith("container_")),
-        );
+        // Also look for a member list sibling that is open.
+        const hasMemberList = !!contentParent.querySelector('div[class^="container_"][data-member-list-open="true"]');
 
-        return hasSection || hasContainer;
+        return hasSection || hasMemberList;
     }
 }

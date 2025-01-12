@@ -86,12 +86,11 @@ export class DomParser {
                     (node) => node instanceof HTMLElement && node.tagName === "SECTION",
                 );
 
-                // Check for addition or removal of div.content_* in the content container
+                // Check for addition or removal of .chatContent_* in the content container
                 const hasContentContainerChanges = changedNodes.some(
                     (node) =>
                         node instanceof HTMLElement &&
-                        node.tagName === "DIV" &&
-                        Array.from(node.classList).some((cls: string) => cls.startsWith("content_")),
+                        Array.from(node.classList).some((cls: string) => cls.startsWith("chatContent_")),
                 );
 
                 if (
