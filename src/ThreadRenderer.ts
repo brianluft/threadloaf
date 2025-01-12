@@ -778,11 +778,17 @@ export class ThreadRenderer {
 
         // Look for any section element that is a direct child of the content container.
         // This fixes search results.
-        const hasSection = Array.from(contentParent.children).some((child) => child.tagName === "SECTION");
+        // The chatContent_ class is added when a thread is opened in the split view.
+        const children = Array.from(contentParent.children);
+        const hasSection = children.some(
+            (child) =>
+                child.tagName === "SECTION" &&
+                !Array.from(child.classList).some((cls) => cls.startsWith("chatContent_")),
+        );
 
         // Also look for a div.container_* sibling.
         // This fixes member lists.
-        const hasContainer = Array.from(contentParent.children).some(
+        const hasContainer = children.some(
             (child) =>
                 child.tagName === "DIV" &&
                 Array.from(child.classList).some((cls: string) => cls.startsWith("container_")),
