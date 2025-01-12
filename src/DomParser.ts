@@ -1,4 +1,3 @@
-import { DomMutator } from "./DomMutator";
 import { ThreadloafState } from "./ThreadloafState";
 
 /*
@@ -24,11 +23,9 @@ import { ThreadloafState } from "./ThreadloafState";
  * and other important Discord UI components.
  */
 export class DomParser {
-    private domMutator: DomMutator;
     private state: ThreadloafState;
 
-    public constructor(domMutator: DomMutator, state: ThreadloafState) {
-        this.domMutator = domMutator;
+    public constructor(state: ThreadloafState) {
         this.state = state;
     }
 

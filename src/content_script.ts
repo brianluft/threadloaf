@@ -17,7 +17,7 @@ import { UserOptionsProvider } from "./UserOptionsProvider";
     const domMutator = new DomMutator(state, contextMenuManager);
     const messageParser = new MessageParser();
     const messageTreeBuilder = new MessageTreeBuilder();
-    const domParser = new DomParser(domMutator, state);
+    const domParser = new DomParser(state);
     const threadRenderer = new ThreadRenderer(
         state,
         domParser,
