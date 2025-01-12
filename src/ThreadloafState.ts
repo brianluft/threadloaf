@@ -9,7 +9,6 @@ export class ThreadloafState {
     public observer: MutationObserver | null = null;
     public headerObserver: MutationObserver | null = null;
     public isThreadViewActive = false;
-    public isTopLoaded = false;
     public isLoadingMore = false;
     public newestMessageId: string | null = null;
     public pendingScrollToNewest: { shouldExpand: boolean } | null = null;

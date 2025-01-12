@@ -127,41 +127,4 @@ export class DomParser {
             });
         }
     }
-
-    public checkIfTopLoaded(): boolean {
-        if (!this.state.threadContainer) {
-            return false;
-        }
-
-        // Check if there's a container div with a heading-xxl/extrabold class as a direct child
-        const topContainer = Array.from(this.state.threadContainer.children).find((child) => {
-            if (!(child instanceof HTMLElement)) {
-                return false;
-            }
-
-            const hasContainerClass = Array.from(child.classList).some((cls) => cls.startsWith("container_"));
-            if (!hasContainerClass) {
-                return false;
-            }
-
-            const hasHeading = Array.from(child.children).some((grandChild) => {
-                if (!(grandChild instanceof HTMLElement)) {
-                    return false;
-                }
-
-                const isHeading =
-                    grandChild.tagName === "H3" &&
-                    Array.from(grandChild.classList).some(
-                        (cls) => cls.startsWith("heading-xxl") || cls.startsWith("extrabold"),
-                    );
-
-                return isHeading;
-            });
-
-            return hasHeading;
-        });
-
-        const result = !!topContainer;
-        return result;
-    }
 }

@@ -24,8 +24,7 @@ export class MessageParser {
         );
         let unread = false;
 
-        for (let index = 0; index < messageElements.length; index++) {
-            const el = messageElements[index];
+        for (const el of messageElements) {
             try {
                 // We may encounter a red line indicating how far the user has read to.
                 // Messages above the red line have been read; messages below are unread.
@@ -93,7 +92,7 @@ export class MessageParser {
                         children: [],
                         originalElement: el as HTMLElement,
                         isGhost: false,
-                        isFirstMessage: hasChannelHeader && index === 0,
+                        isFirstMessage: hasChannelHeader && messages.length === 0,
                         isUnread: unread,
                     });
                     continue;
@@ -385,7 +384,7 @@ export class MessageParser {
                     authorColor,
                     reactionsHtml,
                     isGhost: false,
-                    isFirstMessage: hasChannelHeader && index === 0,
+                    isFirstMessage: hasChannelHeader && messages.length === 0,
                     isUnread: unread,
                 });
             } catch (error) {

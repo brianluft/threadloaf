@@ -263,9 +263,6 @@ export class ThreadRenderer {
             }
         }
 
-        // Check if we're at the top of the thread
-        this.state.isTopLoaded = this.domParser.checkIfTopLoaded();
-
         // Get existing container or create new one
         let threadloafContainer = document.getElementById("threadloaf-container");
         const isNewContainer = !threadloafContainer;
@@ -296,7 +293,7 @@ export class ThreadRenderer {
         // Parse messages and build tree
         const rawMessages = this.messageParser.parseMessages(this.state.threadContainer);
 
-        // Build the tree (which includes coalescing)
+        // Build the tree
         const rootMessages = this.messageTreeBuilder.buildMessageTree(rawMessages);
 
         // Flatten the tree to get all messages in display order
