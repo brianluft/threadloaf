@@ -6,6 +6,12 @@ interface TestSuite {
     tests: Test[];
 }
 
+declare global {
+    interface Window {
+        runTests: () => Promise<{ passed: number; failed: number; messages: string[] }>;
+    }
+}
+
 class TestRunner {
     private suites: TestSuite[] = [];
     private messages: string[] = [];
@@ -56,10 +62,11 @@ class TestRunner {
     }
 }
 
-export async function runTests(): Promise<{ passed: number; failed: number; messages: string[] }> {
+async function runTests(): Promise<{ passed: number; failed: number; messages: string[] }> {
     const runner = new TestRunner();
-
     runner.registerSuite("MessageParser", await new MessageParserTest().getTests());
-
     return await runner.runAll();
 }
+
+// Expose runTests globally
+window.runTests = runTests;

@@ -3,7 +3,9 @@
     "build": "npm run format && tsc --noEmit && npm run lint && npm run bundle && cp -rf manifest.json styles.css threadloaf-*.png popup.html test-data ../dist/",
     "bundle": "esbuild content_script.ts --bundle --outfile=../dist/content_script.js --format=iife --platform=browser --sourcemap && esbuild popup.ts --bundle --outfile=../dist/popup.js --format=iife --platform=browser --sourcemap",
     "format": "prettier --write \"**/*.ts\"",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "bundle-tests": "mkdir -p ../temp && esbuild runTests.ts --bundle --outfile=../temp/runTests.js --format=iife --platform=browser && cp test.html ../temp/",
+    "test": "npm run bundle-tests && node --loader ts-node/esm runTestsHeadless.ts"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.293",

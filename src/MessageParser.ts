@@ -358,13 +358,16 @@ export class MessageParser {
                     }
                 }
 
-                // Search for the regex "chrome-extension://[a-z]+/" and replace it with "https://discord.com/".
+                // Search for file:// or chrome-extension:// URLs and replace with https://discord.com/
                 let htmlContent = fullContent.innerHTML;
-                htmlContent = htmlContent.replace(/chrome-extension:\/\/[a-z]+/g, "https://discord.com");
-                reactionsHtml = reactionsHtml?.replace(/chrome-extension:\/\/[a-z]+/g, "https://discord.com");
+                htmlContent = htmlContent.replace(/(?:file:\/\/|chrome-extension:\/\/[a-z]+)/g, "https://discord.com");
+                reactionsHtml = reactionsHtml?.replace(
+                    /(?:file:\/\/|chrome-extension:\/\/[a-z]+)/g,
+                    "https://discord.com",
+                );
                 if (parentPreview) {
                     parentPreview.content = parentPreview.content.replace(
-                        /chrome-extension:\/\/[a-z]+/g,
+                        /(?:file:\/\/|chrome-extension:\/\/[a-z]+)/g,
                         "https://discord.com",
                     );
                 }

@@ -26,6 +26,10 @@ jobs:
       working-directory: ./src
       run: npm run build
       
+    - name: Test extension
+      working-directory: ./src
+      run: npm test
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:

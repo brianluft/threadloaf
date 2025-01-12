@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Threadloaf Tests</title>
+</head>
+<body>
+    <script>
+        // Mock Chrome extension APIs
+        window.chrome = {
+            runtime: {
+                getURL: (path) => {
+                    // If it's an asset path, return the full Discord URL
+                    if (path.startsWith('assets/')) {
+                        return `https://discord.com/${path}`;
+                    }
+                    return path;
+                }
+            }
+        };
+
+        // Create a container for test data that won't be visible
+        const testContainer = document.createElement('div');
+        testContainer.id = 'test-container';
+        testContainer.style.display = 'none';
+        document.body.appendChild(testContainer);
+    </script>
+    <script src="runTests.js"></script>
+</body>
+</html> 
