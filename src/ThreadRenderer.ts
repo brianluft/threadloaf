@@ -185,30 +185,19 @@ export class ThreadRenderer {
         // Find the content div by traversing up from thread container
         let currentElement = this.state.threadContainer.parentElement;
         let contentParent: HTMLElement | null = null;
-        let contentClass: string | null = null;
 
         while (currentElement) {
-            // Check if this is a div with content_* class and has a main child
-            if (
-                currentElement.tagName === "DIV" &&
-                Array.from(currentElement.classList).some((cls) => {
-                    if (cls.startsWith("content_")) {
-                        contentClass = cls;
-                        return true;
-                    }
-                    return false;
-                }) &&
-                currentElement.querySelector("main")
-            ) {
-                contentParent = currentElement as HTMLElement;
+            const chatContentClass = Array.from(currentElement.classList).find((cls) => cls.startsWith("chatContent_"));
+            if (chatContentClass) {
+                contentParent = currentElement.parentElement;
                 break;
             }
 
             currentElement = currentElement.parentElement;
         }
 
-        if (!contentParent || !contentClass) {
-            console.error("Could not find parent div with class content_* and main child, cannot render threadloaf");
+        if (!contentParent) {
+            console.error("Could not find the channel parent; cannot render Threadloaf.");
             return;
         }
 
@@ -591,7 +580,7 @@ export class ThreadRenderer {
 
             // Update the main element position (bottom pane) and splitter
             styleElement.textContent = `
-                div.${contentClass} > main {
+                main[class^="chatContent_"], section[class^="chatContent_"] {
                     position: absolute;
                     top: calc(${clampedPercent}% + ${ThreadRenderer.SPLITTER_HEIGHT / 2}px);
                     left: 0;
