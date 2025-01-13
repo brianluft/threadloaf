@@ -265,3 +265,33 @@ div[class^="list_"] li[class^="card_"][data-item-role="item"] {
     /* Tighter gap between cards */
     padding-bottom: 4px;
 }
+
+div[class^="list_"] li[class^="card_"][data-item-role="item"] > div[class*="mainCard_"]:hover {
+    /* When the user hovers over a card, don't do the "move card up and add shadow" animation */
+    box-shadow: none;
+    transform: none;
+    /* Instead, use the same background as when hovering a message in the chat view */
+    background: var(--bg-overlay-1, var(--background-message-hover));
+    /* Also, use a brighter border */
+    border: 1px solid var(--border-strong);
+}
+
+/* Shrink embedded images in the chat view */
+div[class^="visualMediaItemContainer_"] {
+    max-width: 150px !important;
+}
+
+/* Shrink the thumbnail of YouTube embeds */
+div[class^="embedVideo_"] {
+    max-width: 150px !important;
+}
+
+/* Shrink the thumbnail of webpage image embeds */
+div[class*="embedImage_"] {
+    max-width: 150px !important;
+}
+
+/* Hide the "YouTube" provider text on embeds */
+div[class^="embedProvider_"] {
+    display: none !important;
+}
