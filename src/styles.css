@@ -208,7 +208,7 @@ div.threadloaf-message span.message-reactions .reaction-count {
 
 /* Unread message indicator */
 .threadloaf-message[data-is-unread="true"] {
-    background: linear-gradient(to right, var(--brand-500) 0%, transparent 7px);
+    background: linear-gradient(to right, var(--brand-500) 0%, var(--brand-500) 3px, transparent 3px);
 }
 
 /* Fix the background of the thread view when open in the split view */
