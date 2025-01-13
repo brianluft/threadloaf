@@ -29,6 +29,16 @@ export class DomMutator {
         this.state = state;
         this.contextMenuManager = contextMenuManager;
         this.messageSelector = messageSelector;
+
+        // Set up handler for message selection changes
+        this.state.onSelectedMessageChange((messageId) => {
+            if (messageId) {
+                const message = this.state.getMessageInfo(messageId);
+                if (message) {
+                    this.scrollToMessage(message);
+                }
+            }
+        });
     }
 
     private scrollToMessage(message: MessageInfo): void {
@@ -231,13 +241,13 @@ export class DomMutator {
         el.dataset.timestamp = message.timestamp.toString();
 
         el.addEventListener("click", () => {
-            this.scrollToMessage(message);
             this.messageSelector.selectMessage(message.id);
+            this.state.threadContainer?.focus();
         });
 
         el.addEventListener("contextmenu", (event) => {
-            this.scrollToMessage(message);
             this.messageSelector.selectMessage(message.id);
+            this.state.threadContainer?.focus();
             this.contextMenuManager.handleContextMenu(event, message);
         });
 

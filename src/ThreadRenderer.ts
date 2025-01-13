@@ -310,6 +310,9 @@ export class ThreadRenderer {
 
         const allMessages = getAllMessages();
 
+        // Update the message map in state
+        this.state.setMessageInfoMap(allMessages);
+
         // Sort for color grading (newest first)
         const colorSortedMessages = [...allMessages].sort((a, b) => b.timestamp - a.timestamp);
         const messageColors = new Map<string, string>();

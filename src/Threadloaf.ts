@@ -40,7 +40,6 @@ export class Threadloaf {
         this.setupHeaderObserver();
         this.domParser.setupMutationObserver(() => this.threadRenderer.renderThread());
         this.setupPolling();
-        this.setupKeyboardNavigation();
 
         // Find initial thread container and set up initial view
         const initialThreadContainer = this.domParser.findThreadContainer();
@@ -85,9 +84,5 @@ export class Threadloaf {
             childList: true,
             subtree: true,
         });
-    }
-
-    private setupKeyboardNavigation(): void {
-        // Remove keyboard navigation since we no longer have expanded messages
     }
 }
