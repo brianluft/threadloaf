@@ -307,7 +307,7 @@ export class ThreadRenderer {
         const messageColors = new Map<string, string>();
         const messageBold = new Map<string, boolean>();
 
-        const numGradientMessages = Math.min(15, colorSortedMessages.length);
+        const numGradientMessages = Math.min(30, colorSortedMessages.length);
 
         // Store the newest message ID if we have messages
         if (colorSortedMessages.length > 0) {
