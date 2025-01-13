@@ -780,8 +780,8 @@ export class ThreadRenderer {
                 !Array.from(child.classList).some((cls) => cls.startsWith("chatContent_")),
         );
 
-        // Also look for a member list sibling that is open.
-        const hasMemberList = !!contentParent.querySelector('div[class^="container_"][data-member-list-open="true"]');
+        // If the member list is open anywhere, it messes us up, so bail out.
+        const hasMemberList = !!document.querySelector('div[class*="membersWrap_"]');
 
         return hasSection || hasMemberList;
     }
