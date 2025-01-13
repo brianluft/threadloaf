@@ -7,6 +7,7 @@ import { Threadloaf } from "./Threadloaf";
 import { DomMutator } from "./DomMutator";
 import { ContextMenuManager } from "./ContextMenuManager";
 import { UserOptionsProvider } from "./UserOptionsProvider";
+import { ScrollButtonManager } from "./ScrollButtonManager";
 
 (async function (): Promise<void> {
     const userOptions = await UserOptionsProvider.loadInitialOptions();
@@ -18,6 +19,7 @@ import { UserOptionsProvider } from "./UserOptionsProvider";
     const messageParser = new MessageParser();
     const messageTreeBuilder = new MessageTreeBuilder();
     const domParser = new DomParser(state);
+    const scrollButtonManager = new ScrollButtonManager();
     const threadRenderer = new ThreadRenderer(
         state,
         domParser,
@@ -25,6 +27,7 @@ import { UserOptionsProvider } from "./UserOptionsProvider";
         messageParser,
         messageTreeBuilder,
         userOptionsProvider,
+        scrollButtonManager,
     );
 
     // Set up collapse handlers after creating ThreadRenderer

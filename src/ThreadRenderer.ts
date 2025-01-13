@@ -5,6 +5,7 @@ import { MessageParser } from "./MessageParser";
 import { MessageTreeBuilder } from "./MessageTreeBuilder";
 import { MessageInfo } from "./MessageInfo";
 import { UserOptionsProvider } from "./UserOptionsProvider";
+import { ScrollButtonManager } from "./ScrollButtonManager";
 
 /**
  * Manages the rendering of threaded message views in the Discord interface.
@@ -22,6 +23,7 @@ export class ThreadRenderer {
     private messageParser: MessageParser;
     private messageTreeBuilder: MessageTreeBuilder;
     private optionsProvider: UserOptionsProvider;
+    private scrollButtonManager: ScrollButtonManager;
     private lastUrl = "";
     private lastSplitPercent = ThreadRenderer.DEFAULT_POSITION;
     private previousSplitPercent = ThreadRenderer.DEFAULT_POSITION;
@@ -34,6 +36,7 @@ export class ThreadRenderer {
         messageParser: MessageParser,
         messageTreeBuilder: MessageTreeBuilder,
         optionsProvider: UserOptionsProvider,
+        scrollButtonManager: ScrollButtonManager,
     ) {
         this.state = state;
         this.domParser = domParser;
@@ -41,6 +44,7 @@ export class ThreadRenderer {
         this.messageParser = messageParser;
         this.messageTreeBuilder = messageTreeBuilder;
         this.optionsProvider = optionsProvider;
+        this.scrollButtonManager = scrollButtonManager;
     }
 
     private updatePositions(splitPercent: number): void {
@@ -100,6 +104,10 @@ export class ThreadRenderer {
                 cursor: pointer;
                 opacity: ${clampedPercent <= minPosition ? "1" : clampedPercent >= 90 ? "0.3" : "1"};
                 pointer-events: ${clampedPercent <= minPosition ? "auto" : clampedPercent >= 90 ? "none" : "auto"};
+            }
+
+            .threadloaf-chat-scroll-button.top {
+                top: calc(${clampedPercent}% + ${ThreadRenderer.SPLITTER_HEIGHT / 2}px + 8px);
             }
         `;
 
@@ -604,6 +612,10 @@ export class ThreadRenderer {
                     opacity: ${clampedPercent <= minPosition ? "1" : clampedPercent >= 90 ? "0.3" : "1"};
                     pointer-events: ${clampedPercent <= minPosition ? "auto" : clampedPercent >= 90 ? "none" : "auto"};
                 }
+
+                .threadloaf-chat-scroll-button.top {
+                    top: calc(${clampedPercent}% + ${ThreadRenderer.SPLITTER_HEIGHT / 2}px + 8px);
+                }
             `;
 
             // Store the position for future renders
@@ -669,6 +681,17 @@ export class ThreadRenderer {
             threadloafContainer.replaceWith(newThreadloafContainer);
             contentParent.appendChild(newThreadloafContainer);
             contentParent.appendChild(splitter);
+        }
+
+        // Add scroll buttons to thread view
+        if (threadContent) {
+            this.scrollButtonManager.addThreadViewButtons(threadContent, newThreadloafContainer);
+        }
+
+        // Add scroll buttons to chat view
+        const chatScroller = document.querySelector('div[class^="messagesWrapper_"] div[class^="scroller_"]');
+        if (chatScroller instanceof HTMLElement && contentParent) {
+            this.scrollButtonManager.addChatViewButtons(chatScroller, contentParent);
         }
 
         // Restore scroll position if we have a recent message

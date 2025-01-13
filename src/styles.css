@@ -59,7 +59,7 @@
     padding-right: 8px;
     padding-top: 16px;
     padding-bottom: 100px;
-    overflow-y: auto !important;
+    overflow-y: scroll !important;
     overflow-x: hidden;
     flex-grow: 1;
     height: 100%;
@@ -298,4 +298,44 @@ div[class*="embedImage_"] {
 /* Hide the "YouTube" provider text on embeds */
 div[class^="embedProvider_"] {
     display: none !important;
+}
+
+/* Scroll buttons - shared styles */
+.threadloaf-scroll-button,
+.threadloaf-chat-scroll-button {
+    position: absolute;
+    right: 24px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-accent);
+    color: var(--text-normal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s, background-color 0.2s;
+    z-index: 9999;
+}
+
+.threadloaf-scroll-button:hover,
+.threadloaf-chat-scroll-button:hover {
+    opacity: 1;
+    background: var(--background-modifier-hover);
+}
+
+/* Thread view buttons */
+.threadloaf-scroll-button.top {
+    top: 8px;
+}
+
+.threadloaf-scroll-button.bottom {
+    bottom: 8px;
+}
+
+/* Chat view buttons */
+.threadloaf-chat-scroll-button.top {
+    top: calc(60% + 12px + 8px); /* Default split position + half splitter height + padding */
 }
