@@ -2,6 +2,7 @@ import { ThreadloafState } from "./ThreadloafState";
 import { MessageInfo } from "./MessageInfo";
 import { ContextMenuManager } from "./ContextMenuManager";
 import { UserOptionsProvider } from "./UserOptionsProvider";
+import { MessageSelector } from "./MessageSelector";
 
 export interface CollapseHandlers {
     isBottomPaneCollapsed: () => boolean;
@@ -17,34 +18,26 @@ export interface CollapseHandlers {
 export class DomMutator {
     private state: ThreadloafState;
     private contextMenuManager: ContextMenuManager;
+    private messageSelector: MessageSelector;
     private collapseHandlers: CollapseHandlers | null = null;
 
-    public constructor(state: ThreadloafState, contextMenuManager: ContextMenuManager) {
+    public constructor(
+        state: ThreadloafState,
+        contextMenuManager: ContextMenuManager,
+        messageSelector: MessageSelector,
+    ) {
         this.state = state;
         this.contextMenuManager = contextMenuManager;
+        this.messageSelector = messageSelector;
     }
 
-    private scrollToAndHighlightMessage(message: MessageInfo, previewElement: HTMLElement): void {
+    private scrollToMessage(message: MessageInfo): void {
         if (!message.originalElement) {
             console.error("No original element reference found for message");
             return;
         }
 
         const originalElement = message.originalElement as HTMLElement;
-
-        // Function to apply highlight effect
-        const applyHighlight = (element: HTMLElement): void => {
-            element.style.transition = "background-color 0.5s";
-            element.style.backgroundColor = "color-mix(in oklab, var(--text-normal) 30%, transparent)";
-
-            setTimeout(() => {
-                element.style.backgroundColor = "";
-                // Clean up after animation
-                setTimeout(() => {
-                    element.style.transition = "";
-                }, 500);
-            }, 1000);
-        };
 
         // If the bottom pane is collapsed, uncollapse it and wait before scrolling
         if (this.collapseHandlers?.isBottomPaneCollapsed()) {
@@ -54,20 +47,14 @@ export class DomMutator {
                 originalElement.scrollIntoView({ behavior: "auto", block: "end" });
                 // Add 16px padding to the bottom
                 originalElement.closest('[class*="chat_"]')?.scrollBy(0, 16);
-                applyHighlight(originalElement);
-                applyHighlight(previewElement);
             }, 250);
             return;
         }
 
-        // If not collapsed, scroll and highlight immediately
+        // If not collapsed, scroll immediately
         originalElement.scrollIntoView({ behavior: "auto", block: "end" });
         // Add 16px padding to the bottom
         originalElement.closest('[class*="chat_"]')?.scrollBy(0, 16);
-
-        // Highlight both the original message and the clicked preview
-        applyHighlight(originalElement);
-        applyHighlight(previewElement);
     }
 
     public setCollapseHandlers(handlers: CollapseHandlers): void {
@@ -244,11 +231,13 @@ export class DomMutator {
         el.dataset.timestamp = message.timestamp.toString();
 
         el.addEventListener("click", () => {
-            this.scrollToAndHighlightMessage(message, el);
+            this.scrollToMessage(message);
+            this.messageSelector.selectMessage(message.id);
         });
 
         el.addEventListener("contextmenu", (event) => {
-            this.scrollToAndHighlightMessage(message, el);
+            this.scrollToMessage(message);
+            this.messageSelector.selectMessage(message.id);
             this.contextMenuManager.handleContextMenu(event, message);
         });
 

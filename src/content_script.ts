@@ -8,6 +8,7 @@ import { DomMutator } from "./DomMutator";
 import { ContextMenuManager } from "./ContextMenuManager";
 import { UserOptionsProvider } from "./UserOptionsProvider";
 import { ScrollButtonManager } from "./ScrollButtonManager";
+import { MessageSelector } from "./MessageSelector";
 
 (async function (): Promise<void> {
     const userOptions = await UserOptionsProvider.loadInitialOptions();
@@ -15,7 +16,8 @@ import { ScrollButtonManager } from "./ScrollButtonManager";
 
     const state = new ThreadloafState();
     const contextMenuManager = new ContextMenuManager();
-    const domMutator = new DomMutator(state, contextMenuManager);
+    const messageSelector = new MessageSelector(state);
+    const domMutator = new DomMutator(state, contextMenuManager, messageSelector);
     const messageParser = new MessageParser();
     const messageTreeBuilder = new MessageTreeBuilder();
     const domParser = new DomParser(state);
