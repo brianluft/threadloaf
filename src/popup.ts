@@ -5,9 +5,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     const optionsProvider = UserOptionsProvider.getInstance(userOptions);
     const options = optionsProvider.getOptions();
 
-    // Set initial checkbox states
-    const forumCheckbox = document.getElementById("showThreadViewOnlyInForumChannels") as HTMLInputElement;
-    forumCheckbox.checked = options.showThreadViewOnlyInForumChannels;
+    // Set initial radio button states
+    const forumOnlyRadio = document.getElementById("forumChannelsOnly") as HTMLInputElement;
+    const allChannelsRadio = document.getElementById("allChannels") as HTMLInputElement;
+    forumOnlyRadio.checked = options.showThreadViewOnlyInForumChannels;
+    allChannelsRadio.checked = !options.showThreadViewOnlyInForumChannels;
+
+    // Listen for radio button changes
+    forumOnlyRadio.addEventListener("change", async () => {
+        options.showThreadViewOnlyInForumChannels = true;
+        await optionsProvider.setOptions(options);
+    });
+
+    allChannelsRadio.addEventListener("change", async () => {
+        options.showThreadViewOnlyInForumChannels = false;
+        await optionsProvider.setOptions(options);
+    });
 
     const reactionsCheckbox = document.getElementById("showReactions") as HTMLInputElement;
     reactionsCheckbox.checked = options.showReactions;
@@ -19,11 +32,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     nameInput.disabled = !options.highlightOwnName;
 
     // Listen for changes
-    forumCheckbox.addEventListener("change", async () => {
-        options.showThreadViewOnlyInForumChannels = forumCheckbox.checked;
-        await optionsProvider.setOptions(options);
-    });
-
     reactionsCheckbox.addEventListener("change", async () => {
         options.showReactions = reactionsCheckbox.checked;
         await optionsProvider.setOptions(options);

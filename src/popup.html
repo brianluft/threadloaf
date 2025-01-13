@@ -5,34 +5,44 @@
     <title>Threadloaf</title>
     <style>
         body {
-            width: 500px;
-            height: 425px;
+            width: 475px;
+            height: 250px;
             overflow-y: scroll;
             font-family: system-ui, -apple-system, sans-serif;
             line-height: 1.4;
             padding: 1em;
         }
+
         h1 {
             font-size: 1.5em;
             margin-top: 1.5em;
         }
+
         h1:first-child {
             margin-top: 0;
         }
+
+        details {
+            margin-top: 2em;
+        }
+
         summary {
             font-weight: bold;
             font-size: 1.2em;
             cursor: pointer;
         }
+
         pre {
             font-size: 0.9em;
             line-height: 115%;
         }
+
         .option-row {
             display: flex;
             align-items: center;
             margin: 0.5em 0;
         }
+
         .option-row label {
             margin-left: 0.5em;
         }
@@ -49,18 +59,34 @@
             background-color: #f0f0f0;
             color: #666;
         }
+
+        .radio-group {
+            margin-bottom: 1.5em;
+        }
+
+        input[type="radio"] {
+            margin-left: 2em;
+        }
     </style>
     <script src="popup.js"></script>
 </head>
 <body>
     <h1>Options</h1>
-    <div class="option-row">
-        <input type="checkbox" id="showThreadViewOnlyInForumChannels">
-        <label for="showThreadViewOnlyInForumChannels">Show thread view only in forum channels</label>
+    <div class="radio-group">
+        <p>Show thread view in:</p>
+        <div class="option-row">
+            <input type="radio" id="forumChannelsOnly" name="threadViewScope">
+            <label for="forumChannelsOnly">Forum channels only</label>
+        </div>
+        <div class="option-row">
+            <input type="radio" id="allChannels" name="threadViewScope">
+            <label for="allChannels">All channels</label>
+        </div>
     </div>
+
     <div class="option-row">
         <input type="checkbox" id="showReactions">
-        <label for="showReactions">Show reactions</label>
+        <label for="showReactions">Show reactions in thread view</label>
     </div>
 
     <div class="option-row">
@@ -69,9 +95,10 @@
         <input type="text" id="ownName" placeholder="Your name">
     </div>
 
-    <h1>About Threadloaf</h1>
-    <p><a href="https://threadloaf.com" target="_blank">Visit threadloaf.com</a></p>
-    <pre>
+    <details>
+        <summary>About Threadloaf</summary>
+        <p><a href="https://threadloaf.com" target="_blank">Visit threadloaf.com</a></p>
+        <pre>
 MIT License
 
 Copyright (c) 2024-2025 Brian Luft
@@ -93,6 +120,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-    </pre>
+        </pre>
+    </details>
 </body>
 </html>
