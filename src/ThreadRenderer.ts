@@ -481,6 +481,15 @@ export class ThreadRenderer {
                 messageEl.style.flexShrink = "1"; // Allow message to shrink
                 messageEl.style.flexGrow = "1"; // Allow message to grow
 
+                // Add name highlighting if enabled
+                const options = this.optionsProvider.getOptions();
+                if (options.highlightOwnName && options.ownName) {
+                    const authorEl = messageEl.querySelector(".message-author");
+                    if (authorEl && authorEl.textContent?.toLowerCase() === options.ownName.toLowerCase()) {
+                        authorEl.classList.add("highlight-own-name");
+                    }
+                }
+
                 messageContainer.appendChild(messageEl);
                 container.appendChild(messageContainer);
             });

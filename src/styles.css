@@ -115,6 +115,10 @@ div[class*="chat_"] {
     flex: 0 0 auto;
 }
 
+.message-author.highlight-own-name {
+    color: color-mix(in oklab, var(--brand-500), var(--text-normal) 50%) !important;
+}
+
 .separator {
     color: var(--text-normal);
     flex: 0 0 auto;

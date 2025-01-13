@@ -5,6 +5,8 @@ export class UserOptions {
     public showThreadViewOnlyInForumChannels = true;
     public splitterPositions: { [url: string]: number } = {};
     public showReactions = true;
+    public highlightOwnName = false;
+    public ownName = "";
 
     public constructor(init?: Partial<UserOptions>) {
         Object.assign(this, init);
@@ -23,6 +25,8 @@ export class UserOptions {
                     defaultOptions.showThreadViewOnlyInForumChannels,
                 splitterPositions: (obj as UserOptions).splitterPositions ?? defaultOptions.splitterPositions,
                 showReactions: (obj as UserOptions).showReactions ?? defaultOptions.showReactions,
+                highlightOwnName: (obj as UserOptions).highlightOwnName ?? defaultOptions.highlightOwnName,
+                ownName: (obj as UserOptions).ownName ?? defaultOptions.ownName,
             });
         }
         return defaultOptions;

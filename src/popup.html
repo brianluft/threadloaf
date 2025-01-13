@@ -36,6 +36,19 @@
         .option-row label {
             margin-left: 0.5em;
         }
+        
+        #ownName {
+            margin-left: 0.5em;
+            padding: 2px 4px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        #ownName:disabled {
+            background-color: #f0f0f0;
+            color: #666;
+        }
     </style>
     <script src="popup.js"></script>
 </head>
@@ -48,6 +61,12 @@
     <div class="option-row">
         <input type="checkbox" id="showReactions">
         <label for="showReactions">Show reactions</label>
+    </div>
+
+    <div class="option-row">
+        <input type="checkbox" id="highlightOwnName">
+        <label for="highlightOwnName">Highlight my own name:</label>
+        <input type="text" id="ownName" placeholder="Your name">
     </div>
 
     <h1>About Threadloaf</h1>
