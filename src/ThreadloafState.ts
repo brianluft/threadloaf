@@ -10,7 +10,7 @@ export class ThreadloafState {
     private _threadContainer: HTMLElement | null = null;
     private threadContainerChangeHandlers: Array<(container: HTMLElement | null) => void> = [];
     private _selectedMessageId: string | null = null;
-    private selectedMessageChangeHandlers: Array<(messageId: string | null) => void> = [];
+    private selectedMessageChangeHandlers: Array<(messageId: string | null, source: "chat" | "thread") => void> = [];
     private messageInfoMap = new Map<string, MessageInfo>();
     public observer: MutationObserver | null = null;
     public headerObserver: MutationObserver | null = null;
@@ -36,16 +36,16 @@ export class ThreadloafState {
         return this._selectedMessageId;
     }
 
-    public set selectedMessageId(messageId: string | null) {
+    public setSelectedMessageId(messageId: string | null, source: "chat" | "thread"): void {
         if (this._selectedMessageId === messageId) {
             this._selectedMessageId = null;
         } else {
             this._selectedMessageId = messageId;
         }
-        this.selectedMessageChangeHandlers.forEach((handler) => handler(messageId));
+        this.selectedMessageChangeHandlers.forEach((handler) => handler(messageId, source));
     }
 
-    public onSelectedMessageChange(handler: (messageId: string | null) => void): void {
+    public onSelectedMessageChange(handler: (messageId: string | null, source: "chat" | "thread") => void): void {
         this.selectedMessageChangeHandlers.push(handler);
     }
 

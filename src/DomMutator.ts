@@ -31,14 +31,25 @@ export class DomMutator {
         this.messageSelector = messageSelector;
 
         // Set up handler for message selection changes
-        this.state.onSelectedMessageChange((messageId) => {
-            if (messageId) {
-                const message = this.state.getMessageInfo(messageId);
-                if (message) {
-                    this.scrollToMessage(message);
-                }
+        this.state.onSelectedMessageChange((messageId, source) => {
+            if (!messageId) return;
+
+            const message = this.state.getMessageInfo(messageId);
+            if (!message) return;
+
+            if (source === "thread") {
+                this.scrollToMessage(message);
+            } else if (source === "chat") {
+                this.scrollThreadViewToMessage(messageId);
             }
         });
+    }
+
+    private scrollThreadViewToMessage(messageId: string): void {
+        const threadMessage = document.querySelector(`.threadloaf-message[data-msg-id="${messageId}"]`) as HTMLElement;
+        if (!threadMessage) return;
+
+        threadMessage.scrollIntoView({ behavior: "auto", block: "center" });
     }
 
     private scrollToMessage(message: MessageInfo): void {
@@ -241,12 +252,12 @@ export class DomMutator {
         el.dataset.timestamp = message.timestamp.toString();
 
         el.addEventListener("click", () => {
-            this.messageSelector.selectMessage(message.id);
+            this.messageSelector.selectMessage(message.id, "thread");
             this.state.threadContainer?.focus();
         });
 
         el.addEventListener("contextmenu", (event) => {
-            this.messageSelector.selectMessage(message.id);
+            this.messageSelector.selectMessage(message.id, "thread");
             this.state.threadContainer?.focus();
             this.contextMenuManager.handleContextMenu(event, message);
         });

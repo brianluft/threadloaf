@@ -44,7 +44,7 @@ export class MessageSelector {
 
             const message = direction === "up" ? messages[messages.length - 1] : messages[0];
             const messageId = message.getAttribute("data-msg-id");
-            if (messageId) this.selectMessage(messageId);
+            if (messageId) this.selectMessage(messageId, "thread");
             return;
         }
 
@@ -66,7 +66,7 @@ export class MessageSelector {
         // Select the next message
         const nextMessageId = messages[nextIndex].getAttribute("data-msg-id");
         if (nextMessageId) {
-            this.selectMessage(nextMessageId);
+            this.selectMessage(nextMessageId, "thread");
             // Ensure the newly selected message is visible
             messages[nextIndex].scrollIntoView({ block: "nearest", behavior: "auto" });
         }
@@ -90,17 +90,17 @@ export class MessageSelector {
             if (!match) return;
 
             const messageId = match[1];
-            this.selectMessage(messageId);
+            this.selectMessage(messageId, "chat");
         });
     }
 
-    public selectMessage(messageId: string): void {
-        this.state.selectedMessageId = messageId;
+    public selectMessage(messageId: string, source: "chat" | "thread"): void {
+        this.state.setSelectedMessageId(messageId, source);
         this.updateSelectionStyle();
     }
 
-    public clearSelection(): void {
-        this.state.selectedMessageId = null;
+    public clearSelection(source: "chat" | "thread"): void {
+        this.state.setSelectedMessageId(null, source);
         this.updateSelectionStyle();
     }
 
