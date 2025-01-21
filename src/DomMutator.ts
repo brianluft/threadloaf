@@ -47,35 +47,74 @@ export class DomMutator {
 
     private scrollThreadViewToMessage(messageId: string): void {
         const threadMessage = document.querySelector(`.threadloaf-message[data-msg-id="${messageId}"]`) as HTMLElement;
-        if (!threadMessage) return;
+        if (!threadMessage) {
+            return;
+        }
 
         threadMessage.scrollIntoView({ behavior: "auto", block: "center" });
     }
 
     private scrollToMessage(message: MessageInfo): void {
         if (!message.originalElement) {
-            console.error("No original element reference found for message");
+            console.error("[Threadloaf] No original element reference found for message");
             return;
         }
 
         const originalElement = message.originalElement as HTMLElement;
+        const chatContainer = originalElement.closest('[class*="chat_"]');
+        if (!chatContainer) {
+            return;
+        }
 
         // If the bottom pane is collapsed, uncollapse it and wait before scrolling
         if (this.collapseHandlers?.isBottomPaneCollapsed()) {
             this.collapseHandlers.uncollapseBottomPane();
             // Wait longer for the pane expansion and layout to stabilize
             setTimeout(() => {
-                originalElement.scrollIntoView({ behavior: "auto", block: "end" });
-                // Add 16px padding to the bottom
-                originalElement.closest('[class*="chat_"]')?.scrollBy(0, 16);
+                this.scrollMessageIntoView(originalElement, chatContainer);
             }, 250);
             return;
         }
 
         // If not collapsed, scroll immediately
-        originalElement.scrollIntoView({ behavior: "auto", block: "end" });
-        // Add 16px padding to the bottom
-        originalElement.closest('[class*="chat_"]')?.scrollBy(0, 16);
+        this.scrollMessageIntoView(originalElement, chatContainer);
+    }
+
+    private scrollMessageIntoView(messageElement: HTMLElement, chatContainer: Element): void {
+        const messageRect = messageElement.getBoundingClientRect();
+
+        // Find the scrollable container by walking up until we find div.scroller_*
+        let scrollContainer: Element | null = messageElement;
+        while (scrollContainer && !Array.from(scrollContainer.classList).some((cls) => cls.startsWith("scroller_"))) {
+            const parent: Element | null = scrollContainer.parentElement;
+            if (!parent) break;
+            scrollContainer = parent;
+        }
+
+        if (!scrollContainer) {
+            return;
+        }
+
+        const scrollerElement = scrollContainer as HTMLElement;
+
+        // Get the actual visible height of the scroller, accounting for any padding/borders
+        const style = window.getComputedStyle(scrollerElement);
+        const containerHeight =
+            scrollerElement.clientHeight - (parseFloat(style.paddingTop) + parseFloat(style.paddingBottom));
+
+        // If message is taller than the container or close to it (within 50px),
+        // align to top to show the author and beginning of the message
+        const shouldAlignTop = messageRect.height > containerHeight - 50;
+
+        messageElement.scrollIntoView({
+            behavior: "auto",
+            block: shouldAlignTop ? "start" : "end",
+        });
+
+        // Add padding only when aligning to bottom
+        if (!shouldAlignTop) {
+            chatContainer.scrollBy(0, 16);
+        }
     }
 
     public setCollapseHandlers(handlers: CollapseHandlers): void {
