@@ -149,7 +149,7 @@ export class DomMutator {
                 style.id = styleId;
                 style.textContent = `
                     div.${scrollerClass} {
-                        margin-bottom: 16px !important;
+                        margin-bottom: 48px !important;
                     }
                 `;
                 document.head.appendChild(style);
