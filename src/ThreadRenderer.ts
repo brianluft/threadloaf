@@ -16,6 +16,7 @@ import { ScrollButtonManager } from "./ScrollButtonManager";
 export class ThreadRenderer {
     private static readonly SPLITTER_HEIGHT = 24; // Match the CSS height
     private static readonly DEFAULT_POSITION = 60; // Default split position
+    private static readonly THREADLOAF_VISIBLE_CLASS = "threadloaf-visible";
 
     private state: ThreadloafState;
     private domParser: DomParser;
@@ -174,6 +175,20 @@ export class ThreadRenderer {
         }
     }
 
+    /**
+     * Adds or removes a class from the document body to indicate when Threadloaf UI is visible.
+     * This allows us to scope CSS rules to only apply when Threadloaf is present, particularly
+     * for embedded content like images and videos that need different styling when the chat
+     * view is compressed.
+     */
+    private setThreadloafVisibleBodyClass(visible: boolean): void {
+        if (visible) {
+            document.body.classList.add(ThreadRenderer.THREADLOAF_VISIBLE_CLASS);
+        } else {
+            document.body.classList.remove(ThreadRenderer.THREADLOAF_VISIBLE_CLASS);
+        }
+    }
+
     // Render the thread UI
     public renderThread(): void {
         if (!this.state.threadContainer) return;
@@ -223,6 +238,8 @@ export class ThreadRenderer {
             if (styleElement) {
                 styleElement.remove();
             }
+
+            this.setThreadloafVisibleBodyClass(false);
             return;
         }
 
@@ -551,6 +568,7 @@ export class ThreadRenderer {
 
         // Always show both views
         this.state.threadContainer.style.display = "block";
+        this.setThreadloafVisibleBodyClass(true);
 
         // Add margin to the chat view
         this.domMutator.addScrollerStyle();
