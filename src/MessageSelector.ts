@@ -27,6 +27,10 @@ export class MessageSelector {
             this.currentKeydownHandler = (event: KeyboardEvent): void => {
                 if (!document.body.classList.contains("threadloaf-visible")) return;
                 if (event.key === "a" || event.key === "z") {
+                    // Check if there's an active editor in the thread container
+                    const hasActiveEditor = container.querySelector('div[class*="editor_"]') !== null;
+                    if (hasActiveEditor) return;
+
                     event.preventDefault();
                     event.stopPropagation();
                     this.moveSelection(event.key === "a" ? "up" : "down");
