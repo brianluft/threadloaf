@@ -25,6 +25,7 @@ export class MessageSelector {
         // Set up handler for new container
         if (container) {
             this.currentKeydownHandler = (event: KeyboardEvent): void => {
+                if (!document.body.classList.contains("threadloaf-visible")) return;
                 if (event.key === "a" || event.key === "z") {
                     event.preventDefault();
                     event.stopPropagation();
@@ -75,6 +76,7 @@ export class MessageSelector {
     private setupChatViewClickHandler(): void {
         // Attach to the highest stable point in Discord's DOM
         document.body.addEventListener("click", (event) => {
+            if (!document.body.classList.contains("threadloaf-visible")) return;
             const target = event.target as HTMLElement;
             if (!target) return;
 
