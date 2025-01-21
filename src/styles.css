@@ -281,25 +281,22 @@ div[class^="list_"] li[class^="card_"][data-item-role="item"] > div[class*="main
 }
 
 /* Shrink embedded images in the chat view */
-div[class^="visualMediaItemContainer_"] {
+div[class*="visualMediaItemContainer_"] {
     max-width: 150px !important;
-    max-height: 150px !important;
 }
 
 /* Shrink the thumbnail of YouTube embeds */
-div[class^="embedVideo_"] {
+div[class*="embedVideo_"] {
     max-width: 150px !important;
-    max-height: 150px !important;
 }
 
 /* Shrink the thumbnail of webpage image embeds */
 div[class*="embedImage_"] {
     max-width: 150px !important;
-    max-height: 150px !important;
 }
 
 /* Hide the "YouTube" provider text on embeds */
-div[class^="embedProvider_"] {
+div[class*="embedProvider_"] {
     display: none !important;
 }
 
