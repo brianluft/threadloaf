@@ -32,6 +32,14 @@
     border-radius: 4px;
     position: relative;
     z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#threadloaf-splitter .collapse-button-svg {
+    width: 16px;
+    height: 16px;
 }
 
 #threadloaf-splitter .collapse-button:hover:not([style*="opacity: 0.3"]) {

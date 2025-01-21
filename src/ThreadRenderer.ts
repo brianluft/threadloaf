@@ -741,15 +741,21 @@ export class ThreadRenderer {
         // Create collapse buttons
         const upButton = document.createElement("div");
         upButton.className = "collapse-button";
-        upButton.textContent = String.fromCodePoint(0x1f781);
+        upButton.innerHTML = `<svg class="collapse-button-svg" width="512" height="512" version="1.1" viewBox="0 0 135.47 135.47" xmlns="http://www.w3.org/2000/svg">
+            <g transform="translate(-.36513 19.705)" stroke-width=".76872" aria-label="🞁">
+                <path fill="currentColor" d="m10.684 76.661 57.414-57.266 57.414 57.266z"/>
+            </g>
+        </svg>`;
         upButton.title = "Collapse top panel";
-        upButton.style.fontSize = "16px";
 
         const downButton = document.createElement("div");
         downButton.className = "collapse-button";
-        downButton.textContent = String.fromCodePoint(0x1f783);
+        downButton.innerHTML = `<svg class="collapse-button-svg" width="512" height="512" version="1.1" viewBox="0 0 135.47 135.47" xmlns="http://www.w3.org/2000/svg">
+            <g transform="matrix(1 0 0 -1 -.36513 115.76)" stroke-width=".76872" aria-label="🞁">
+                <path fill="currentColor" d="m10.684 76.661 57.414-57.266 57.414 57.266z"/>
+            </g>
+        </svg>`;
         downButton.title = "Collapse bottom panel";
-        downButton.style.fontSize = "16px";
 
         // Add click handlers
         upButton.addEventListener("click", () => {
