@@ -570,9 +570,6 @@ export class ThreadRenderer {
         this.state.threadContainer.style.display = "block";
         this.setThreadloafVisibleBodyClass(true);
 
-        // Add margin to the chat view
-        this.domMutator.addScrollerStyle();
-
         // Update or create the style element for main positioning
         let styleElement = document.getElementById("threadloaf-main-style");
         if (!styleElement) {

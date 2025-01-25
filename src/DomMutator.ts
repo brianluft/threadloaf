@@ -61,26 +61,22 @@ export class DomMutator {
         }
 
         const originalElement = message.originalElement as HTMLElement;
-        const chatContainer = originalElement.closest('[class*="chat_"]');
-        if (!chatContainer) {
-            return;
-        }
 
         // If the bottom pane is collapsed, uncollapse it and wait before scrolling
         if (this.collapseHandlers?.isBottomPaneCollapsed()) {
             this.collapseHandlers.uncollapseBottomPane();
             // Wait longer for the pane expansion and layout to stabilize
             setTimeout(() => {
-                this.scrollMessageIntoView(originalElement, chatContainer);
+                this.scrollMessageIntoView(originalElement);
             }, 250);
             return;
         }
 
         // If not collapsed, scroll immediately
-        this.scrollMessageIntoView(originalElement, chatContainer);
+        this.scrollMessageIntoView(originalElement);
     }
 
-    private scrollMessageIntoView(messageElement: HTMLElement, chatContainer: Element): void {
+    private scrollMessageIntoView(messageElement: HTMLElement): void {
         const messageRect = messageElement.getBoundingClientRect();
 
         // Find the scrollable container by walking up until we find div.scroller_*
@@ -113,56 +109,15 @@ export class DomMutator {
 
         // Add padding only when aligning to bottom
         if (!shouldAlignTop) {
-            chatContainer.scrollBy(0, 16);
+            // If the div.jumpToPresentBar_* exists, scroll by 32px instead of 16px.
+            const jumpToPresentBar = document.body.querySelector('div[class*="jumpToPresentBar_"]');
+            const yOffset = jumpToPresentBar ? 40 : 16;
+            scrollerElement.scrollBy(0, yOffset);
         }
     }
 
     public setCollapseHandlers(handlers: CollapseHandlers): void {
         this.collapseHandlers = handlers;
-    }
-
-    public addScrollerStyle(): void {
-        const elements = document.querySelectorAll<HTMLElement>('ol[class*="scrollerInner_"]');
-        const threadContainer = Array.from(elements).find((el) => {
-            return el.getAttribute("data-list-id") === "chat-messages" && el.children.length > 0;
-        });
-
-        if (!threadContainer) {
-            console.error("Thread container not found.");
-            return;
-        }
-
-        const scrollerElement = threadContainer.closest('div[class*="scroller_"]');
-        if (scrollerElement) {
-            const scrollerClass = Array.from(scrollerElement.classList).find((className) =>
-                className.startsWith("scroller_"),
-            );
-            if (scrollerClass) {
-                const styleId = `threadloaf-scroller-style-${scrollerClass}`;
-                // Remove any existing style first
-                const existingStyle = document.getElementById(styleId);
-                if (existingStyle) {
-                    existingStyle.remove();
-                }
-
-                const style = document.createElement("style");
-                style.id = styleId;
-                style.textContent = `
-                    div.${scrollerClass} {
-                        margin-bottom: 48px !important;
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-        }
-    }
-
-    public removeScrollerStyle(scrollerClass: string): void {
-        const styleId = `threadloaf-scroller-style-${scrollerClass}`;
-        const existingStyle = document.getElementById(styleId);
-        if (existingStyle) {
-            existingStyle.remove();
-        }
     }
 
     // Create a message element
