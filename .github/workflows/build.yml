@@ -22,9 +22,8 @@ jobs:
       working-directory: ./src
       run: npm install
       
-    - name: Build extension
-      working-directory: ./src
-      run: npm run build
+    - name: Build and package extension
+      run: ./src/release.sh
       
     - name: Test extension
       working-directory: ./src
@@ -33,6 +32,8 @@ jobs:
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: dist
-        path: dist/
+        name: release-artifacts
+        path: |
+          publish/extension.zip
+          publish/source.zip
         if-no-files-found: error
