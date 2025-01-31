@@ -267,17 +267,4 @@ export class DomMutator {
         link.href = chrome.runtime.getURL("styles.css");
         document.head.appendChild(link);
     }
-
-    public findAndHideHeader(): void {
-        const headers = document.querySelectorAll('div[class*=" "]');
-        for (const header of Array.from(headers)) {
-            const classes = Array.from(header.classList);
-            const hasContainerClass = classes.some((cls) => cls.startsWith("container_"));
-            const hasHeaderClass = classes.some((cls) => cls.startsWith("header_"));
-            if (hasContainerClass && hasHeaderClass && header instanceof HTMLElement) {
-                header.style.display = "none";
-                break;
-            }
-        }
-    }
 }

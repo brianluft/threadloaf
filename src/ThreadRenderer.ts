@@ -732,9 +732,6 @@ export class ThreadRenderer {
             this.scrollToNewestMessage();
         }
 
-        // Try to hide header again after rendering
-        this.domMutator.findAndHideHeader();
-
         // Create collapse buttons
         const upButton = document.createElement("div");
         upButton.className = "collapse-button";

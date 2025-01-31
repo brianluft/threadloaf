@@ -37,7 +37,6 @@ export class Threadloaf {
             return;
         }
         this.domMutator.injectStyles();
-        this.setupHeaderObserver();
         this.domParser.setupMutationObserver(() => this.threadRenderer.renderThread());
         this.setupPolling();
 
@@ -69,20 +68,5 @@ export class Threadloaf {
                 clearInterval(interval);
             }
         }, 1000);
-    }
-
-    private setupHeaderObserver(): void {
-        // Initial attempt to hide header
-        this.domMutator.findAndHideHeader();
-
-        // Keep watching for header changes
-        this.state.headerObserver = new MutationObserver(() => {
-            this.domMutator.findAndHideHeader();
-        });
-
-        this.state.headerObserver.observe(document.body, {
-            childList: true,
-            subtree: true,
-        });
     }
 }
