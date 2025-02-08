@@ -5,7 +5,7 @@
     "description": "Enhances Discord with a threaded discussion view",
     "browser_specific_settings": {
       "gecko": {
-        "id": "6384c57b-f03b-4de7-b146-d0159cde0ca2",
+        "id": "{6384c57b-f03b-4de7-b146-d0159cde0ca2}",
         "strict_min_version": "130.0"
       }
     },
