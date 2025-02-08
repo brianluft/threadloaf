@@ -47,4 +47,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         options.ownName = nameInput.value.trim();
         await optionsProvider.setOptions(options);
     });
+
+    // Setup default thread pane size slider
+    const defaultSplitSlider = document.getElementById("defaultSplit") as HTMLInputElement;
+    const defaultSplitValueDisplay = document.getElementById("defaultSplitValue") as HTMLElement;
+    defaultSplitSlider.value = options.defaultSplit.toString();
+    defaultSplitValueDisplay.textContent = options.defaultSplit + "%";
+    defaultSplitSlider.addEventListener("input", async () => {
+        const newVal = parseInt(defaultSplitSlider.value, 10);
+        defaultSplitValueDisplay.textContent = newVal + "%";
+        options.defaultSplit = newVal;
+        await optionsProvider.setOptions(options);
+    });
 });

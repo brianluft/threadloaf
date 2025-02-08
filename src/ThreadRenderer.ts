@@ -202,7 +202,7 @@ export class ThreadRenderer {
         if (isNewThread) {
             const options = this.optionsProvider.getOptions();
             const savedPosition = options.splitterPositions[currentUrl];
-            this.lastSplitPercent = savedPosition ?? ThreadRenderer.DEFAULT_POSITION;
+            this.lastSplitPercent = savedPosition ?? options.defaultSplit;
         }
 
         // Find the content div by traversing up from thread container
