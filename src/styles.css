@@ -347,3 +347,9 @@ body.threadloaf-visible div[class*="embedProvider_"] {
 .threadloaf-chat-scroll-button.top {
     top: calc(60% + 12px + 8px); /* Default split position + half splitter height + padding */
 }
+
+/* In early February 2025, Discord deployed an A/B test with a new UI, and we are causing a vertical scrollbar to
+appear. Let's just hide it. */
+body.threadloaf-visible div.page_c48ade {
+    overflow: hidden;
+}
