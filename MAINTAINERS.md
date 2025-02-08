@@ -25,7 +25,7 @@
   - Click "Submit Version"
 - Release to the Chrome Web Store.
   - Log into the [Developer Dashboard](https://chrome.google.com/u/2/webstore/devconsole/).
-  - In the upper right corner, click the "Publisher" dropdown and pick "Threadloaf Publishers".
+  - In the upper right corner, click the "Publisher" dropdown and pick "Threadloaf".
   - Click on Threadloaf in the list.
   - Click "Store Listing" in the left pane.
   - If there is a "Why can't I publish?" link at the top near the "Save Draft" and "Publish Item" buttons, then click that link, figure out whatever new rule Google instituted that prevents us from publishing, and fix it.
