@@ -353,3 +353,8 @@ appear. Let's just hide it. */
 body.threadloaf-visible div.page_c48ade {
     overflow: hidden;
 }
+
+/* The reactions bar is sticky and shows at the top of the chat view. Let's hide it. */
+body.threadloaf-visible div[class*="messagesWrapper_"] div[class*="scrollerContent_"] > div[class*="container_"] {
+    position: initial;
+}
