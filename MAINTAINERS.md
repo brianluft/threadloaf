@@ -36,8 +36,19 @@
 - You're done!
 
 # Reviewer instructions
-> You may use this Discord server anonymously to test the extension: (URL)
-> This server has a forum channel and a chat channel, both populated with test conversations.
 
-Replace (URL) above with the discord.gg link. 
-If these instructions are updated, then the new instructions must be pasted into AMO here under Technical Details - Whiteboard: https://addons.mozilla.org/en-US/developers/addon/threadloaf/edit
+```
+Linux, npm version 9+, and node.js version 18+ are required.
+Run `npm run build` from the `src` directory to produce the extension into the `dist` directory.
+
+Test credentials:
+Username:
+Password:
+URL:
+
+This Discord server has a forum channel and a chat channel, both populated with test conversations.
+```
+
+Fill in the details above.
+If these instructions are updated, then the new instructions must be pasted into AMO's reviewer instructions.
+
