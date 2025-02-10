@@ -1,8 +1,17 @@
 <h1 align="center"><img src="threadloaf.jpg" width=64 height=64><br>Threadloaf</h1>
 
-Threadloaf is a Chrome extension that enhances Discord with a hierarchical tree view of messages.
+<p align="center">Threadloaf is a Chrome extension that enhances Discord with a hierarchical tree view of messages.</p>
 
+<p align="center">
+<b>
+<a href="https://chrome.google.com/webstore/detail/kcmfpchdgmiflfoakcklghddhabhejdn">Install in Chrome/Edge</a> &bull; 
+<a href="https://addons.mozilla.org/en-US/firefox/addon/threadloaf/">Install in Firefox</a>
+</b>
+</p>
+
+<p align="center">
 <img src="screenshot.png">
+</p>
 
 ## Features
 
