@@ -22,12 +22,6 @@
 - **Visual Feedback**: Messages are highlighted when clicked to help you track where you've jumped to.
 - **Message Preview**: See message previews in a compact format that maintains readability.
 
-## Installation
-
-1. Install the extension from the Chrome Web Store (link coming soon).
-2. Click the extensions button in the browser toolbar to access the Threadloaf options.
-3. Visit Discord.
-
 ## Build from Source
 
 To build the extension from source:
