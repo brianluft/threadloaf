@@ -350,8 +350,8 @@ body.threadloaf-visible div[class*="embedProvider_"] {
 
 /* In early February 2025, Discord deployed an A/B test with a new UI, and we are causing a vertical scrollbar to
 appear. Let's just hide it. */
-body.threadloaf-visible div.page_c48ade {
-    overflow: hidden;
+div[class*="page_"] {
+    overflow: hidden !important;
 }
 
 /* The reactions bar is sticky and shows at the top of the chat view. Let's hide it. */
