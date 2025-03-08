@@ -5,12 +5,12 @@
     <title>Threadloaf</title>
     <style>
         body {
-            width: 475px;
-            height: 250px;
+            width: 450px;
             overflow-y: scroll;
             font-family: system-ui, -apple-system, sans-serif;
             line-height: 1.4;
             padding: 1em;
+            padding-bottom: 50px;
         }
 
         h1 {
@@ -81,6 +81,22 @@
         <div class="option-row">
             <input type="radio" id="allChannels" name="threadViewScope">
             <label for="allChannels">All channels</label>
+        </div>
+    </div>
+
+    <div class="radio-group">
+        <p>Thread list appearance:</p>
+        <div class="option-row">
+            <input type="radio" id="threadAppearanceNormal" name="threadAppearance">
+            <label for="threadAppearanceNormal">Normal</label>
+        </div>
+        <div class="option-row">
+            <input type="radio" id="threadAppearanceCompact" name="threadAppearance">
+            <label for="threadAppearanceCompact">Compact</label>
+        </div>
+        <div class="option-row">
+            <input type="radio" id="threadAppearanceUltraCompact" name="threadAppearance">
+            <label for="threadAppearanceUltraCompact">Ultra compact</label>
         </div>
     </div>
 

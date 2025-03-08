@@ -229,26 +229,26 @@ div[class^="chatLayerWrapper_"] div#threadloaf-container {
 }
 
 /* Thread list */
-div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="left_"] > div[class^="body_"] {
+body.threadloaf-thread-list-compact-or-ultra-compact div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="left_"] > div[class^="body_"] {
     display: block; /* instead of flex */
 }
 
-div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="left_"] > div[class^="body_"] > div[class^="tags_"] {
+body.threadloaf-thread-list-compact-or-ultra-compact div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="left_"] > div[class^="body_"] > div[class^="tags_"] {
     /* Right align the tags */
     float: right;
 }
 
-div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="left_"] > div[class^="body_"] > div[class^="tags_"] > div[class^="pill_"] > div {
+body.threadloaf-thread-list-compact-or-ultra-compact div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="left_"] > div[class^="body_"] > div[class^="tags_"] > div[class^="pill_"] > div {
     /* Hide the tag text */
     display: none;
 }
 
-div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="left_"] > div[class^="body_"] > div[class^="tags_"] > div[class^="pill_"] > img {
+body.threadloaf-thread-list-compact-or-ultra-compact div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="left_"] > div[class^="body_"] > div[class^="tags_"] > div[class^="pill_"] > img {
     /* Fix the margin of the tag icon now that the text is hidden */
     margin: 0;
 }
 
-div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="left_"] > div > div[class^="footer_"] {
+body.threadloaf-thread-list-compact-or-ultra-compact div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="left_"] > div > div[class^="footer_"] {
     /* Right align the footer */
     float: right;
     /* Move it up to condense the card */
@@ -259,12 +259,12 @@ div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="left_"
     border-radius: 20px; 
 }
 
-div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="bodyMedia_"] {
+body.threadloaf-thread-list-compact-or-ultra-compact div[class^="list_"] li[class^="card_"][data-item-role="item"] div[class^="bodyMedia_"] {
     /* Hide the image on the right side of the thread card */
     display: none;
 }
 
-div[class^="list_"] li[class^="card_"][data-item-role="item"] > div {
+body.threadloaf-thread-list-compact-or-ultra-compact div[class^="list_"] li[class^="card_"][data-item-role="item"] > div {
     /* Tighten the padding on the cards */
     padding-left: 8px;
     padding-right: 8px;
@@ -273,12 +273,12 @@ div[class^="list_"] li[class^="card_"][data-item-role="item"] > div {
     border-radius: 0;
 }
 
-div[class^="list_"] li[class^="card_"][data-item-role="item"] {
+body.threadloaf-thread-list-compact-or-ultra-compact div[class^="list_"] li[class^="card_"][data-item-role="item"] {
     /* Tighter gap between cards */
     padding-bottom: 4px;
 }
 
-div[class^="list_"] li[class^="card_"][data-item-role="item"] > div[class*="mainCard_"]:hover {
+body.threadloaf-thread-list-compact-or-ultra-compact div[class^="list_"] li[class^="card_"][data-item-role="item"] > div[class*="mainCard_"]:hover {
     /* When the user hovers over a card, don't do the "move card up and add shadow" animation */
     box-shadow: none;
     transform: none;
@@ -286,6 +286,26 @@ div[class^="list_"] li[class^="card_"][data-item-role="item"] > div[class*="main
     background: var(--bg-overlay-1, var(--background-message-hover));
     /* Also, use a brighter border */
     border: 1px solid var(--border-strong);
+}
+
+body.threadloaf-thread-list-ultra-compact div[class^="list_"] div[class*="body_"] div[class*="tags_"] {
+    /* Ultra Compact mode: Hide the tags */
+    display: none;
+}
+
+body.threadloaf-thread-list-ultra-compact div[class^="list_"] div[class*="body_"] div[class*="message_"] {
+    /* Ultra Compact mode: Hide the message text line */
+    display: none;
+}
+
+body.threadloaf-thread-list-ultra-compact div[class^="list_"] div[class*="footer_"] div[class*="reaction_"] {
+    /* Ultra Compact mode: Hide the reaction */
+    display: none;
+}
+
+body.threadloaf-thread-list-ultra-compact div[class^="list_"] li[class*="card_"] div[class*="body_"] {
+    /* Ultra Compact mode: Remove bottom padding from the cards */
+    padding-bottom: 0;
 }
 
 /* Shrink embedded images when the Threadloaf UI is visible */

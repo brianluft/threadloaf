@@ -1,3 +1,5 @@
+import { ThreadListAppearance } from "./ThreadListAppearance";
+
 /**
  * Represents the fully typed options your extension manages.
  */
@@ -8,6 +10,7 @@ export class UserOptions {
     public highlightOwnName = false;
     public ownName = "";
     public defaultSplit = 60;
+    public threadListAppearance = ThreadListAppearance.Normal;
 
     public constructor(init?: Partial<UserOptions>) {
         Object.assign(this, init);
@@ -29,6 +32,7 @@ export class UserOptions {
                 highlightOwnName: (obj as UserOptions).highlightOwnName ?? defaultOptions.highlightOwnName,
                 ownName: (obj as UserOptions).ownName ?? defaultOptions.ownName,
                 defaultSplit: (obj as UserOptions).defaultSplit ?? defaultOptions.defaultSplit,
+                threadListAppearance: (obj as UserOptions).threadListAppearance ?? defaultOptions.threadListAppearance,
             });
         }
         return defaultOptions;

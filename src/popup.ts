@@ -1,4 +1,5 @@
 import { UserOptionsProvider } from "./UserOptionsProvider";
+import { ThreadListAppearance } from "./ThreadListAppearance";
 
 document.addEventListener("DOMContentLoaded", async () => {
     const userOptions = await UserOptionsProvider.loadInitialOptions();
@@ -58,5 +59,48 @@ document.addEventListener("DOMContentLoaded", async () => {
         defaultSplitValueDisplay.textContent = newVal + "%";
         options.defaultSplit = newVal;
         await optionsProvider.setOptions(options);
+    });
+
+    // Setup thread list appearance radio buttons
+    const threadAppearanceNormal = document.getElementById("threadAppearanceNormal") as HTMLInputElement;
+    const threadAppearanceCompact = document.getElementById("threadAppearanceCompact") as HTMLInputElement;
+    const threadAppearanceUltraCompact = document.getElementById("threadAppearanceUltraCompact") as HTMLInputElement;
+
+    // Set initial state
+    switch (options.threadListAppearance) {
+        case ThreadListAppearance.Normal:
+            threadAppearanceNormal.checked = true;
+            break;
+        case ThreadListAppearance.Compact:
+            threadAppearanceCompact.checked = true;
+            break;
+        case ThreadListAppearance.UltraCompact:
+            threadAppearanceUltraCompact.checked = true;
+            break;
+        default:
+            threadAppearanceNormal.checked = true;
+            break;
+    }
+
+    // Add change listeners
+    threadAppearanceNormal.addEventListener("change", async () => {
+        if (threadAppearanceNormal.checked) {
+            options.threadListAppearance = ThreadListAppearance.Normal;
+            await optionsProvider.setOptions(options);
+        }
+    });
+
+    threadAppearanceCompact.addEventListener("change", async () => {
+        if (threadAppearanceCompact.checked) {
+            options.threadListAppearance = ThreadListAppearance.Compact;
+            await optionsProvider.setOptions(options);
+        }
+    });
+
+    threadAppearanceUltraCompact.addEventListener("change", async () => {
+        if (threadAppearanceUltraCompact.checked) {
+            options.threadListAppearance = ThreadListAppearance.UltraCompact;
+            await optionsProvider.setOptions(options);
+        }
     });
 });

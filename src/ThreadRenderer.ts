@@ -6,6 +6,7 @@ import { MessageTreeBuilder } from "./MessageTreeBuilder";
 import { MessageInfo } from "./MessageInfo";
 import { UserOptionsProvider } from "./UserOptionsProvider";
 import { ScrollButtonManager } from "./ScrollButtonManager";
+import { ThreadListAppearance } from "./ThreadListAppearance";
 
 /**
  * Manages the rendering of threaded message views in the Discord interface.
@@ -17,6 +18,9 @@ export class ThreadRenderer {
     private static readonly SPLITTER_HEIGHT = 24; // Match the CSS height
     private static readonly DEFAULT_POSITION = 60; // Default split position
     private static readonly THREADLOAF_VISIBLE_CLASS = "threadloaf-visible";
+    private static readonly THREAD_LIST_COMPACT_CLASS = "threadloaf-thread-list-compact";
+    private static readonly THREAD_LIST_ULTRA_COMPACT_CLASS = "threadloaf-thread-list-ultra-compact";
+    private static readonly THREAD_LIST_ANY_COMPACT_CLASS = "threadloaf-thread-list-compact-or-ultra-compact";
 
     private state: ThreadloafState;
     private domParser: DomParser;
@@ -46,6 +50,35 @@ export class ThreadRenderer {
         this.messageTreeBuilder = messageTreeBuilder;
         this.optionsProvider = optionsProvider;
         this.scrollButtonManager = scrollButtonManager;
+
+        // Set initial thread list appearance class
+        this.updateThreadListAppearanceClasses(optionsProvider.getOptions().threadListAppearance);
+
+        // Listen for option changes
+        optionsProvider.addChangeListener((newOptions) => {
+            this.updateThreadListAppearanceClasses(newOptions.threadListAppearance);
+        });
+    }
+
+    private updateThreadListAppearanceClasses(appearance: ThreadListAppearance): void {
+        document.body.classList.remove(
+            ThreadRenderer.THREAD_LIST_COMPACT_CLASS,
+            ThreadRenderer.THREAD_LIST_ULTRA_COMPACT_CLASS,
+            ThreadRenderer.THREAD_LIST_ANY_COMPACT_CLASS,
+        );
+        switch (appearance) {
+            case ThreadListAppearance.Compact:
+                document.body.classList.add(ThreadRenderer.THREAD_LIST_COMPACT_CLASS);
+                document.body.classList.add(ThreadRenderer.THREAD_LIST_ANY_COMPACT_CLASS);
+                break;
+            case ThreadListAppearance.UltraCompact:
+                document.body.classList.add(ThreadRenderer.THREAD_LIST_ULTRA_COMPACT_CLASS);
+                document.body.classList.add(ThreadRenderer.THREAD_LIST_ANY_COMPACT_CLASS);
+                break;
+            default:
+                // Normal mode - no additional classes needed
+                break;
+        }
     }
 
     private updatePositions(splitPercent: number): void {
