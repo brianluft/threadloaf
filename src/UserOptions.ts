@@ -10,7 +10,7 @@ export class UserOptions {
     public highlightOwnName = false;
     public ownName = "";
     public defaultSplit = 60;
-    public threadListAppearance = ThreadListAppearance.Normal;
+    public threadListAppearance = ThreadListAppearance.Compact;
 
     public constructor(init?: Partial<UserOptions>) {
         Object.assign(this, init);
