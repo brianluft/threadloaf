@@ -1,4 +1,4 @@
-<h1 align="center"><img src="threadloaf.jpg" width=64 height=64><br>Threadloaf</h1>
+<h1 align="center"><img src="threadloaf.png" width=64><br>Threadloaf</h1>
 
 <p align="center">Threadloaf is a Chrome extension that enhances Discord with a hierarchical tree view of messages.</p>
 
