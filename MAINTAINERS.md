@@ -6,6 +6,13 @@
 - Pay the \$5 developer signup fee to Google by clicking the "Pay this fee now" button at the bottom of the [Chrome Web Store developer dashboard](https://chrome.google.com/webstore/developer/dashboard).
 - Register for a [Firefox Add-ons developer account](https://addons.mozilla.org/en-US/developers/).
 
+## Development
+
+- Use the VSCode dev container in WSL.
+- `npm install`
+- `npm run build`
+- In Edge, add the unpacked extension via `\\wsl$\Ubuntu\home\your-username\threadloaf\dist`
+
 ## Release procedure
 
 - Update the version in `src/manifest.json`
