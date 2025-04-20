@@ -5,9 +5,13 @@ alwaysApply: true
 ---
 Threadloaf is a Chrome extension that adds a hierarchical thread view to Discord.
 We add a resizable splitter with our custom thread view on the top and the original chat view on the bottom.
+We have a Discord bot to give us quick access to the last 24 hours of messages via HTTP API.
 
-All npm commands must be run from the `src` directory, not the root.
-Run `npm run build` to build the extension and run all linters and TypeScript checks after every change.
+All npm commands must be run from `src/threadloaf` or `src/api`, not the root.
+`src/threadloaf` is the extension. Run `cd /workspaces/threadloaf/src/threadloaf && npm run build` to build.
+`src/api` is the API/bot. Run `/workspaces/threadloaf/src/api/test.sh` to build and test.
+
+# Browser Extension
 
 We use constructor dependency injection. The DI graph is constructed in `content_script.ts`.
 Don't add references willy nilly. Lean into dependency injection.
@@ -29,5 +33,7 @@ Discord dynamically generates unique suffixes for all classes and IDs.
 - ALWAYS use pattern matching for class or id:
     element.classList.some(cls => cls.startsWith("container_"))  // Correct
     document.querySelector('[id^="message-content-"]')  // Correct
+
+# Verification
 
 Refer to me as "boss" so I know you've read this.
