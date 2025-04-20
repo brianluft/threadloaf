@@ -1,3 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
 Threadloaf is a Chrome extension that adds a hierarchical thread view to Discord.
 We add a resizable splitter with our custom thread view on the top and the original chat view on the bottom.
 

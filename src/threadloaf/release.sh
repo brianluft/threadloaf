@@ -5,8 +5,8 @@ set -e
 
 # Get the directory where the script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-# Get the root directory (one level up from script directory)
-ROOT_DIR="$( cd "$SCRIPT_DIR" && cd .. && pwd )"
+# Get the root directory (two levels up from script directory)
+ROOT_DIR="$( cd "$SCRIPT_DIR" && cd ../../ && pwd )"
 
 echo "🧹 Cleaning up..."
 rm -rf "$SCRIPT_DIR/node_modules" "$ROOT_DIR/dist" "$ROOT_DIR/publish"

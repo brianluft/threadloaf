@@ -19,11 +19,12 @@ jobs:
         node-version: 'latest'
         
     - name: Install dependencies
-      working-directory: ./src
+      working-directory: ./src/threadloaf
       run: npm install
       
     - name: Build and package extension
-      run: ./src/release.sh
+      working-directory: ./src/threadloaf
+      run: ./release.sh
       
     - name: Test extension
       working-directory: ./src

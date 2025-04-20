@@ -15,7 +15,7 @@
 
 ## Release procedure
 
-- Update the version in `src/manifest.json`
+- Update the version in `src/threadloaf/manifest.json`
 - Commit "Version X.X.X" and push to GitHub.
 - Tag a release on GitHub.
 - Wait for GitHub Actions to build. Download the artifacts from the completed CI job.
