@@ -2,6 +2,7 @@
 dist/
 publish/
 temp/
+src/api/__tests__/coverage/
 
 # Dependencies
 node_modules/
