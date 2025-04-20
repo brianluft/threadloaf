@@ -17,3 +17,5 @@ Fix all lint warnings.
 Run tests with `/workspaces/threadloaf/src/api/test.sh` again to verify your change.
 
 IMPORTANT: make ONE change, test it successfully, and then stop. You must give me a chance to review before we proceed.
+
+Do not reduce the jest coverage thresholds.

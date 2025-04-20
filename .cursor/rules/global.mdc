@@ -8,6 +8,7 @@ We add a resizable splitter with our custom thread view on the top and the origi
 We have a Discord bot to give us quick access to the last 24 hours of messages via HTTP API.
 
 All npm commands must be run from `src/threadloaf` or `src/api`, not the root.
+The absolute path of the workspace root is `/workspaces/threadloaf/`. Use absolute paths in command executions.
 `src/threadloaf` is the extension. Run `cd /workspaces/threadloaf/src/threadloaf && npm run build` to build.
 `src/api` is the API/bot. Run `/workspaces/threadloaf/src/api/test.sh` to build and test.
 

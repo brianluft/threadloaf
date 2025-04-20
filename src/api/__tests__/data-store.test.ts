@@ -152,6 +152,42 @@ describe("DataStore", () => {
             // @ts-ignore - accessing private property for testing
             expect(dataStore.messagesByChannel.get(channelId)).toEqual([recentMessage]);
         });
+
+        test("should remove channel when all messages are old", () => {
+            const channelId = "channel-with-only-old-messages";
+            
+            // Add only old messages
+            const oldMessage1: StoredMessage = {
+                id: "oldMsg1",
+                content: "Old message 1",
+                authorTag: "User#1234",
+                timestamp: NOW - ONE_DAY_MS - 1000, // Just over 24 hours ago
+            };
+            
+            const oldMessage2: StoredMessage = {
+                id: "oldMsg2",
+                content: "Old message 2",
+                authorTag: "User#5678",
+                timestamp: NOW - ONE_DAY_MS - 2000, // Even older
+            };
+            
+            dataStore.addMessage(channelId, oldMessage1);
+            dataStore.addMessage(channelId, oldMessage2);
+            
+            // Add another message to trigger pruning
+            const anotherChannelMessage: StoredMessage = {
+                id: "msg3",
+                content: "Message in another channel",
+                authorTag: "User#9012",
+                timestamp: NOW - 3600000, // 1 hour ago
+            };
+            dataStore.addMessage("another-channel", anotherChannelMessage);
+            
+            // The original channel should be gone since all its messages were old
+            expect(dataStore.getMessagesForChannel(channelId)).toHaveLength(0);
+            // @ts-ignore - accessing private property for testing
+            expect(dataStore.messagesByChannel.has(channelId)).toBe(false);
+        });
     });
 
     describe("forum thread handling", () => {

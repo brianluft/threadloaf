@@ -3,7 +3,7 @@
  * Exposes HTTP endpoints for retrieving messages and forum threads
  */
 
-import express, { Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import { DataStore, StoredMessage } from "./data-store";
 
 export class ApiServer {
@@ -16,6 +16,7 @@ export class ApiServer {
         this.dataStore = dataStore;
         this.setupMiddleware();
         this.setupRoutes();
+        this.setupErrorHandling();
     }
 
     /**
@@ -39,13 +40,30 @@ export class ApiServer {
             console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
             next();
         });
+    }
 
-        // Error handling middleware
-        this.app.use((err: Error, _: Request, res: Response, next: Function) => {
+    /**
+     * Setup error handling middleware - must be called after routes are setup
+     */
+    private setupErrorHandling(): void {
+        // Error handling middleware - must be registered after routes
+        this.app.use(this.errorHandler.bind(this));
+    }
+
+    /**
+     * Error handling middleware function
+     */
+    private errorHandler(err: unknown, _req: Request, res: Response, next: NextFunction): void {
+        // Log the error with appropriate handling for different error types
+        if (err instanceof Error) {
+            console.error("API error:", err.message);
+        } else {
             console.error("API error:", err);
-            res.status(500).json({ error: "Internal server error" });
-            next();
-        });
+        }
+        
+        // Send a generic error response
+        res.status(500).json({ error: "Internal server error" });
+        next();
     }
 
     /**
