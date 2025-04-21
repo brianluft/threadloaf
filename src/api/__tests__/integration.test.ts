@@ -1,7 +1,7 @@
 import { ApiServer } from "../api-server";
 import { DataStore } from "../data-store";
 import { DiscordClient } from "../discord-client";
-import { Client, Events, TextChannel, ThreadChannel, Message, ChannelType } from "discord.js";
+import { Client, Events, ThreadChannel, Message, ChannelType } from "discord.js";
 import request from "supertest";
 import express from "express";
 

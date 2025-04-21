@@ -35,6 +35,10 @@ Discord dynamically generates unique suffixes for all classes and IDs.
     element.classList.some(cls => cls.startsWith("container_"))  // Correct
     document.querySelector('[id^="message-content-"]')  // Correct
 
+# API Testing
+
+Keep unit test files to 500 lines or less. Create a new test file as needed.
+
 # Verification
 
 Refer to me as "boss" so I know you've read this.

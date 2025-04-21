@@ -6,7 +6,7 @@ import { Client, Events, ChannelType, Collection, Guild, AnyThreadChannel } from
 // Mock DataStore
 jest.mock("../../data-store");
 
-describe("DiscordClient", () => {
+describe("DiscordClient Thread Handling", () => {
     let discordClient: DiscordClient;
     let mockClient: jest.Mocked<Client>;
     let dataStore: jest.Mocked<DataStore>;
@@ -263,73 +263,73 @@ describe("DiscordClient", () => {
         });
     });
 
-        test("should handle rate-limited thread starter message fetch", async () => {
-            // Mock guild setup
-            const mockGuild = {
-                id: TEST_GUILD_ID,
-                channels: {
-                    cache: new Collection([
+    test("should handle rate-limited thread starter message fetch", async () => {
+        // Mock guild setup
+        const mockGuild = {
+            id: TEST_GUILD_ID,
+            channels: {
+                cache: new Collection([
+                    [
+                        "forum-channel",
+                        {
+                            type: ChannelType.GuildForum,
+                            isTextBased: () => true,
+                            isThread: () => false,
+                        },
+                    ],
+                ]),
+                fetchActiveThreads: jest.fn().mockResolvedValue({
+                    threads: new Collection([
                         [
-                            "forum-channel",
-                            {
-                                type: ChannelType.GuildForum,
-                                isTextBased: () => true,
-                                isThread: () => false,
-                            },
+                            "thread-1",
+                            createMockThreadChannel({
+                                threadId: "thread-1",
+                                parentId: "forum-channel",
+                            }),
                         ],
                     ]),
-                    fetchActiveThreads: jest.fn().mockResolvedValue({
-                        threads: new Collection([
-                            [
-                                "thread-1",
-                                createMockThreadChannel({
-                                    threadId: "thread-1",
-                                    parentId: "forum-channel",
-                                }),
-                            ],
-                        ]),
-                    }),
-                },
-            } as unknown as Guild;
-
-            // Simulate rate limit by making fetchStarterMessage fail once then succeed
-            let fetchAttempt = 0;
-            const mockThread = createMockThreadChannel({
-                threadId: "thread-1",
-                parentId: "forum-channel",
-            });
-            mockThread.fetchStarterMessage = jest.fn().mockImplementation(async () => {
-                if (fetchAttempt === 0) {
-                    fetchAttempt++;
-                    throw { code: 429, retry_after: 0.1 }; // Discord rate limit error
-                }
-                return {
-                    author: { tag: "Thread Starter#1234" },
-                    content: "Thread starter message",
-                };
-            });
-
-            // Mock messages collection to prevent timeout
-            mockThread.messages = {
-                fetch: jest.fn().mockResolvedValue(new Collection()),
-            } as any;
-
-            // Replace the thread in the collection
-            mockGuild.channels.fetchActiveThreads = jest.fn().mockResolvedValue({
-                threads: new Collection([["thread-1", mockThread]]),
-            });
-
-            // Trigger the backfill process
-            await clientOnHandlers[Events.ClientReady].call(discordClient);
-            await discordClient["performBackfill"](mockGuild);
-
-            // Verify the retry behavior
-            expect(mockThread.fetchStarterMessage).toHaveBeenCalledTimes(2);
-            expect(dataStore.addForumThread).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    id: "thread-1",
-                    createdBy: "Thread Starter#1234",
                 }),
-            );
-        }, 10000); // Increase timeout to 10 seconds
+            },
+        } as unknown as Guild;
+
+        // Simulate rate limit by making fetchStarterMessage fail once then succeed
+        let fetchAttempt = 0;
+        const mockThread = createMockThreadChannel({
+            threadId: "thread-1",
+            parentId: "forum-channel",
+        });
+        mockThread.fetchStarterMessage = jest.fn().mockImplementation(async () => {
+            if (fetchAttempt === 0) {
+                fetchAttempt++;
+                throw { code: 429, retry_after: 0.1 }; // Discord rate limit error
+            }
+            return {
+                author: { tag: "Thread Starter#1234" },
+                content: "Thread starter message",
+            };
+        });
+
+        // Mock messages collection to prevent timeout
+        mockThread.messages = {
+            fetch: jest.fn().mockResolvedValue(new Collection()),
+        } as any;
+
+        // Replace the thread in the collection
+        mockGuild.channels.fetchActiveThreads = jest.fn().mockResolvedValue({
+            threads: new Collection([["thread-1", mockThread]]),
+        });
+
+        // Trigger the backfill process
+        await clientOnHandlers[Events.ClientReady].call(discordClient);
+        await discordClient["performBackfill"](mockGuild);
+
+        // Verify the retry behavior
+        expect(mockThread.fetchStarterMessage).toHaveBeenCalledTimes(2);
+        expect(dataStore.addForumThread).toHaveBeenCalledWith(
+            expect.objectContaining({
+                id: "thread-1",
+                createdBy: "Thread Starter#1234",
+            }),
+        );
+    }, 10000); // Increase timeout to 10 seconds
 });
