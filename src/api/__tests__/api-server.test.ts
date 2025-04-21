@@ -476,18 +476,20 @@ describe("ApiServer", () => {
             });
 
             // Add error handling middleware that matches the real implementation
-            testApp.use((err: Error | unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
-                // Log the error
-                if (err instanceof Error) {
-                    console.error("API error:", err.message);
-                } else {
-                    console.error("API error:", err);
-                }
-                
-                // Send error response
-                res.status(500).json({ error: "Internal server error" });
-                next();
-            });
+            testApp.use(
+                (err: Error | unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+                    // Log the error
+                    if (err instanceof Error) {
+                        console.error("API error:", err.message);
+                    } else {
+                        console.error("API error:", err);
+                    }
+
+                    // Send error response
+                    res.status(500).json({ error: "Internal server error" });
+                    next();
+                },
+            );
         });
 
         test("should handle Error objects correctly", async () => {
@@ -533,24 +535,24 @@ describe("ApiServer", () => {
                 callback();
                 return { on: jest.fn() };
             });
-            
+
             // Create server with mocked app
             const server = new ApiServer(3456, dataStore);
-            
+
             // @ts-ignore - replace app.listen with mock
             server.app.listen = listenMock;
-            
+
             // Spy on console.log
             const consoleLogSpy = jest.spyOn(console, "log");
             consoleLogSpy.mockImplementation(() => {});
-            
+
             // Call start method
             server.start();
-            
+
             // Verify server was started on the correct port
             expect(listenMock).toHaveBeenCalledWith(3456, expect.any(Function));
             expect(consoleLogSpy).toHaveBeenCalledWith("API server listening on port 3456");
-            
+
             // Restore console.log
             consoleLogSpy.mockRestore();
         });
@@ -597,7 +599,7 @@ describe("ApiServer", () => {
             // Verify middleware worked as expected
             expect(mockNext).toHaveBeenCalled();
             expect(console.log).toHaveBeenCalledWith(expect.stringMatching(/.*- GET \/test-path/));
-            
+
             // Restore console.log
             console.log = originalConsoleLog;
         });
@@ -623,7 +625,7 @@ describe("ApiServer", () => {
 
             // Verify middleware was added
             expect(useSpy).toHaveBeenCalledTimes(1);
-            
+
             // We can verify that the bound method is registered, but can't easily test its behavior here
             expect(useSpy).toHaveBeenCalled();
         });
@@ -633,61 +635,61 @@ describe("ApiServer", () => {
         test("should handle Error objects correctly", () => {
             // Create server
             const server = new ApiServer(3000, dataStore);
-            
+
             // Create mock request, response, next
             const mockError = new Error("Test error message");
             const mockRequest = {} as Request;
             const mockResponse = {
                 status: jest.fn().mockReturnThis(),
-                json: jest.fn()
+                json: jest.fn(),
             } as unknown as Response;
             const mockNext = jest.fn();
-            
+
             // Spy on console.error
             const consoleErrorSpy = jest.spyOn(console, "error");
             consoleErrorSpy.mockImplementation(() => {});
-            
+
             // Call the error handler directly
             // @ts-ignore - access private method for testing
             server.errorHandler(mockError, mockRequest, mockResponse, mockNext);
-            
+
             // Verify error was handled correctly
             expect(mockResponse.status).toHaveBeenCalledWith(500);
             expect(mockResponse.json).toHaveBeenCalledWith({ error: "Internal server error" });
             expect(mockNext).toHaveBeenCalled();
             expect(consoleErrorSpy).toHaveBeenCalledWith("API error:", "Test error message");
-            
+
             // Restore console.error
             consoleErrorSpy.mockRestore();
         });
-        
+
         test("should handle non-Error objects thrown as errors", () => {
             // Create server
             const server = new ApiServer(3000, dataStore);
-            
+
             // Use a string as the error - this tests handling of different error types
             const nonErrorObject = "This is not an Error object";
             const mockRequest = {} as Request;
             const mockResponse = {
                 status: jest.fn().mockReturnThis(),
-                json: jest.fn()
+                json: jest.fn(),
             } as unknown as Response;
             const mockNext = jest.fn();
-            
+
             // Spy on console.error
             const consoleErrorSpy = jest.spyOn(console, "error");
             consoleErrorSpy.mockImplementation(() => {});
-            
+
             // Call the error handler with non-Error object
             // @ts-ignore - access private method and pass non-Error
             server.errorHandler(nonErrorObject, mockRequest, mockResponse, mockNext);
-            
+
             // Verify error handling behaves the same
             expect(mockResponse.status).toHaveBeenCalledWith(500);
             expect(mockResponse.json).toHaveBeenCalledWith({ error: "Internal server error" });
             expect(mockNext).toHaveBeenCalled();
             expect(consoleErrorSpy).toHaveBeenCalledWith("API error:", nonErrorObject);
-            
+
             // Restore console.error
             consoleErrorSpy.mockRestore();
         });
@@ -697,31 +699,31 @@ describe("ApiServer", () => {
         test("should directly test the health endpoint route handler", () => {
             // Create a server instance
             const server = new ApiServer(3000, dataStore);
-            
+
             // Create a mock Express app
             const mockApp = {
                 get: jest.fn(),
             };
-            
+
             // Replace the app with our mock
             // @ts-ignore - access private property
             server.app = mockApp;
-            
+
             // Call setupRoutes to register the routes with our mock app
             // @ts-ignore - access private method
             server.setupRoutes();
-            
+
             // Get the health route handler (3rd GET route)
             const healthHandler = mockApp.get.mock.calls[2][1];
-            
+
             // Create mock response
             const mockRes = {
                 json: jest.fn(),
             };
-            
+
             // Call the health handler directly
             healthHandler(null, mockRes);
-            
+
             // Verify it returned the correct response
             expect(mockRes.json).toHaveBeenCalledWith({ status: "ok" });
         });
@@ -765,7 +767,9 @@ describe("ApiServer routes - real setup", () => {
     test("GET /messages/:channelId real setup error", async () => {
         const channelId = "error-channel";
         const error = new Error("Test failure");
-        dataStore.getMessagesForChannel.mockImplementation(() => { throw error; });
+        dataStore.getMessagesForChannel.mockImplementation(() => {
+            throw error;
+        });
 
         const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
@@ -806,7 +810,7 @@ describe("ApiServer routes - real setup", () => {
 
         dataStore.getAllForumThreads.mockReturnValue(threads);
         dataStore.getMessagesForChannel.mockImplementation((channelId: string) =>
-            channelId === "thread1" ? thread1Messages : thread2Messages
+            channelId === "thread1" ? thread1Messages : thread2Messages,
         );
 
         const response = await request(app).get("/forum-threads");
@@ -832,7 +836,9 @@ describe("ApiServer routes - real setup", () => {
 
     test("GET /forum-threads real setup error", async () => {
         const error = new Error("Test failure");
-        dataStore.getAllForumThreads.mockImplementation(() => { throw error; });
+        dataStore.getAllForumThreads.mockImplementation(() => {
+            throw error;
+        });
 
         const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 

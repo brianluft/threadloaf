@@ -60,7 +60,7 @@ export class ApiServer {
         } else {
             console.error("API error:", err);
         }
-        
+
         // Send a generic error response
         res.status(500).json({ error: "Internal server error" });
         next();
