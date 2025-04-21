@@ -462,5 +462,227 @@ describe("DiscordClient Backfill", () => {
             // Clean up
             consoleErrorSpy.mockRestore();
         });
+
+        test("should handle failed channel message fetch operations", async () => {
+            // Use fake timers
+            jest.useFakeTimers();
+
+            // Mock the handleRateLimitedOperation to return success: false
+            const mockHandleRateLimitedOperation = jest.fn().mockResolvedValue({ success: false });
+            (discordClient as any).handleRateLimitedOperation = mockHandleRateLimitedOperation;
+
+            // Create a mock channel
+            const mockChannel = {
+                id: "test-channel-id",
+                isTextBased: () => true,
+                messages: {
+                    fetch: jest.fn(),
+                },
+            };
+
+            // Mock the channel cache
+            (mockClient.channels.cache as any).get = jest.fn().mockReturnValue(mockChannel);
+
+            // Call backfillChannelMessages
+            await (discordClient as any).backfillChannelMessages("test-channel-id");
+
+            // Verify handleRateLimitedOperation was called
+            expect(mockHandleRateLimitedOperation).toHaveBeenCalledWith(
+                expect.any(Function),
+                "channel:test-channel-id",
+            );
+
+            // Verify warning was logged
+            expect(console.warn).toHaveBeenCalledWith(
+                "Could not fetch messages for channel test-channel-id, stopping backfill",
+            );
+
+            // Verify no messages were stored
+            expect(dataStore.addMessage).not.toHaveBeenCalled();
+
+            // Restore real timers
+            jest.useRealTimers();
+        });
+
+        test("should handle various error cases during message fetching", async () => {
+            // Mock console methods for cleaner test output
+            jest.spyOn(console, "log").mockImplementation(() => {});
+            jest.spyOn(console, "error").mockImplementation(() => {});
+            jest.spyOn(console, "warn").mockImplementation(() => {});
+
+            // Create a mock channel
+            const mockChannel = {
+                id: "test-channel-123",
+                isTextBased: () => true,
+                messages: {
+                    fetch: jest.fn(),
+                },
+            };
+
+            // Mock the client's channels cache
+            mockClient.channels.cache.get = jest.fn().mockReturnValue(mockChannel);
+
+            // Mock handleRateLimitedOperation to simulate different scenarios
+            let fetchCallCount = 0;
+            const handleRateLimitedSpy = jest.spyOn(discordClient as any, "handleRateLimitedOperation");
+            handleRateLimitedSpy.mockImplementation(async () => {
+                fetchCallCount++;
+                if (fetchCallCount === 1) {
+                    // First call: Return some messages
+                    const mockMessages = new (require("discord.js").Collection)();
+                    mockMessages.set("msg1", {
+                        id: "msg1",
+                        content: "Test message",
+                        author: { tag: "User#1234" },
+                        createdTimestamp: Date.now() - 1000,
+                    });
+                    return { success: true, result: mockMessages };
+                } else if (fetchCallCount === 2) {
+                    // Second call: Return empty collection to simulate end of messages
+                    const mockMessages = new (require("discord.js").Collection)();
+                    return { success: true, result: mockMessages };
+                }
+                // Subsequent calls: Simulate failure
+                return { success: false };
+            });
+
+            // Call backfillChannelMessages
+            await discordClient["backfillChannelMessages"]("test-channel-123");
+
+            // Verify message was stored
+            expect(dataStore.addMessage).toHaveBeenCalledWith(
+                "test-channel-123",
+                expect.objectContaining({
+                    id: "msg1",
+                    content: "Test message",
+                    authorTag: "User#1234",
+                }),
+            );
+
+            // Verify handleRateLimitedOperation was called with correct parameters
+            expect(handleRateLimitedSpy).toHaveBeenCalledWith(expect.any(Function), "channel:test-channel-123");
+
+            // Cleanup
+            handleRateLimitedSpy.mockRestore();
+        });
+
+        test("should handle rate limiting and retries", async () => {
+            // Mock console methods for cleaner test output
+            jest.spyOn(console, "warn").mockImplementation(() => {});
+            jest.spyOn(console, "error").mockImplementation(() => {});
+
+            // Mock setTimeout to execute immediately
+            jest.spyOn(global, "setTimeout").mockImplementation((callback: any) => {
+                callback();
+                return {} as any;
+            });
+
+            // Create a mock operation that fails with different errors but succeeds within retry limit
+            const mockOperation = jest
+                .fn()
+                .mockRejectedValueOnce({ httpStatus: 429, retryAfter: 1 }) // Rate limit error
+                .mockRejectedValueOnce(new Error("Unknown error")) // Random error
+                .mockResolvedValueOnce("success"); // Success on third try
+
+            // Test rate limit handling
+            const result1 = await discordClient["handleRateLimitedOperation"](mockOperation, "test-operation");
+
+            // Should eventually succeed
+            expect(result1.success).toBe(true);
+            expect(result1.result).toBe("success");
+            expect(mockOperation).toHaveBeenCalledTimes(3);
+
+            // Test unknown message error
+            const unknownMessageOp = jest.fn().mockRejectedValueOnce({ code: 10008 });
+            const result2 = await discordClient["handleRateLimitedOperation"](unknownMessageOp, "test-operation");
+            expect(result2.success).toBe(false);
+
+            // Test unknown channel error
+            const unknownChannelOp = jest.fn().mockRejectedValueOnce({ code: 10003 });
+            const result3 = await discordClient["handleRateLimitedOperation"](unknownChannelOp, "test-operation");
+            expect(result3.success).toBe(false);
+        });
+
+        test("should handle edge cases in message fetching", async () => {
+            // Mock console methods for cleaner test output
+            jest.spyOn(console, "log").mockImplementation(() => {});
+            jest.spyOn(console, "error").mockImplementation(() => {});
+            jest.spyOn(console, "warn").mockImplementation(() => {});
+
+            // Mock setTimeout to execute immediately
+            jest.spyOn(global, "setTimeout").mockImplementation((callback: any) => {
+                callback();
+                return {} as any;
+            });
+
+            // Create a mock channel
+            const mockChannel = {
+                id: "test-channel-123",
+                isTextBased: () => true,
+                messages: {
+                    fetch: jest.fn(),
+                },
+            };
+
+            // Mock the client's channels cache
+            mockClient.channels.cache.get = jest.fn().mockReturnValue(mockChannel);
+
+            // Mock handleRateLimitedOperation to simulate different scenarios
+            let fetchCallCount = 0;
+            const handleRateLimitedSpy = jest.spyOn(discordClient as any, "handleRateLimitedOperation");
+            handleRateLimitedSpy.mockImplementation(async () => {
+                fetchCallCount++;
+                const now = Date.now();
+                const oneDayAgo = now - 24 * 60 * 60 * 1000;
+
+                if (fetchCallCount === 1) {
+                    // First call: Return messages with some old ones
+                    const mockMessages = new (require("discord.js").Collection)();
+                    mockMessages.set("msg1", {
+                        id: "msg1",
+                        content: "Recent message",
+                        author: { tag: "User#1234" },
+                        createdTimestamp: now - 1000,
+                    });
+                    mockMessages.set("msg2", {
+                        id: "msg2",
+                        content: "Old message",
+                        author: { tag: "User#1234" },
+                        createdTimestamp: oneDayAgo - 1000,
+                    });
+                    Object.defineProperty(mockMessages, "size", { value: 2 });
+                    return { success: true, result: mockMessages };
+                }
+                // Second call: Return empty collection to end the loop
+                const mockMessages = new (require("discord.js").Collection)();
+                Object.defineProperty(mockMessages, "size", { value: 0 });
+                return { success: true, result: mockMessages };
+            });
+
+            // Call backfillChannelMessages
+            await discordClient["backfillChannelMessages"]("test-channel-123");
+
+            // Verify only recent messages were stored
+            expect(dataStore.addMessage).toHaveBeenCalledWith(
+                "test-channel-123",
+                expect.objectContaining({
+                    id: "msg1",
+                    content: "Recent message",
+                }),
+            );
+            // Old message should not be stored
+            expect(dataStore.addMessage).not.toHaveBeenCalledWith(
+                "test-channel-123",
+                expect.objectContaining({
+                    id: "msg2",
+                    content: "Old message",
+                }),
+            );
+            // Should have been called exactly once (only for the recent message)
+            expect(dataStore.addMessage).toHaveBeenCalledTimes(1);
+
+            // Cleanup
+            handleRateLimitedSpy.mockRestore();
+        });
     });
 });

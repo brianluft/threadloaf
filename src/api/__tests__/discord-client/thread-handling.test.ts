@@ -1,7 +1,7 @@
 import { createMockThreadChannel, TEST_TOKEN, TEST_GUILD_ID } from "./discord.mocks";
 import { DiscordClient } from "../../discord-client";
 import { DataStore } from "../../data-store";
-import { Client, Events, ChannelType, Collection, Guild, AnyThreadChannel } from "discord.js";
+import { Client, Events, ChannelType, Collection, Guild, AnyThreadChannel, ThreadChannel } from "discord.js";
 
 // Mock DataStore
 jest.mock("../../data-store");
@@ -28,6 +28,11 @@ describe("DiscordClient Thread Handling", () => {
             intents: ["Guilds", "GuildMessages", "MessageContent"],
         }) as jest.Mocked<Client>;
         mockClient.on = jest.fn().mockImplementation(captureEventHandler);
+
+        // Mock the channels property
+        mockClient.channels = {
+            cache: new Map(),
+        } as any;
 
         // Spy on Client constructor to inject our mock
         jest.spyOn(require("discord.js"), "Client").mockImplementation(() => mockClient);
@@ -176,6 +181,253 @@ describe("DiscordClient Thread Handling", () => {
 
             // Restore console.error
             consoleErrorSpy.mockRestore();
+        });
+
+        test("should handle failed message fetching", async () => {
+            const now = Date.now();
+
+            // Create mock thread collection
+            const mockThreadCollection = new Map();
+
+            // Add a thread in our guild
+            const mockThread = createMockThreadChannel({
+                guildId: TEST_GUILD_ID,
+                threadId: "test-thread-123",
+                threadType: ChannelType.PublicThread,
+            });
+
+            // Mock the handleRateLimitedOperation method to simulate failed message fetch
+            const handleRateLimitedSpy = jest.spyOn(discordClient as any, "handleRateLimitedOperation");
+            handleRateLimitedSpy.mockImplementation(async (...args: any[]) => {
+                const id = args[1] as string;
+                if (id.startsWith("thread-starter:")) {
+                    return {
+                        success: true,
+                        result: {
+                            id: "starter1",
+                            content: "Thread starter message",
+                            author: { tag: "ThreadCreator#1234" },
+                            createdTimestamp: now - 3000,
+                        },
+                    };
+                }
+                if (id.startsWith("thread:")) {
+                    return { success: false }; // Simulate failed message fetch
+                }
+                return { success: false };
+            });
+
+            mockThreadCollection.set("test-thread-123", mockThread);
+
+            // Spy on console.warn
+            const consoleWarnSpy = jest.spyOn(console, "warn");
+            consoleWarnSpy.mockImplementation(() => {});
+
+            // Call the method
+            await discordClient["processActiveThreads"](mockThreadCollection as any);
+
+            // Verify warning was logged
+            expect(consoleWarnSpy).toHaveBeenCalledWith(
+                `Could not fetch messages for thread test-thread-123, stopping backfill`,
+            );
+
+            // Restore console.warn
+            consoleWarnSpy.mockRestore();
+        });
+
+        test("should handle thread with no messages", async () => {
+            const now = Date.now();
+
+            // Create mock thread collection
+            const mockThreadCollection = new Map();
+
+            // Add a thread in our guild
+            const mockThread = createMockThreadChannel({
+                guildId: TEST_GUILD_ID,
+                threadId: "test-thread-123",
+                threadType: ChannelType.PublicThread,
+            });
+
+            // Mock the handleRateLimitedOperation method to return empty message collection
+            const handleRateLimitedSpy = jest.spyOn(discordClient as any, "handleRateLimitedOperation");
+            handleRateLimitedSpy.mockImplementation(async (...args: any[]) => {
+                const id = args[1] as string;
+                if (id.startsWith("thread-starter:")) {
+                    return {
+                        success: true,
+                        result: {
+                            id: "starter1",
+                            content: "Thread starter message",
+                            author: { tag: "ThreadCreator#1234" },
+                            createdTimestamp: now - 3000,
+                        },
+                    };
+                }
+                if (id.startsWith("thread:")) {
+                    // Return an empty Collection
+                    return {
+                        success: true,
+                        result: new Collection(),
+                    };
+                }
+                return { success: false };
+            });
+
+            mockThreadCollection.set("test-thread-123", mockThread);
+
+            // Call the method
+            await discordClient["processActiveThreads"](mockThreadCollection as any);
+
+            // Verify that no messages were added to the data store
+            expect(dataStore.addMessage).not.toHaveBeenCalled();
+        });
+
+        test("should handle thread with only old messages", async () => {
+            const now = Date.now();
+            const oneDayAgo = now - 24 * 60 * 60 * 1000;
+
+            // Create mock thread collection
+            const mockThreadCollection = new Map();
+
+            // Add a thread in our guild
+            const mockThread = createMockThreadChannel({
+                guildId: TEST_GUILD_ID,
+                threadId: "test-thread-123",
+                threadType: ChannelType.PublicThread,
+            });
+
+            // Create a mock message collection with only old messages
+            const mockMessages = new Collection();
+            mockMessages.set("old-msg1", {
+                id: "old-msg1",
+                content: "Old message",
+                author: { tag: "OldUser#1234" },
+                createdTimestamp: oneDayAgo - 1000, // Message from more than 24 hours ago
+            });
+
+            // Mock the handleRateLimitedOperation method to return old messages
+            const handleRateLimitedSpy = jest.spyOn(discordClient as any, "handleRateLimitedOperation");
+            handleRateLimitedSpy.mockImplementation(async (...args: any[]) => {
+                const id = args[1] as string;
+                if (id.startsWith("thread-starter:")) {
+                    return {
+                        success: true,
+                        result: {
+                            id: "starter1",
+                            content: "Thread starter message",
+                            author: { tag: "ThreadCreator#1234" },
+                            createdTimestamp: oneDayAgo - 2000,
+                        },
+                    };
+                }
+                if (id.startsWith("thread:")) {
+                    return {
+                        success: true,
+                        result: mockMessages,
+                    };
+                }
+                return { success: false };
+            });
+
+            mockThreadCollection.set("test-thread-123", mockThread);
+
+            // Call the method
+            await discordClient["processActiveThreads"](mockThreadCollection as any);
+
+            // Verify that no messages were added to the data store
+            expect(dataStore.addMessage).not.toHaveBeenCalled();
+        });
+
+        test("should handle failed channel message fetching", async () => {
+            const now = Date.now();
+
+            // Create mock thread collection
+            const mockThreadCollection = new Map();
+
+            // Create a mock channel
+            const mockChannel = {
+                id: "channel-123",
+                type: ChannelType.GuildText,
+                isTextBased: () => true,
+                messages: {
+                    fetch: jest.fn(),
+                },
+            };
+
+            // Add the channel to the client's cache
+            mockClient.channels.cache.set("channel-123", mockChannel as any);
+
+            // Add a thread in our guild that's a channel thread
+            const mockThread = {
+                ...createMockThreadChannel({
+                    guildId: TEST_GUILD_ID,
+                    threadId: "test-thread-123",
+                    threadType: ChannelType.PublicThread,
+                    parentId: "channel-123",
+                }),
+                parent: mockChannel,
+                parentId: "channel-123",
+            } as unknown as ThreadChannel;
+
+            // Mock the handleRateLimitedOperation method to simulate failed channel message fetch
+            const handleRateLimitedSpy = jest.spyOn(discordClient as any, "handleRateLimitedOperation");
+            handleRateLimitedSpy.mockImplementation(async (...args: any[]) => {
+                const id = args[1] as string;
+                if (id.startsWith("thread-starter:")) {
+                    return {
+                        success: true,
+                        result: {
+                            id: "starter1",
+                            content: "Thread starter message",
+                            author: { tag: "ThreadCreator#1234" },
+                            createdTimestamp: now - 3000,
+                        },
+                    };
+                }
+                if (id.startsWith("thread:")) {
+                    return { success: true, result: new Collection() };
+                }
+                if (id.startsWith("channel:")) {
+                    return { success: false }; // Simulate failed channel message fetch
+                }
+                return { success: false };
+            });
+
+            mockThreadCollection.set("test-thread-123", mockThread);
+
+            // Spy on console.warn
+            const consoleWarnSpy = jest.spyOn(console, "warn");
+            consoleWarnSpy.mockImplementation(() => {});
+
+            // Call the method
+            await discordClient["processActiveThreads"](mockThreadCollection as any);
+
+            // Verify warning was logged
+            expect(consoleWarnSpy).toHaveBeenCalledWith(
+                `Could not fetch messages for channel channel-123, stopping backfill`,
+            );
+
+            // Restore console.warn
+            consoleWarnSpy.mockRestore();
+        });
+
+        test("should handle threads from different guilds", async () => {
+            // Create a thread from a different guild
+            const wrongGuildThread = createMockThreadChannel({
+                guildId: "wrong-guild",
+                threadType: ChannelType.PublicThread,
+            });
+
+            // Spy on dataStore.removeThread to ensure it's not called
+            const removeThreadSpy = jest.spyOn(dataStore, "removeThread");
+
+            // Call the method with a Collection containing the thread
+            const threadCollection = new Collection<string, AnyThreadChannel>();
+            threadCollection.set(wrongGuildThread.id, wrongGuildThread as unknown as AnyThreadChannel);
+            await discordClient["processActiveThreads"](threadCollection);
+
+            // Verify removeThread was not called
+            expect(removeThreadSpy).not.toHaveBeenCalled();
         });
     });
 
@@ -332,4 +584,145 @@ describe("DiscordClient Thread Handling", () => {
             }),
         );
     }, 10000); // Increase timeout to 10 seconds
+
+    describe("handleRateLimitedOperation", () => {
+        test("should handle unknown message errors gracefully", async () => {
+            // Create a mock operation that throws an unknown message error
+            const mockOperation = jest.fn().mockRejectedValue({
+                code: 10008, // Unknown message error code
+                message: "Unknown Message",
+            });
+
+            // Call the method directly
+            const result = await discordClient["handleRateLimitedOperation"](mockOperation, "test-operation", 5);
+
+            // Verify the operation was attempted
+            expect(mockOperation).toHaveBeenCalled();
+
+            // Verify we got a failed result
+            expect(result).toEqual({ success: false });
+
+            // Verify warning was logged
+            expect(console.warn).toHaveBeenCalledWith(
+                "Unknown message encountered during operation for test-operation, continuing",
+            );
+        });
+
+        test("should handle unknown channel errors gracefully", async () => {
+            // Create a mock operation that throws an unknown channel error
+            const mockOperation = jest.fn().mockRejectedValue({
+                code: 10003, // Unknown channel error code
+                message: "Unknown Channel",
+            });
+
+            // Call the method directly
+            const result = await discordClient["handleRateLimitedOperation"](mockOperation, "test-channel", 5);
+
+            // Verify the operation was attempted
+            expect(mockOperation).toHaveBeenCalled();
+
+            // Verify we got a failed result
+            expect(result).toEqual({ success: false });
+
+            // Verify warning was logged
+            expect(console.warn).toHaveBeenCalledWith("Channel/thread test-channel not found, skipping operation");
+        });
+
+        test("should handle rate limit errors with retries", async () => {
+            // Mock setTimeout to execute immediately
+            jest.spyOn(global, "setTimeout").mockImplementation((callback: any) => {
+                callback();
+                return {} as any;
+            });
+
+            // Create a mock operation that succeeds after one rate limit error
+            const mockOperation = jest
+                .fn()
+                .mockRejectedValueOnce({
+                    httpStatus: 429,
+                    retryAfter: 1, // 1 second retry after
+                    message: "Rate Limited",
+                })
+                .mockResolvedValueOnce("success");
+
+            // Call the method directly
+            const result = await discordClient["handleRateLimitedOperation"](
+                mockOperation,
+                "rate-limited-operation",
+                5,
+            );
+
+            // Verify the operation was attempted twice
+            expect(mockOperation).toHaveBeenCalledTimes(2);
+
+            // Verify we got a successful result
+            expect(result).toEqual({ success: true, result: "success" });
+
+            // Verify warning was logged
+            expect(console.warn).toHaveBeenCalledWith(
+                "Rate limited during operation for rate-limited-operation. Retrying after 1000ms",
+            );
+        });
+
+        test("should fail after maximum retries", async () => {
+            // Mock setTimeout to execute immediately
+            jest.spyOn(global, "setTimeout").mockImplementation((callback: any) => {
+                callback();
+                return {} as any;
+            });
+
+            // Create a mock operation that always fails with a generic error
+            const mockOperation = jest.fn().mockRejectedValue(new Error("Generic error"));
+
+            // Call the method directly with 3 max retries
+            const result = await discordClient["handleRateLimitedOperation"](mockOperation, "failing-operation", 3);
+
+            // Verify the operation was attempted exactly 3 times
+            expect(mockOperation).toHaveBeenCalledTimes(3);
+
+            // Verify we got a failed result
+            expect(result).toEqual({ success: false });
+
+            // Verify error was logged for each attempt
+            expect(console.error).toHaveBeenCalledWith(
+                "Error during operation for failing-operation:",
+                expect.any(Error),
+            );
+
+            // Verify final failure was logged
+            expect(console.error).toHaveBeenCalledWith("Failed operation for failing-operation after 3 attempts");
+
+            // Verify backoff warnings were logged
+            expect(console.warn).toHaveBeenCalledWith("Retrying in 2000ms (attempt 1/3)");
+            expect(console.warn).toHaveBeenCalledWith("Retrying in 4000ms (attempt 2/3)");
+        });
+    });
+
+    test("should handle thread creation in text channel", async () => {
+        // Create a mock thread in a text channel
+        const mockThread = {
+            id: "text-thread-123",
+            guild: { id: TEST_GUILD_ID },
+            type: ChannelType.PublicThread,
+            parentId: "text-channel-123",
+            parent: {
+                type: ChannelType.GuildText,
+            },
+            join: jest.fn().mockResolvedValue(undefined),
+            name: "Test Thread",
+        } as unknown as ThreadChannel;
+
+        // Spy on backfillChannelMessages
+        const backfillSpy = jest.spyOn(discordClient as any, "backfillChannelMessages");
+        backfillSpy.mockResolvedValue(undefined);
+
+        // Trigger the thread create event
+        await clientOnHandlers[Events.ThreadCreate](mockThread);
+
+        // Verify backfillChannelMessages was called with the parent channel ID
+        expect(backfillSpy).toHaveBeenCalledWith("text-channel-123");
+
+        // Cleanup
+        backfillSpy.mockRestore();
+    });
 });

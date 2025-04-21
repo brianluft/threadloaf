@@ -147,6 +147,9 @@ export class DiscordClient {
 
                     this.dataStore.addForumThread(threadMeta);
                 }
+            } else if (thread.parent?.type === ChannelType.GuildText) {
+                // For non-forum threads, backfill the parent channel
+                await this.backfillChannelMessages(thread.parentId || "");
             }
         } catch (error) {
             console.error(`Error handling thread create for ${thread.id}:`, error);
@@ -259,6 +262,9 @@ export class DiscordClient {
 
                         this.dataStore.addForumThread(threadMeta);
                     }
+                } else if (thread.parent?.type === ChannelType.GuildText) {
+                    // For non-forum threads, backfill the parent channel
+                    await this.backfillChannelMessages(thread.parentId || "");
                 }
 
                 // Track if we've hit messages older than 24 hours

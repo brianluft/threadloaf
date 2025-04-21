@@ -187,4 +187,13 @@ describe("DataStore Message Storage", () => {
         // @ts-ignore - accessing private property for testing
         expect(dataStore.messagesByChannel.has(channelId)).toBe(false);
     });
+
+    test("pruneOldMessages should handle unknown channel gracefully", () => {
+        // Invoke pruneOldMessages on a channel that doesn't exist
+        expect(() => (dataStore as any).pruneOldMessages("unknown-channel")).not.toThrow();
+        // getMessagesForChannel should return empty array
+        expect(dataStore.getMessagesForChannel("unknown-channel")).toEqual([]);
+        // @ts-ignore - accessing private property
+        expect((dataStore as any).messagesByChannel.has("unknown-channel")).toBe(false);
+    });
 });

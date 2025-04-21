@@ -169,6 +169,258 @@ describe("DiscordClient Rate Limiting", () => {
             consoleWarnSpy.mockRestore();
             jest.useRealTimers();
         });
+
+        test("should exhaust all retries with non-Discord error", async () => {
+            // Spy on console.error and console.warn
+            const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+            const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+            // Use fake timers
+            jest.useFakeTimers();
+
+            // Create a specific error
+            const specificError = new Error("Persistent error");
+
+            // Create an operation that always fails
+            const failingOperation = jest.fn().mockRejectedValue(specificError);
+
+            // Start the operation with 3 retries (reduced from 5 for efficiency)
+            const resultPromise = handleRateLimitedOperation(failingOperation, "test-op", 3);
+
+            // Process all retries in sequence
+            for (let i = 0; i < 4; i++) {
+                await Promise.resolve(); // Let the current execution complete
+                jest.runAllTimers(); // Run the timer for the backoff
+                await Promise.resolve(); // Let the next iteration start
+            }
+
+            // Get the final result
+            const result = await resultPromise;
+
+            // Verify the operation was called the expected number of times
+            expect(failingOperation).toHaveBeenCalledTimes(3);
+
+            // Verify error logging
+            expect(consoleErrorSpy).toHaveBeenCalledWith("Error during operation for test-op:", specificError);
+            expect(consoleErrorSpy).toHaveBeenCalledWith("Failed operation for test-op after 3 attempts");
+
+            // Verify backoff warnings were logged with increasing delays
+            for (let i = 1; i <= 3; i++) {
+                const backoffTime = Math.min(1000 * Math.pow(2, i), 30000);
+                expect(consoleWarnSpy).toHaveBeenCalledWith(`Retrying in ${backoffTime}ms (attempt ${i}/3)`);
+            }
+
+            // Verify the operation failed
+            expect(result).toEqual({ success: false });
+
+            // Clean up
+            consoleErrorSpy.mockRestore();
+            consoleWarnSpy.mockRestore();
+            jest.useRealTimers();
+        }, 10000); // Increased timeout to 10 seconds
+
+        test("should handle Discord rate limit errors (HTTP 429)", async () => {
+            // Create a mock operation that throws a rate limit error
+            const mockOperation = jest
+                .fn()
+                .mockRejectedValueOnce({
+                    httpStatus: 429,
+                    retryAfter: 1, // 1 second retry after
+                    message: "Rate limited",
+                })
+                .mockResolvedValueOnce("success"); // succeed on retry
+
+            // Use fake timers
+            jest.useFakeTimers();
+
+            // Start the operation
+            const resultPromise = handleRateLimitedOperation(mockOperation, "rate-limited-op");
+
+            // Let the first rejection happen
+            await Promise.resolve();
+
+            // Verify warning was logged
+            expect(console.warn).toHaveBeenCalledWith(
+                "Rate limited during operation for rate-limited-op. Retrying after 1000ms",
+            );
+
+            // Advance timer by retry delay
+            jest.advanceTimersByTime(1000);
+
+            // Complete the operation
+            await Promise.resolve();
+
+            // Verify the operation was retried and succeeded
+            expect(mockOperation).toHaveBeenCalledTimes(2);
+            const result = await resultPromise;
+            expect(result).toEqual({ success: true, result: "success" });
+        });
+
+        test("should handle Discord rate limit errors without retryAfter (HTTP 429)", async () => {
+            // Create a mock operation that throws a rate limit error without retryAfter
+            const mockOperation = jest
+                .fn()
+                .mockRejectedValueOnce({
+                    httpStatus: 429,
+                    message: "Rate limited",
+                    // No retryAfter provided, should default to 5000ms
+                })
+                .mockResolvedValueOnce("success"); // succeed on retry
+
+            // Use fake timers
+            jest.useFakeTimers();
+
+            // Start the operation
+            const resultPromise = handleRateLimitedOperation(mockOperation, "rate-limited-op");
+
+            // Let the first rejection happen
+            await Promise.resolve();
+
+            // Verify warning was logged with default 5000ms retry time
+            expect(console.warn).toHaveBeenCalledWith(
+                "Rate limited during operation for rate-limited-op. Retrying after 5000ms",
+            );
+
+            // Advance timer by default retry delay
+            jest.advanceTimersByTime(5000);
+
+            // Complete the operation
+            await Promise.resolve();
+
+            // Verify the operation was retried and succeeded
+            expect(mockOperation).toHaveBeenCalledTimes(2);
+            const result = await resultPromise;
+            expect(result).toEqual({ success: true, result: "success" });
+        });
+
+        test("should handle rate limit error (HTTP 429) with retryAfter", async () => {
+            // Mock console.warn to avoid cluttering test output
+            const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+            // Create a mock operation that first throws a rate limit error, then succeeds
+            const mockOperation = jest
+                .fn()
+                .mockRejectedValueOnce({
+                    httpStatus: 429,
+                    retryAfter: 2, // 2 seconds retry after
+                    message: "Rate limited",
+                })
+                .mockResolvedValueOnce("success");
+
+            // Start the operation
+            const resultPromise = handleRateLimitedOperation(mockOperation, "rate-limited-op");
+
+            // Let the first attempt complete and hit rate limit
+            await Promise.resolve();
+
+            // Verify rate limit warning was logged
+            expect(consoleWarnSpy).toHaveBeenCalledWith(
+                "Rate limited during operation for rate-limited-op. Retrying after 2000ms",
+            );
+
+            // Advance timer by retryAfter duration
+            jest.advanceTimersByTime(2000);
+            await Promise.resolve();
+
+            // Get final result
+            const result = await resultPromise;
+
+            // Verify the operation was called twice (initial + retry after rate limit)
+            expect(mockOperation).toHaveBeenCalledTimes(2);
+
+            // Verify we got success on the retry
+            expect(result).toEqual({ success: true, result: "success" });
+
+            // Clean up
+            consoleWarnSpy.mockRestore();
+        });
+
+        test("should handle rate limit error without retryAfter specified", async () => {
+            // Mock console.warn to avoid cluttering test output
+            const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+            // Create a mock operation that first throws a rate limit error without retryAfter, then succeeds
+            const mockOperation = jest
+                .fn()
+                .mockRejectedValueOnce({
+                    httpStatus: 429,
+                    message: "Rate limited",
+                })
+                .mockResolvedValueOnce("success");
+
+            // Start the operation
+            const resultPromise = handleRateLimitedOperation(mockOperation, "rate-limited-op");
+
+            // Let the first attempt complete and hit rate limit
+            await Promise.resolve();
+
+            // Verify rate limit warning was logged with default 5000ms
+            expect(consoleWarnSpy).toHaveBeenCalledWith(
+                "Rate limited during operation for rate-limited-op. Retrying after 5000ms",
+            );
+
+            // Advance timer by default retry duration
+            jest.advanceTimersByTime(5000);
+            await Promise.resolve();
+
+            // Get final result
+            const result = await resultPromise;
+
+            // Verify the operation was called twice (initial + retry after rate limit)
+            expect(mockOperation).toHaveBeenCalledTimes(2);
+
+            // Verify we got success on the retry
+            expect(result).toEqual({ success: true, result: "success" });
+
+            // Clean up
+            consoleWarnSpy.mockRestore();
+        });
+
+        test("should handle rate limit errors with specified retry delay", async () => {
+            // Spy on console.warn
+            const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+            // Use fake timers
+            jest.useFakeTimers();
+
+            // Create a mock operation that first throws a rate limit error, then succeeds
+            const mockOperation = jest
+                .fn()
+                .mockRejectedValueOnce({
+                    httpStatus: 429,
+                    retryAfter: 2, // 2 seconds retry delay
+                    message: "Rate limited",
+                })
+                .mockResolvedValueOnce("success");
+
+            // Start the operation
+            const resultPromise = handleRateLimitedOperation(mockOperation, "rate-limited-op");
+
+            // Let the first attempt complete (which will hit rate limit)
+            await Promise.resolve();
+
+            // Verify rate limit warning was logged
+            expect(consoleWarnSpy).toHaveBeenCalledWith(
+                "Rate limited during operation for rate-limited-op. Retrying after 2000ms",
+            );
+
+            // Advance timer by the retry delay
+            jest.advanceTimersByTime(2000);
+            await Promise.resolve();
+
+            // Get the final result
+            const result = await resultPromise;
+
+            // Verify the operation was called twice (once for rate limit, once for success)
+            expect(mockOperation).toHaveBeenCalledTimes(2);
+
+            // Verify we got success on the retry
+            expect(result).toEqual({ success: true, result: "success" });
+
+            // Clean up
+            consoleWarnSpy.mockRestore();
+            jest.useRealTimers();
+        });
     });
 
     describe("rate limit handling", () => {

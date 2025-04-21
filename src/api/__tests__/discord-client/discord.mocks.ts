@@ -72,6 +72,7 @@ export function createMockThreadChannel(
         archived?: boolean;
         parentId?: string;
         threadType?: number;
+        parentType?: number;
     } = {},
 ): ThreadChannel {
     const threadId = options.threadId || "test-thread-id";
@@ -79,6 +80,7 @@ export function createMockThreadChannel(
     const archived = options.archived !== undefined ? options.archived : false;
     const parentId = options.parentId || "parent-channel-id";
     const threadType = options.threadType || ChannelType.PublicThread;
+    const parentType = options.parentType || ChannelType.GuildForum;
 
     return {
         id: threadId,
@@ -87,7 +89,7 @@ export function createMockThreadChannel(
         parentId: parentId,
         name: "Test Thread",
         parent: {
-            type: ChannelType.GuildForum,
+            type: parentType,
         },
         type: threadType,
         join: jest.fn().mockResolvedValue(undefined),

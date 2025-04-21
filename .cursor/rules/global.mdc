@@ -37,7 +37,9 @@ Discord dynamically generates unique suffixes for all classes and IDs.
 
 # API Testing
 
+Run tests with `/workspaces/threadloaf/src/api/test.sh`
 Keep unit test files to 500 lines or less. Create a new test file as needed.
+Use fake timeouts and delays. Don't make tests wait for real delays.
 
 # Verification
 
