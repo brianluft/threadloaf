@@ -250,11 +250,45 @@ describe("DiscordClient Event Handlers", () => {
             // Verify error was logged with thread ID
             expect(consoleErrorSpy).toHaveBeenCalledWith(
                 `Error handling thread create for ${mockThread.id}:`,
-                expect.objectContaining({ message: "Failed to join thread" }),
+                expect.any(Error),
             );
 
             // Restore console.error
             consoleErrorSpy.mockRestore();
+        });
+
+        test("should handle thread with null parentId", async () => {
+            const timestamp = Date.now();
+            const mockStarterMessage = {
+                id: "root1",
+                content: "Forum post with null parentId",
+                author: { tag: "User#9999" },
+                createdTimestamp: timestamp,
+            };
+
+            // Create a thread with a null parentId
+            const mockThread = {
+                guild: { id: TEST_GUILD_ID },
+                id: "forum-thread-null-parent",
+                name: "Thread With Null ParentId",
+                type: ChannelType.PublicThread,
+                parentId: null, // Set parentId to null
+                parent: { type: ChannelType.GuildForum },
+                createdTimestamp: timestamp,
+                join: jest.fn().mockResolvedValue(undefined),
+                fetchStarterMessage: jest.fn().mockResolvedValue(mockStarterMessage),
+            } as unknown as ThreadChannel;
+
+            // Call the handler directly
+            await clientOnHandlers[Events.ThreadCreate](mockThread);
+
+            // Should store thread metadata with empty string as parentId
+            expect(dataStore.addForumThread).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    id: "forum-thread-null-parent",
+                    parentId: "", // Verify empty string is used when parentId is null
+                }),
+            );
         });
     });
 

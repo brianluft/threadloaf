@@ -684,5 +684,135 @@ describe("DiscordClient Backfill", () => {
             // Cleanup
             handleRateLimitedSpy.mockRestore();
         });
+
+        test("should handle message pagination in backfillChannelMessages", async () => {
+            // Mock messages for two pages
+            const mockMessages1 = new Collection<string, any>();
+            const mockMessages2 = new Collection<string, any>();
+            const now = Date.now();
+
+            // Add messages to first page
+            for (let i = 0; i < 100; i++) {
+                mockMessages1.set(`msg${i}`, {
+                    id: `msg${i}`,
+                    content: `Message ${i}`,
+                    author: { tag: "user1" },
+                    createdTimestamp: now - 1000 * i,
+                });
+            }
+
+            // Add messages to second page
+            for (let i = 100; i < 150; i++) {
+                mockMessages2.set(`msg${i}`, {
+                    id: `msg${i}`,
+                    content: `Message ${i}`,
+                    author: { tag: "user1" },
+                    createdTimestamp: now - 1000 * i,
+                });
+            }
+
+            // Add last() method to collections
+            mockMessages1.last = () => mockMessages1.get(`msg${99}`);
+            mockMessages2.last = () => mockMessages2.get(`msg${149}`);
+
+            // Mock the channel
+            const mockChannel = {
+                id: "channel-id",
+                isTextBased: jest.fn().mockReturnValue(true),
+                messages: {
+                    fetch: jest
+                        .fn()
+                        .mockImplementationOnce(() => Promise.resolve(mockMessages1))
+                        .mockImplementationOnce(() => Promise.resolve(mockMessages2)),
+                },
+            };
+
+            // Setup mock client to return our channel
+            mockClient.channels.cache.get = jest.fn().mockReturnValue(mockChannel);
+
+            // Mock handleRateLimitedOperation to pass through the operation
+            (discordClient as any).handleRateLimitedOperation = async (operation: () => Promise<any>) => {
+                const result = await operation();
+                return { success: true, result };
+            };
+
+            // Use fake timers for the delay
+            jest.useFakeTimers();
+
+            // Start the backfill
+            const backfillPromise = (discordClient as any).backfillChannelMessages("channel-id");
+
+            // Advance timers and resolve promises in sequence
+            await Promise.resolve(); // Let the first fetch complete
+            jest.advanceTimersByTime(250); // Handle the delay
+            await Promise.resolve(); // Let the second fetch complete
+            jest.advanceTimersByTime(250); // Handle the delay
+            await Promise.resolve(); // Let any remaining promises resolve
+
+            // Wait for backfill to complete
+            await backfillPromise;
+
+            // Verify that fetch was called with the correct options
+            expect(mockChannel.messages.fetch).toHaveBeenCalledWith({ limit: 100 });
+            expect(mockChannel.messages.fetch).toHaveBeenCalledWith({
+                limit: 100,
+                before: mockMessages1.last()?.id,
+            });
+
+            // Verify messages were stored
+            expect(dataStore.addMessage).toHaveBeenCalledTimes(150);
+        }, 10000); // Increase timeout to 10 seconds
+
+        test("should stop backfill when all messages are older than 24 hours", async () => {
+            const now = Date.now();
+            const oneDayAgo = now - 24 * 60 * 60 * 1000;
+
+            // Create a batch of messages that are all older than 24 hours
+            const oldMessagesBatch = new Collection();
+            oldMessagesBatch.set("old1", {
+                id: "old1",
+                content: "Old message 1",
+                author: { tag: "User1#1234" },
+                createdTimestamp: oneDayAgo - 60 * 1000, // 1 minute older than 24 hours ago
+            });
+            oldMessagesBatch.set("old2", {
+                id: "old2",
+                content: "Old message 2",
+                author: { tag: "User2#5678" },
+                createdTimestamp: oneDayAgo - 3600 * 1000, // 1 hour older than 24 hours ago
+            });
+
+            const mockChannel = {
+                id: "test-channel-id",
+                isTextBased: () => true,
+                messages: {
+                    fetch: jest.fn().mockResolvedValue(oldMessagesBatch),
+                },
+            };
+
+            // Mock the client's channels cache
+            mockClient.channels = {
+                cache: new Collection([["test-channel-id", mockChannel]]),
+            } as any;
+
+            // Create spy for console.log
+            const logSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+
+            // Call the private method
+            await (discordClient as any).backfillChannelMessages("test-channel-id");
+
+            // Verify that messages.fetch was called once
+            expect(mockChannel.messages.fetch).toHaveBeenCalledTimes(1);
+
+            // Verify that no messages were stored (since all are older than 24 hours)
+            expect(dataStore.addMessage).not.toHaveBeenCalled();
+
+            // Verify that backfill completion was logged with 0 messages
+            expect(logSpy).toHaveBeenCalledWith(
+                expect.stringContaining("Backfill complete for channel test-channel-id: fetched 0 messages"),
+            );
+
+            logSpy.mockRestore();
+        });
     });
 });

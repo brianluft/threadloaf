@@ -74,6 +74,9 @@ describe("DiscordClient Rate Limiting", () => {
         });
 
         test("should handle unknown message error (code 10008)", async () => {
+            // Spy on console.warn
+            const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+
             // Create a mock operation that throws an error with code 10008
             const mockOperation = jest.fn().mockRejectedValue({
                 code: 10008,
@@ -84,7 +87,7 @@ describe("DiscordClient Rate Limiting", () => {
             const result = await handleRateLimitedOperation(mockOperation, "test-operation");
 
             // Verify the warning was logged
-            expect(console.warn).toHaveBeenCalledWith(
+            expect(consoleWarnSpy).toHaveBeenCalledWith(
                 "Unknown message encountered during operation for test-operation, continuing",
             );
 
@@ -93,9 +96,15 @@ describe("DiscordClient Rate Limiting", () => {
 
             // Verify the operation returned false without retrying
             expect(result).toEqual({ success: false });
+
+            // Clean up
+            consoleWarnSpy.mockRestore();
         });
 
         test("should handle unknown channel error (code 10003)", async () => {
+            // Spy on console.warn
+            const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+
             // Create a mock operation that throws an error with code 10003
             const mockOperation = jest.fn().mockRejectedValue({
                 code: 10003,
@@ -106,13 +115,16 @@ describe("DiscordClient Rate Limiting", () => {
             const result = await handleRateLimitedOperation(mockOperation, "test-operation");
 
             // Verify the warning was logged
-            expect(console.warn).toHaveBeenCalledWith("Channel/thread test-operation not found, skipping operation");
+            expect(consoleWarnSpy).toHaveBeenCalledWith("Channel/thread test-operation not found, skipping operation");
 
             // Verify the operation was attempted exactly once (no retries for this error)
             expect(mockOperation).toHaveBeenCalledTimes(1);
 
             // Verify the operation returned false without retrying
             expect(result).toEqual({ success: false });
+
+            // Clean up
+            consoleWarnSpy.mockRestore();
         });
 
         test("should handle generic errors with exponential backoff", async () => {
@@ -198,7 +210,7 @@ describe("DiscordClient Rate Limiting", () => {
             const result = await resultPromise;
 
             // Verify the operation was called the expected number of times
-            expect(failingOperation).toHaveBeenCalledTimes(3);
+            expect(failingOperation).toHaveBeenCalledTimes(3); // Initial + 2 retries = 3 attempts total for maxRetries = 3
 
             // Verify error logging
             expect(consoleErrorSpy).toHaveBeenCalledWith("Error during operation for test-op:", specificError);
@@ -421,6 +433,59 @@ describe("DiscordClient Rate Limiting", () => {
             consoleWarnSpy.mockRestore();
             jest.useRealTimers();
         });
+
+        test("should use correct exponential backoff timing", async () => {
+            // Spy on console.error and console.warn
+            const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+            const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+            // Use fake timers
+            jest.useFakeTimers();
+
+            // Create a specific error
+            const specificError = new Error("Test error");
+
+            // Create an operation that always fails
+            const failingOperation = jest.fn().mockRejectedValue(specificError);
+
+            // Start the operation with 3 retries
+            const resultPromise = handleRateLimitedOperation(failingOperation, "test-op", 3);
+
+            // For each retry, advance timers using runAllTimers
+            for (let i = 1; i <= 3; i++) {
+                await Promise.resolve(); // Let the current execution complete (handle potential rejection)
+                jest.runAllTimers(); // Resolve the setTimeout called for backoff
+                await Promise.resolve(); // Allow the loop in handleRateLimitedOperation to continue
+            }
+
+            // Get the final result
+            const result = await resultPromise;
+
+            // Verify all warning messages were logged with correct backoff times
+            const expectedWarnings = [
+                "Retrying in 2000ms (attempt 1/3)",
+                "Retrying in 4000ms (attempt 2/3)",
+                "Retrying in 8000ms (attempt 3/3)",
+            ];
+
+            expectedWarnings.forEach((warning) => {
+                expect(consoleWarnSpy).toHaveBeenCalledWith(warning);
+            });
+
+            // Verify the operation was called the expected number of times
+            expect(failingOperation).toHaveBeenCalledTimes(3); // Initial + 2 retries = 3 attempts total for maxRetries = 3
+
+            // Verify the final error message
+            expect(consoleErrorSpy).toHaveBeenCalledWith("Failed operation for test-op after 3 attempts");
+
+            // Verify the operation failed
+            expect(result).toEqual({ success: false });
+
+            // Clean up
+            consoleErrorSpy.mockRestore();
+            consoleWarnSpy.mockRestore();
+            jest.useRealTimers(); // Restore real timers in afterEach, but ensure it's called here if needed
+        });
     });
 
     describe("rate limit handling", () => {
@@ -458,6 +523,47 @@ describe("DiscordClient Rate Limiting", () => {
 
             // Verify our mock was called with the expected parameters
             expect(mockHandleRateLimitedOperation).toHaveBeenCalledWith(expect.any(Function), "channel:channel1");
+        });
+
+        test("should handle thread message fetch failure during backfill", async () => {
+            // Mock handleRateLimitedOperation to return failure
+            const mockHandleRateLimitedOperation = jest.fn().mockResolvedValue({ success: false });
+            (discordClient as any).handleRateLimitedOperation = mockHandleRateLimitedOperation;
+
+            // Mock a thread channel
+            const mockThread = {
+                id: "test-thread-id",
+                guild: {
+                    id: TEST_GUILD_ID,
+                },
+                type: ChannelType.PublicThread,
+                parent: {
+                    type: ChannelType.GuildText,
+                },
+                parentId: "parent-channel-id",
+                join: jest.fn().mockResolvedValue(undefined),
+                messages: {
+                    fetch: jest.fn().mockRejectedValue(new Error("Failed to fetch messages")),
+                },
+            };
+
+            // Create a collection of threads
+            const threads = new Collection();
+            threads.set(mockThread.id, mockThread);
+
+            // Spy on console.warn
+            const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+            // Call processActiveThreads directly
+            await (discordClient as any).processActiveThreads(threads);
+
+            // Verify the warning was logged
+            expect(warnSpy).toHaveBeenCalledWith(
+                "Could not fetch messages for thread test-thread-id, stopping backfill",
+            );
+
+            // Clean up
+            warnSpy.mockRestore();
         });
     });
 });

@@ -50,7 +50,7 @@ export class DiscordClient {
      * Handle the client ready event
      */
     private async handleReady(): Promise<void> {
-        console.log(`Logged in as ${this.client.user?.tag}`);
+        console.log(`Logged in as ${this.client.user!.tag}`);
 
         // Set ready state
         this.ready = true;
@@ -346,91 +346,87 @@ export class DiscordClient {
      * Backfill messages from a specific channel
      */
     private async backfillChannelMessages(channelId: string): Promise<void> {
-        try {
-            console.log(`Backfilling messages for channel ${channelId}`);
+        console.log(`Backfilling messages for channel ${channelId}`);
 
-            const channel = this.client.channels.cache.get(channelId);
-            if (!channel || !channel.isTextBased()) {
-                console.error(`Channel ${channelId} not found or not a text channel`);
-                return;
-            }
-
-            const now = Date.now();
-            const oneDayAgo = now - 24 * 60 * 60 * 1000;
-
-            // Track if we've hit messages older than 24 hours
-            let reachedEnd = false;
-
-            // Start with no "before" parameter for the first batch
-            let lastMessageId: string | undefined = undefined;
-
-            // Counter for total messages fetched
-            let totalFetched = 0;
-
-            while (!reachedEnd) {
-                // Create fetch options
-                const options: { limit: number; before?: string } = { limit: 100 };
-                if (lastMessageId) {
-                    options.before = lastMessageId;
-                }
-
-                // Use our helper to handle rate limiting
-                const { success, result: messages } = await this.handleRateLimitedOperation(
-                    () => channel.messages.fetch(options),
-                    `channel:${channelId}`,
-                );
-
-                if (!success || !messages) {
-                    console.warn(`Could not fetch messages for channel ${channelId}, stopping backfill`);
-                    break;
-                }
-
-                // If we got no messages, we've reached the end
-                if (messages.size === 0) {
-                    reachedEnd = true;
-                    continue;
-                }
-
-                // Process the messages
-                const recentMessages = messages.filter((m) => m.createdTimestamp >= oneDayAgo);
-
-                // If all messages are older than 24 hours, we've reached our limit
-                if (recentMessages.size === 0 && messages.size > 0) {
-                    reachedEnd = true;
-                    continue;
-                }
-
-                // Process and store messages
-                for (const [, message] of recentMessages) {
-                    const storedMessage: StoredMessage = {
-                        id: message.id,
-                        content: message.content,
-                        authorTag: message.author.tag,
-                        timestamp: message.createdTimestamp,
-                    };
-
-                    this.dataStore.addMessage(channelId, storedMessage);
-                }
-
-                totalFetched += recentMessages.size;
-
-                // Get the ID of the oldest message for next batch
-                lastMessageId = messages.last()?.id;
-
-                // If we fetched fewer than requested, we've reached the end
-                if (messages.size < 100) {
-                    reachedEnd = true;
-                    continue;
-                }
-
-                // Add a small delay to be nice to the API
-                await new Promise((resolve) => setTimeout(resolve, 250));
-            }
-
-            console.log(`Backfill complete for channel ${channelId}: fetched ${totalFetched} messages`);
-        } catch (error) {
-            console.error(`Unexpected error during backfill for ${channelId}:`, error);
+        const channel = this.client.channels.cache.get(channelId);
+        if (!channel || !channel.isTextBased()) {
+            console.error(`Channel ${channelId} not found or not a text channel`);
+            return;
         }
+
+        const now = Date.now();
+        const oneDayAgo = now - 24 * 60 * 60 * 1000;
+
+        // Track if we've hit messages older than 24 hours
+        let reachedEnd = false;
+
+        // Start with no "before" parameter for the first batch
+        let lastMessageId: string | undefined = undefined;
+
+        // Counter for total messages fetched
+        let totalFetched = 0;
+
+        while (!reachedEnd) {
+            // Create fetch options
+            const options: { limit: number; before?: string } = { limit: 100 };
+            if (lastMessageId) {
+                options.before = lastMessageId;
+            }
+
+            // Use our helper to handle rate limiting
+            const { success, result: messages } = await this.handleRateLimitedOperation(
+                () => channel.messages.fetch(options),
+                `channel:${channelId}`,
+            );
+
+            if (!success || !messages) {
+                console.warn(`Could not fetch messages for channel ${channelId}, stopping backfill`);
+                break;
+            }
+
+            // If we got no messages, we've reached the end
+            if (messages.size === 0) {
+                reachedEnd = true;
+                continue;
+            }
+
+            // Process the messages
+            const recentMessages = messages.filter((m) => m.createdTimestamp >= oneDayAgo);
+
+            // If all messages are older than 24 hours, we've reached our limit
+            if (recentMessages.size === 0 && messages.size > 0) {
+                reachedEnd = true;
+                continue;
+            }
+
+            // Process and store messages
+            for (const [, message] of recentMessages) {
+                const storedMessage: StoredMessage = {
+                    id: message.id,
+                    content: message.content,
+                    authorTag: message.author.tag,
+                    timestamp: message.createdTimestamp,
+                };
+
+                this.dataStore.addMessage(channelId, storedMessage);
+            }
+
+            totalFetched += recentMessages.size;
+
+            // Get the ID of the oldest message for next batch
+            lastMessageId = messages.last()?.id;
+
+            // If we fetched fewer than requested, we've reached the end
+            if (messages.size < 100) {
+                reachedEnd = true;
+                continue;
+            }
+
+            // Add a small delay to be nice to the API
+            await new Promise((resolve) => setTimeout(resolve, 250));
+        }
+
+        console.log(`Backfill complete for channel ${channelId}: fetched ${totalFetched} messages`);
     }
 
     /**

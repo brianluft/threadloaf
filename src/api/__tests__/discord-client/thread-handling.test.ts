@@ -429,6 +429,44 @@ describe("DiscordClient Thread Handling", () => {
             // Verify removeThread was not called
             expect(removeThreadSpy).not.toHaveBeenCalled();
         });
+
+        test("should handle thread with null parent", async () => {
+            // Create mock thread collection
+            const mockThreadCollection = new Collection<string, AnyThreadChannel>();
+
+            // Create a thread with null parent
+            const mockThread = {
+                id: "test-thread-no-parent",
+                guild: { id: TEST_GUILD_ID },
+                type: ChannelType.PublicThread,
+                join: jest.fn().mockResolvedValue(undefined),
+                parent: null, // This will test line 122's optional chaining
+                parentId: "parent-id-123",
+                name: "Thread With Null Parent",
+                createdTimestamp: Date.now(),
+                fetchStarterMessage: jest.fn(),
+                messages: {
+                    fetch: jest.fn().mockResolvedValue(new Collection()),
+                },
+            } as unknown as AnyThreadChannel;
+
+            mockThreadCollection.set("test-thread-no-parent", mockThread);
+
+            // Explicitly spy on processActiveThreads to verify line 122 is covered
+            const processActiveThreadsSpy = jest.spyOn(discordClient as any, "processActiveThreads");
+
+            // Call the method directly to ensure line 122 is reached
+            await discordClient["processActiveThreads"](mockThreadCollection);
+
+            // Verify thread was joined
+            expect(mockThread.join).toHaveBeenCalled();
+
+            // Verify isForum check was false, by confirming addForumThread was not called
+            expect(dataStore.addForumThread).not.toHaveBeenCalled();
+
+            // Clean up spy
+            processActiveThreadsSpy.mockRestore();
+        });
     });
 
     describe("handleThreadUpdate method", () => {
@@ -724,5 +762,42 @@ describe("DiscordClient Thread Handling", () => {
 
         // Cleanup
         backfillSpy.mockRestore();
+    });
+
+    test("should handle thread creation with null parent", async () => {
+        // Create a mock thread with null parent to specifically test line 122
+        const mockThread = {
+            id: "thread-with-null-parent",
+            guild: { id: TEST_GUILD_ID },
+            type: ChannelType.PublicThread,
+            join: jest.fn().mockResolvedValue(undefined),
+            parent: null, // This is the key part - null parent tests line 122
+            parentId: "text-channel-123",
+            name: "Thread With Null Parent",
+            fetchStarterMessage: jest.fn().mockResolvedValue({
+                id: "starter-msg",
+                content: "Starter message content",
+                author: { tag: "User#1234" },
+                createdTimestamp: Date.now() - 1000,
+            }),
+        } as unknown as ThreadChannel;
+
+        // Spy on dataStore methods
+        const addMessageSpy = jest.spyOn(dataStore, "addMessage");
+        const addForumThreadSpy = jest.spyOn(dataStore, "addForumThread");
+
+        // Trigger handleThreadCreate directly to test line 122
+        await discordClient["handleThreadCreate"](mockThread);
+
+        // Verify thread was joined
+        expect(mockThread.join).toHaveBeenCalled();
+
+        // Verify that since parent is null, isForum would be false
+        // and therefore addForumThread should not be called
+        expect(addForumThreadSpy).not.toHaveBeenCalled();
+
+        // Clean up
+        addMessageSpy.mockRestore();
+        addForumThreadSpy.mockRestore();
     });
 });
