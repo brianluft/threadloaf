@@ -27,7 +27,7 @@ jobs:
       run: ./release.sh
       
     - name: Test extension
-      working-directory: ./src
+      working-directory: ./src/threadloaf
       run: npm test
 
     - name: Upload build artifacts
