@@ -18,4 +18,4 @@ Run tests with `/workspaces/threadloaf/src/api/test.sh` again to verify your cha
 
 IMPORTANT: make ONE change, test it successfully, and then stop. You must give me a chance to review before we proceed.
 
-Do not reduce the jest coverage thresholds.
+NEVER reduce the jest coverage thresholds. They are exactly where we want them.

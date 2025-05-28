@@ -290,6 +290,52 @@ describe("DiscordClient Event Handlers", () => {
                 }),
             );
         });
+
+        test("handleThreadCreate should skip private threads", async () => {
+            // Create a mock private thread
+            const mockPrivateThread = {
+                id: "private-thread-id",
+                guild: {
+                    id: TEST_GUILD_ID,
+                },
+                type: ChannelType.PrivateThread,
+                join: jest.fn().mockResolvedValue(undefined),
+            };
+
+            // Call the handleThreadCreate method
+            await clientOnHandlers[Events.ThreadCreate](mockPrivateThread);
+
+            // Verify join was not called for a private thread
+            expect(mockPrivateThread.join).not.toHaveBeenCalled();
+        });
+
+        test("handleThreadCreate should handle errors gracefully", async () => {
+            // Spy on console.error to verify it's called
+            const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+            // Create a mock thread that will cause an error
+            const mockErrorThread = {
+                id: "error-thread-id",
+                guild: {
+                    id: TEST_GUILD_ID,
+                },
+                type: ChannelType.PublicThread,
+                join: jest.fn().mockRejectedValue(new Error("Thread join error")),
+                parent: null, // This will cause an error when accessing thread.parent.type
+            };
+
+            // Call the handleThreadCreate method - should not throw despite the error
+            await clientOnHandlers[Events.ThreadCreate](mockErrorThread);
+
+            // Verify the error was logged
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+                expect.stringContaining(`Error handling thread create for ${mockErrorThread.id}:`),
+                expect.any(Error),
+            );
+
+            // Clean up
+            consoleErrorSpy.mockRestore();
+        });
     });
 
     describe("handleThreadUpdate", () => {

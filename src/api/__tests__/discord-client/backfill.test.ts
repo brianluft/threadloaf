@@ -814,5 +814,35 @@ describe("DiscordClient Backfill", () => {
 
             logSpy.mockRestore();
         });
+
+        test("backfillChannelMessages should handle empty message collection", async () => {
+            // Mock channel with empty message collection
+            const mockChannel = {
+                id: "empty-channel-id",
+                isTextBased: () => true,
+                messages: {
+                    fetch: jest.fn(),
+                },
+            };
+
+            // Mock client.channels.cache.get
+            mockClient.channels.cache.get = jest.fn().mockReturnValue(mockChannel);
+
+            // Mock handleRateLimitedOperation to return an empty collection
+            const mockHandleRateLimited = jest.fn().mockResolvedValue({
+                success: true,
+                result: new Collection(), // Empty collection
+            });
+            (discordClient as any).handleRateLimitedOperation = mockHandleRateLimited;
+
+            // Call backfillChannelMessages
+            await (discordClient as any).backfillChannelMessages("empty-channel-id");
+
+            // Verify handleRateLimitedOperation was called
+            expect(mockHandleRateLimited).toHaveBeenCalled();
+
+            // Verify dataStore.addMessage was not called (no messages to add)
+            expect(dataStore.addMessage).not.toHaveBeenCalled();
+        });
     });
 });

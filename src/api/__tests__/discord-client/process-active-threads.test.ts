@@ -257,4 +257,212 @@ describe("processActiveThreads successful backfill", () => {
 
         consoleErrorSpy.mockRestore();
     });
+
+    test("should skip private threads", async () => {
+        // Mock the dataStore methods for verification
+        dataStore.addForumThread = jest.fn();
+        dataStore.addMessage = jest.fn();
+
+        // Mock the threads collection with a private thread
+        const privateThread = {
+            id: "private-thread-1",
+            name: "Private Thread",
+            guild: {
+                id: TEST_GUILD_ID,
+            },
+            type: ChannelType.PrivateThread,
+            join: jest.fn().mockResolvedValue(undefined),
+            parent: {
+                type: ChannelType.GuildText,
+            },
+            messages: {
+                fetch: jest.fn().mockResolvedValue(new Collection()),
+            },
+            fetchStarterMessage: jest.fn().mockResolvedValue({
+                id: "starter-123",
+                content: "Starter message",
+                author: { tag: "user#1234" },
+                createdTimestamp: Date.now() - 10000,
+            }),
+        };
+
+        const mockThreads = new Collection<string, any>();
+        mockThreads.set(privateThread.id, privateThread);
+
+        // Call processActiveThreads
+        await (discordClient as any).processActiveThreads(mockThreads);
+
+        // Verify the private thread was skipped - join should not be called
+        expect(privateThread.join).not.toHaveBeenCalled();
+
+        // The thread should not be processed, so data store methods should not be called
+        expect(dataStore.addForumThread).not.toHaveBeenCalled();
+        expect(dataStore.addMessage).not.toHaveBeenCalled();
+    });
+
+    test("should handle forum thread with missing starter message", async () => {
+        // Mock the dataStore methods for verification
+        dataStore.addForumThread = jest.fn();
+        dataStore.addMessage = jest.fn();
+
+        // Mock a forum thread where fetchStarterMessage succeeds but returns null/undefined
+        const forumThread = {
+            id: "forum-thread-1",
+            name: "Forum Thread",
+            guild: {
+                id: TEST_GUILD_ID,
+            },
+            type: ChannelType.PublicThread,
+            join: jest.fn().mockResolvedValue(undefined),
+            parent: {
+                type: ChannelType.GuildForum,
+            },
+            parentId: "forum-parent-123",
+            createdTimestamp: Date.now() - 1000,
+            messages: {
+                fetch: jest.fn().mockResolvedValue(new Collection()),
+            },
+            // This simulates line 258 condition - handleRateLimitedOperation returns success: true but result is falsy
+            fetchStarterMessage: jest.fn(),
+        };
+
+        // Mock handleRateLimitedOperation to return success but with undefined result
+        const mockHandleRateLimited = jest.fn().mockResolvedValue({
+            success: true,
+            result: undefined,
+        });
+        (discordClient as any).handleRateLimitedOperation = mockHandleRateLimited;
+
+        const mockThreads = new Collection<string, any>();
+        mockThreads.set(forumThread.id, forumThread);
+
+        // Call processActiveThreads
+        await (discordClient as any).processActiveThreads(mockThreads);
+
+        // Verify thread.join was called
+        expect(forumThread.join).toHaveBeenCalled();
+
+        // Verify that addForumThread was not called since the starter message was missing
+        expect(dataStore.addForumThread).not.toHaveBeenCalled();
+    });
+
+    test("should handle non-forum thread", async () => {
+        // Mock the dataStore methods for verification
+        dataStore.addForumThread = jest.fn();
+        dataStore.addMessage = jest.fn();
+
+        // Mock a non-forum thread (text channel thread) to test line 267
+        const textChannelThread = {
+            id: "text-thread-1",
+            name: "Text Channel Thread",
+            guild: {
+                id: TEST_GUILD_ID,
+            },
+            type: ChannelType.PublicThread,
+            join: jest.fn().mockResolvedValue(undefined),
+            parent: {
+                type: ChannelType.GuildText, // Not a forum parent
+            },
+            parentId: "text-channel-123",
+            createdTimestamp: Date.now() - 1000,
+            messages: {
+                fetch: jest.fn().mockResolvedValue(new Collection()),
+            },
+            fetchStarterMessage: jest.fn(),
+        };
+
+        // We'll need to mock backfillChannelMessages since it should be called for non-forum threads
+        const mockBackfillChannelMessages = jest.fn().mockResolvedValue(undefined);
+        (discordClient as any).backfillChannelMessages = mockBackfillChannelMessages;
+
+        const mockThreads = new Collection<string, any>();
+        mockThreads.set(textChannelThread.id, textChannelThread);
+
+        // Call processActiveThreads
+        await (discordClient as any).processActiveThreads(mockThreads);
+
+        // Verify thread.join was called
+        expect(textChannelThread.join).toHaveBeenCalled();
+
+        // Verify that backfillChannelMessages was called with the parent channel ID
+        expect(mockBackfillChannelMessages).toHaveBeenCalledWith(textChannelThread.parentId);
+
+        // Verify addForumThread was not called since this is not a forum thread
+        expect(dataStore.addForumThread).not.toHaveBeenCalled();
+    });
+
+    test("should handle thread with no messages", async () => {
+        // Mock the dataStore methods for verification
+        dataStore.addForumThread = jest.fn();
+        dataStore.addMessage = jest.fn();
+
+        // Mock thread that will return an empty message collection
+        const emptyThread = {
+            id: "empty-thread-1",
+            name: "Empty Thread",
+            guild: {
+                id: TEST_GUILD_ID,
+            },
+            type: ChannelType.PublicThread,
+            join: jest.fn().mockResolvedValue(undefined),
+            parent: {
+                type: ChannelType.GuildForum,
+            },
+            parentId: "forum-parent-123",
+            createdTimestamp: Date.now() - 1000,
+            messages: {
+                fetch: jest.fn(),
+            },
+            fetchStarterMessage: jest.fn().mockResolvedValue({
+                id: "starter-123",
+                content: "Starter message",
+                author: { tag: "user#1234" },
+                createdTimestamp: Date.now() - 10000,
+            }),
+        };
+
+        // Mock handleRateLimitedOperation to test the empty messages case (line 326)
+        const mockHandleRateLimited = jest
+            .fn()
+            // First for fetching starter message - return a valid starter message
+            .mockResolvedValueOnce({
+                success: true,
+                result: {
+                    id: "starter-123",
+                    content: "Starter message",
+                    author: { tag: "user#1234" },
+                    createdTimestamp: Date.now() - 10000,
+                },
+            })
+            // Then for fetching messages - return an empty collection
+            .mockResolvedValueOnce({
+                success: true,
+                result: new Collection(), // Empty collection to trigger line 326
+            });
+
+        (discordClient as any).handleRateLimitedOperation = mockHandleRateLimited;
+
+        const mockThreads = new Collection<string, any>();
+        mockThreads.set(emptyThread.id, emptyThread);
+
+        // Call processActiveThreads
+        await (discordClient as any).processActiveThreads(mockThreads);
+
+        // Verify thread.join was called
+        expect(emptyThread.join).toHaveBeenCalled();
+
+        // Verify addForumThread was called with the thread metadata
+        expect(dataStore.addForumThread).toHaveBeenCalledWith(
+            expect.objectContaining({
+                id: emptyThread.id,
+                title: emptyThread.name,
+            }),
+        );
+
+        // Verify handleRateLimitedOperation was called for message fetch
+        expect(mockHandleRateLimited).toHaveBeenCalledTimes(2);
+
+        // Verify addMessage was not called since there were no messages
+        expect(dataStore.addMessage).not.toHaveBeenCalled();
+    });
 });
