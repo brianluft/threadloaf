@@ -800,4 +800,67 @@ describe("DiscordClient Thread Handling", () => {
         addMessageSpy.mockRestore();
         addForumThreadSpy.mockRestore();
     });
+
+    test("should handle forum thread creation with null createdTimestamp", async () => {
+        // Mock Date.now to return a fixed value for testing
+        const mockNow = 1234567890000;
+        const originalDateNow = Date.now;
+        Date.now = jest.fn().mockReturnValue(mockNow);
+
+        // Create a mock forum thread with null createdTimestamp to test line 144
+        const mockThread = {
+            id: "forum-thread-no-timestamp",
+            guild: { id: TEST_GUILD_ID },
+            type: ChannelType.PublicThread,
+            join: jest.fn().mockResolvedValue(undefined),
+            parent: {
+                type: ChannelType.GuildForum,
+            },
+            parentId: "forum-channel-123",
+            name: "Forum Thread Without Timestamp",
+            createdTimestamp: null, // This is null to test the fallback to Date.now()
+            fetchStarterMessage: jest.fn().mockResolvedValue({
+                id: "starter-msg",
+                content: "Starter message content",
+                author: { tag: "ForumUser#1234" },
+                createdTimestamp: Date.now() - 1000,
+            }),
+        } as unknown as ThreadChannel;
+
+        // Spy on dataStore methods
+        const addMessageSpy = jest.spyOn(dataStore, "addMessage");
+        const addForumThreadSpy = jest.spyOn(dataStore, "addForumThread");
+
+        // Trigger handleThreadCreate to test line 144
+        await discordClient["handleThreadCreate"](mockThread);
+
+        // Verify thread was joined
+        expect(mockThread.join).toHaveBeenCalled();
+
+        // Verify that addForumThread was called with Date.now() as fallback
+        expect(addForumThreadSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                id: "forum-thread-no-timestamp",
+                title: "Forum Thread Without Timestamp",
+                parentId: "forum-channel-123",
+                createdAt: mockNow, // Should use Date.now() fallback
+                createdBy: "ForumUser#1234",
+            }),
+        );
+
+        // Verify starter message was added
+        expect(addMessageSpy).toHaveBeenCalledWith(
+            "forum-thread-no-timestamp",
+            expect.objectContaining({
+                id: "starter-msg",
+                content: "Starter message content",
+                authorTag: "ForumUser#1234",
+            }),
+        );
+
+        // Clean up
+        addMessageSpy.mockRestore();
+        addForumThreadSpy.mockRestore();
+        Date.now = originalDateNow;
+    });
 });
