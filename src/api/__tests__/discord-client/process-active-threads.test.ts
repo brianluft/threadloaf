@@ -465,4 +465,49 @@ describe("processActiveThreads successful backfill", () => {
         // Verify addMessage was not called since there were no messages
         expect(dataStore.addMessage).not.toHaveBeenCalled();
     });
+
+    test("should handle non-forum thread with null parentId", async () => {
+        // Mock the dataStore methods for verification
+        dataStore.addForumThread = jest.fn();
+        dataStore.addMessage = jest.fn();
+
+        // Mock a non-forum thread with null parentId to test the || "" fallback on line 267
+        const textChannelThread = {
+            id: "text-thread-null-parent",
+            name: "Text Channel Thread with Null Parent",
+            guild: {
+                id: TEST_GUILD_ID,
+            },
+            type: ChannelType.PublicThread,
+            join: jest.fn().mockResolvedValue(undefined),
+            parent: {
+                type: ChannelType.GuildText, // Not a forum parent
+            },
+            parentId: null, // This will test the || "" fallback
+            createdTimestamp: Date.now() - 1000,
+            messages: {
+                fetch: jest.fn().mockResolvedValue(new Collection()),
+            },
+            fetchStarterMessage: jest.fn(),
+        };
+
+        // Mock backfillChannelMessages to verify it's called with empty string
+        const mockBackfillChannelMessages = jest.fn().mockResolvedValue(undefined);
+        (discordClient as any).backfillChannelMessages = mockBackfillChannelMessages;
+
+        const mockThreads = new Collection<string, any>();
+        mockThreads.set(textChannelThread.id, textChannelThread);
+
+        // Call processActiveThreads
+        await (discordClient as any).processActiveThreads(mockThreads);
+
+        // Verify thread.join was called
+        expect(textChannelThread.join).toHaveBeenCalled();
+
+        // Verify that backfillChannelMessages was called with empty string (the || "" fallback)
+        expect(mockBackfillChannelMessages).toHaveBeenCalledWith("");
+
+        // Verify addForumThread was not called since this is not a forum thread
+        expect(dataStore.addForumThread).not.toHaveBeenCalled();
+    });
 });

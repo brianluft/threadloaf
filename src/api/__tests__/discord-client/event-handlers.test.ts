@@ -336,6 +336,78 @@ describe("DiscordClient Event Handlers", () => {
             // Clean up
             consoleErrorSpy.mockRestore();
         });
+
+        test("should handle non-forum threads in text channels", async () => {
+            // Create the DiscordClient instance to access the backfillChannelMessages method
+            const discordClient = new DiscordClient(TEST_TOKEN, TEST_GUILD_ID, dataStore);
+
+            // Mock the backfillChannelMessages method to verify it gets called
+            const backfillChannelMessagesSpy = jest
+                .spyOn(discordClient as any, "backfillChannelMessages")
+                .mockResolvedValue(undefined);
+
+            const mockThread = {
+                guild: { id: TEST_GUILD_ID },
+                id: "text-channel-thread",
+                name: "Thread in Text Channel",
+                type: ChannelType.PublicThread,
+                parentId: "text-channel-123",
+                parent: { type: ChannelType.GuildText }, // This makes isForum false
+                createdTimestamp: Date.now(),
+                join: jest.fn().mockResolvedValue(undefined),
+            } as unknown as ThreadChannel;
+
+            // Call the handleThreadCreate method directly on the instance
+            await discordClient["handleThreadCreate"](mockThread);
+
+            // Should join the thread
+            expect(mockThread.join).toHaveBeenCalled();
+
+            // Should call backfillChannelMessages for the parent channel (this covers line 152)
+            expect(backfillChannelMessagesSpy).toHaveBeenCalledWith("text-channel-123");
+
+            // Should not store forum thread metadata since it's not a forum thread
+            expect(dataStore.addForumThread).not.toHaveBeenCalled();
+
+            // Clean up the spy
+            backfillChannelMessagesSpy.mockRestore();
+        });
+
+        test("should handle non-forum threads with null parentId", async () => {
+            // Create the DiscordClient instance to access the backfillChannelMessages method
+            const discordClient = new DiscordClient(TEST_TOKEN, TEST_GUILD_ID, dataStore);
+
+            // Mock the backfillChannelMessages method to verify it gets called
+            const backfillChannelMessagesSpy = jest
+                .spyOn(discordClient as any, "backfillChannelMessages")
+                .mockResolvedValue(undefined);
+
+            const mockThread = {
+                guild: { id: TEST_GUILD_ID },
+                id: "text-channel-thread-null-parent",
+                name: "Thread in Text Channel with Null Parent",
+                type: ChannelType.PublicThread,
+                parentId: null, // This will test the || "" fallback on line 152
+                parent: { type: ChannelType.GuildText }, // This makes isForum false
+                createdTimestamp: Date.now(),
+                join: jest.fn().mockResolvedValue(undefined),
+            } as unknown as ThreadChannel;
+
+            // Call the handleThreadCreate method directly on the instance
+            await discordClient["handleThreadCreate"](mockThread);
+
+            // Should join the thread
+            expect(mockThread.join).toHaveBeenCalled();
+
+            // Should call backfillChannelMessages with empty string (the || "" fallback)
+            expect(backfillChannelMessagesSpy).toHaveBeenCalledWith("");
+
+            // Should not store forum thread metadata since it's not a forum thread
+            expect(dataStore.addForumThread).not.toHaveBeenCalled();
+
+            // Clean up the spy
+            backfillChannelMessagesSpy.mockRestore();
+        });
     });
 
     describe("handleThreadUpdate", () => {
