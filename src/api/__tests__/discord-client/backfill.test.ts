@@ -844,5 +844,53 @@ describe("DiscordClient Backfill", () => {
             // Verify dataStore.addMessage was not called (no messages to add)
             expect(dataStore.addMessage).not.toHaveBeenCalled();
         });
+
+        test("backfillChannelMessages should handle messages collection where last() returns undefined", async () => {
+            // This test specifically targets the uncovered branch in line 417: lastMessageId = messages.last()?.id;
+            const now = Date.now();
+
+            // Create a messages collection that has size > 0 but last() returns undefined
+            const messages = new Collection<string, any>();
+            const msg1 = {
+                id: "msg1",
+                content: "Test message",
+                author: { tag: "User#1234" },
+                createdTimestamp: now - 1000,
+            };
+            messages.set(msg1.id, msg1);
+
+            // Mock the last() method to return undefined (edge case scenario)
+            messages.last = jest.fn().mockReturnValue(undefined);
+
+            const mockChannel = {
+                id: "test-channel-id",
+                isTextBased: () => true,
+                messages: {
+                    fetch: jest.fn(),
+                },
+            };
+
+            // Mock client.channels.cache.get
+            mockClient.channels.cache.get = jest.fn().mockReturnValue(mockChannel);
+
+            // Mock handleRateLimitedOperation to return our collection with mocked last()
+            const mockHandleRateLimited = jest.fn().mockResolvedValue({
+                success: true,
+                result: messages,
+            });
+            (discordClient as any).handleRateLimitedOperation = mockHandleRateLimited;
+
+            // Call backfillChannelMessages
+            await (discordClient as any).backfillChannelMessages("test-channel-id");
+
+            // Verify the message was processed despite last() returning undefined
+            expect(dataStore.addMessage).toHaveBeenCalledWith(
+                "test-channel-id",
+                expect.objectContaining({ id: msg1.id }),
+            );
+
+            // Verify that the optional chaining handled the undefined case gracefully
+            expect(mockHandleRateLimited).toHaveBeenCalledTimes(1);
+        });
     });
 });

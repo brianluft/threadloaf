@@ -510,4 +510,30 @@ describe("processActiveThreads successful backfill", () => {
         // Verify addForumThread was not called since this is not a forum thread
         expect(dataStore.addForumThread).not.toHaveBeenCalled();
     });
+
+    test("should handle messages collection where last() returns undefined", async () => {
+        // This test specifically targets the uncovered branch in line 326: lastMessageId = messages.last()?.id;
+        const mockThread = createMockThread(THREAD_ID);
+
+        // Create a messages collection that has size > 0 but last() returns undefined
+        const messages = new Collection<string, any>();
+        const msg1 = mockMessage("msg1", now - 1000);
+        messages.set(msg1.id, msg1);
+
+        // Mock the last() method to return undefined (edge case scenario)
+        messages.last = jest.fn().mockReturnValue(undefined);
+
+        mockHandleRateLimitedOperation.mockResolvedValueOnce({ success: true, result: messages });
+
+        const threadCollection = new Collection<string, AnyThreadChannel>();
+        threadCollection.set(THREAD_ID, mockThread);
+
+        await (discordClient as any).processActiveThreads(threadCollection);
+
+        // Verify the message was processed despite last() returning undefined
+        expect(dataStore.addMessage).toHaveBeenCalledWith(THREAD_ID, expect.objectContaining({ id: msg1.id }));
+
+        // Verify that the optional chaining handled the undefined case gracefully
+        expect(mockHandleRateLimitedOperation).toHaveBeenCalledTimes(1);
+    });
 });
