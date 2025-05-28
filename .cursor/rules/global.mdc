@@ -40,7 +40,8 @@ Discord dynamically generates unique suffixes for all classes and IDs.
 Run tests with `/workspaces/threadloaf/src/api/test.sh`
 Keep unit test files to 500 lines or less. Create a new test file as needed.
 Use fake timeouts and delays. Don't make tests wait for real delays.
-Use `sed -n '8,8p' filename` technique to find the code at a particular line number (line 8 in this example).
+
+ALWAYS use `sed -n '8,8p' filename` to find the code at a particular line number. Your tools lie to you about line numbers; use sed.
 
 # Verification
 

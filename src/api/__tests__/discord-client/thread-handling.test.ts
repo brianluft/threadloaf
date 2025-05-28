@@ -467,6 +467,74 @@ describe("DiscordClient Thread Handling", () => {
             // Clean up spy
             processActiveThreadsSpy.mockRestore();
         });
+
+        test("should handle thread with undefined parentId", async () => {
+            const now = Date.now();
+
+            // Create mock thread collection
+            const mockThreadCollection = new Collection<string, AnyThreadChannel>();
+
+            // Create a forum thread with undefined parentId to test the || "" fallback on line 258
+            const mockThread = {
+                id: "test-thread-undefined-parent",
+                guild: { id: TEST_GUILD_ID },
+                type: ChannelType.PublicThread,
+                join: jest.fn().mockResolvedValue(undefined),
+                parent: { type: ChannelType.GuildForum },
+                parentId: undefined, // This will test the || "" fallback on line 258
+                name: "Thread With Undefined Parent ID",
+                createdTimestamp: now,
+                fetchStarterMessage: jest.fn().mockResolvedValue({
+                    id: "starter-msg",
+                    content: "Starter message",
+                    author: { tag: "Creator#1234" },
+                    createdTimestamp: now,
+                }),
+                messages: {
+                    fetch: jest.fn().mockResolvedValue(new Collection()),
+                },
+            } as unknown as AnyThreadChannel;
+
+            mockThreadCollection.set("test-thread-undefined-parent", mockThread);
+
+            // Mock the handleRateLimitedOperation method for the starter message
+            const handleRateLimitedSpy = jest.spyOn(discordClient as any, "handleRateLimitedOperation");
+            handleRateLimitedSpy.mockImplementation(async (...args: any[]) => {
+                const id = args[1] as string;
+                if (id.startsWith("thread-starter:")) {
+                    return {
+                        success: true,
+                        result: {
+                            id: "starter-msg",
+                            content: "Starter message",
+                            author: { tag: "Creator#1234" },
+                            createdTimestamp: now,
+                        },
+                    };
+                }
+                if (id.startsWith("thread:")) {
+                    return { success: true, result: new Collection() };
+                }
+                return { success: false };
+            });
+
+            // Call the method
+            await discordClient["processActiveThreads"](mockThreadCollection);
+
+            // Verify thread was joined
+            expect(mockThread.join).toHaveBeenCalled();
+
+            // Verify forum thread metadata was stored with empty string parentId
+            expect(dataStore.addForumThread).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    id: "test-thread-undefined-parent",
+                    parentId: "", // This should be the empty string fallback
+                    createdBy: "Creator#1234",
+                }),
+            );
+
+            handleRateLimitedSpy.mockRestore();
+        });
     });
 
     describe("handleThreadUpdate method", () => {
