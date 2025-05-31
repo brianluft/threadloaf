@@ -38,10 +38,10 @@ We will use one short OAuth2 sign-in the first time a member installs the browse
 # Authorization (API)
 All of our API endpoints need to take an API token and verify that the user is a member of the guild specified in their request.
 
-- [ ] Create an authorization cache that remembers that a given token (from which we can get the user id) is a member of a given guild. Cache entries expire after 24 hours.
-- [ ] Create a function that inquires whether a given token is a member of a given guild. Check the cache first, on cache miss go to the discord API to check.
-- [ ] Update all API endpoints (except health) so they require an API token. Validate the token and validate that they are a member of the specified guild using the cache.
-- [ ] Update tests and regain 100% code/branch test coverage.
+- [X] Create an authorization cache that remembers that a given token (from which we can get the user id) is a member of a given guild. Cache entries expire after 24 hours.
+- [X] Create a function that inquires whether a given token is a member of a given guild. Check the cache first, on cache miss go to the discord API to check.
+- [X] Update all API endpoints (except health) so they require an API token. Validate the token and validate that they are a member of the specified guild using the cache.
+- [X] Update tests and regain 100% code/branch test coverage.
 
 # Show recent replies underneath threads in the thread list
 Read THREAD_LIST_EXAMPLE.html, an export of the Discord forum channel's thread list HTML.
