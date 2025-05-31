@@ -2,10 +2,14 @@ import { ApiServer } from "../../api-server";
 import { DataStore } from "../../data-store";
 import express from "express";
 
-export function createShared(): { dataStore: jest.Mocked<DataStore>; dataStoresByGuild: Map<string, DataStore>; app: express.Express } {
+export function createShared(): {
+    dataStore: jest.Mocked<DataStore>;
+    dataStoresByGuild: Map<string, DataStore>;
+    app: express.Express;
+} {
     // Create a new DataStore mock
     const dataStore = new DataStore() as jest.Mocked<DataStore>;
-    
+
     // Create a Map with the test guild ID
     const TEST_GUILD_ID = "test-guild-id";
     const dataStoresByGuild = new Map<string, DataStore>();
@@ -45,7 +49,7 @@ export function createShared(): { dataStore: jest.Mocked<DataStore>; dataStoresB
         app.get("/forum-threads", (req, res) => {
             try {
                 const allThreads: any[] = [];
-                
+
                 // Collect threads from all guilds
                 for (const guildDataStore of dataStoresByGuild.values()) {
                     const forumThreads = guildDataStore.getAllForumThreads();
@@ -61,7 +65,7 @@ export function createShared(): { dataStore: jest.Mocked<DataStore>; dataStoresB
                             latestReplies,
                         };
                     });
-                    
+
                     allThreads.push(...guildThreads);
                 }
 

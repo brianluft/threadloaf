@@ -27,7 +27,10 @@ const guildIdsString = process.env.GUILD_IDS!;
 const port = parseInt(process.env.PORT!) || 3000;
 
 // Parse guild IDs from comma-separated string
-const guildIds = guildIdsString.split(",").map(id => id.trim()).filter(id => id.length > 0);
+const guildIds = guildIdsString
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0);
 
 if (guildIds.length === 0) {
     console.error("No valid guild IDs found in GUILD_IDS environment variable");

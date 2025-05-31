@@ -10,7 +10,7 @@ We have a Discord bot to give us quick access to the last 24 hours of messages v
 All npm commands must be run from `src/threadloaf` or `src/api`, not the root.
 The absolute path of the workspace root is `/workspaces/threadloaf/`. Use absolute paths in command executions.
 `src/threadloaf` is the extension. Run `cd /workspaces/threadloaf/src/threadloaf && npm run build` to build.
-`src/api` is the API/bot. Run `/workspaces/threadloaf/src/api/test.sh` to build and test.
+`src/api` is the API/bot. Run `/workspaces/threadloaf/scripts/test-api.sh` to build and test.
 
 # Browser Extension
 
@@ -37,7 +37,7 @@ Discord dynamically generates unique suffixes for all classes and IDs.
 
 # API Testing
 
-Run tests with `/workspaces/threadloaf/src/api/test.sh`
+Run tests with `/workspaces/threadloaf/scripts/test-api.sh`
 Keep unit test files to 500 lines or less. Create a new test file as needed.
 Use fake timeouts and delays. Don't make tests wait for real delays.
 

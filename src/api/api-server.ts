@@ -74,7 +74,7 @@ export class ApiServer {
         this.app.get("/messages/:channelId", (req, res) => {
             try {
                 const channelId = req.params.channelId;
-                
+
                 // For now, search across all guilds for the channel
                 // TODO: This will be updated when we add guild ID to the URL path
                 let messages: StoredMessage[] = [];
@@ -85,7 +85,7 @@ export class ApiServer {
                         break;
                     }
                 }
-                
+
                 res.json(messages);
             } catch (error) {
                 console.error("Error fetching messages:", error);
@@ -97,7 +97,7 @@ export class ApiServer {
         this.app.get("/forum-threads", (req, res) => {
             try {
                 const allThreads: any[] = [];
-                
+
                 // Collect threads from all guilds
                 // TODO: This will be updated when we add guild ID to the URL path
                 for (const dataStore of this.dataStoresByGuild.values()) {
@@ -122,7 +122,7 @@ export class ApiServer {
                             latestReplies,
                         };
                     });
-                    
+
                     allThreads.push(...guildThreads);
                 }
 

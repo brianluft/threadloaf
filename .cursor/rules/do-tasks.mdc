@@ -3,7 +3,12 @@ description:
 globs: 
 alwaysApply: false
 ---
-Read the file [TASKS.md](mdc:project/TASKS.md).
-Perform the next unchecked task.
-Take it to completion, check it off the list, and commit the updated tasks file to git.
-Repeat until all tasks are complete.
+Carefully follow this process step by step.
+
+1. Read the file [TASKS.md](mdc:project/TASKS.md).
+2. Perform the next unchecked task. You may do multiple consecutive tasks at once if it makes sense.
+4. Run the API tests.
+5. If everything is good, format the code with `/workspaces/threadloaf/scripts/format.sh`.
+6. Update TASKS.md to check off the tasks you completed.
+7. Commit to git with a short commit message.
+8. STOP. You must give me an opportunity to review.

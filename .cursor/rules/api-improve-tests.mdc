@@ -3,7 +3,7 @@ description:
 globs: 
 alwaysApply: false
 ---
-Run tests with `/workspaces/threadloaf/src/api/test.sh`. Do not call `npm` directly.
+Run tests with `/workspaces/threadloaf/scripts/test-api.sh`. Do not call `npm` directly.
 
 If there are any failing tests, fix one.
 
@@ -14,7 +14,7 @@ If you discover that the original code is wrong, fix the original code and then 
 
 Fix all lint warnings.
 
-Run tests with `/workspaces/threadloaf/src/api/test.sh` again to verify your change.
+Run tests with `/workspaces/threadloaf/scripts/test-api.sh` again to verify your change.
 
 IMPORTANT: make ONE change, test it successfully, and then stop. You must give me a chance to review before we proceed.
 

@@ -163,7 +163,7 @@ describe("ApiServer GET /forum-threads", () => {
         // Create a Map with the test DataStore
         const dataStoresByGuild = new Map<string, DataStore>();
         dataStoresByGuild.set("test-guild-id", dataStore);
-        
+
         // Create a server instance
         const server = new ApiServer(3000, dataStoresByGuild);
 

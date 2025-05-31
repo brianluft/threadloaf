@@ -40,10 +40,10 @@ describe("ApiServer setupErrorHandling", () => {
     test("should handle errors by logging and returning 500", async () => {
         // Create actual express app
         const app = express();
-        
+
         // Setup JSON middleware
         app.use(express.json());
-        
+
         // Add a route that throws an error
         app.get("/error", () => {
             throw new Error("Test error");
@@ -51,11 +51,11 @@ describe("ApiServer setupErrorHandling", () => {
 
         // Create the server
         const server = new ApiServer(3000, dataStoresByGuild);
-        
+
         // Get the error handler by calling setupErrorHandling
         // @ts-ignore - access private method to get error handler
         const errorHandler = server.errorHandler.bind(server);
-        
+
         // Add the error handler manually after the route
         app.use(errorHandler);
 
@@ -77,10 +77,10 @@ describe("ApiServer setupErrorHandling", () => {
     test("should handle non-Error objects by logging them", async () => {
         // Create actual express app
         const app = express();
-        
+
         // Setup JSON middleware
         app.use(express.json());
-        
+
         // Add a route that throws a non-Error object
         app.get("/error", () => {
             throw "string error";
@@ -88,11 +88,11 @@ describe("ApiServer setupErrorHandling", () => {
 
         // Create the server
         const server = new ApiServer(3000, dataStoresByGuild);
-        
+
         // Get the error handler by calling setupErrorHandling
         // @ts-ignore - access private method to get error handler
         const errorHandler = server.errorHandler.bind(server);
-        
+
         // Add the error handler manually after the route
         app.use(errorHandler);
 

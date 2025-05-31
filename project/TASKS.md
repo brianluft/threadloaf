@@ -3,8 +3,8 @@ When you've completed a cohesive unit of work and the tests are PASSING, make a 
 # Multi-server support (API)
 We support only a single GUILD_ID. We need to support monitoring multiple independent servers.
 
-- [ ] Environment file will provide a list of guild IDs instead of just one.
-- [ ] API: Use a separate DiscordClient and DataStore per guild to keep them separate.
+- [X] Environment file will provide a list of guild IDs instead of just one.
+- [X] API: Use a separate DiscordClient and DataStore per guild to keep them separate.
 - [ ] Update API endpoints so they all take a guild ID in the URL path, at the beginning. e.g. `/:guildId/messages/:channelId`.
 - [ ] Return a 400 error if the client's guild ID is not one of our configured guild IDs, but don't leak what the right ones are.
 - [ ] Update readme and test.http with updated endpoints

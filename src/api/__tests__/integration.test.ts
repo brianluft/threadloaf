@@ -152,7 +152,7 @@ describe("Integration Tests", () => {
 
         app.get("/forum-threads", (req, res) => {
             const allThreads: any[] = [];
-            
+
             // Collect threads from all guilds
             for (const guildDataStore of dataStoresByGuild.values()) {
                 const forumThreads = guildDataStore.getAllForumThreads();
@@ -168,7 +168,7 @@ describe("Integration Tests", () => {
                         latestReplies,
                     };
                 });
-                
+
                 allThreads.push(...guildThreads);
             }
             res.json(allThreads);

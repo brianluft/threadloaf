@@ -15,11 +15,11 @@ describe("ApiServer routes - real setup", () => {
     beforeEach(() => {
         jest.clearAllMocks();
         dataStore = new DataStore() as jest.Mocked<DataStore>;
-        
+
         // Create a Map with the test DataStore
         dataStoresByGuild = new Map<string, DataStore>();
         dataStoresByGuild.set("test-guild-id", dataStore);
-        
+
         apiServer = new ApiServer(3000, dataStoresByGuild);
         // Access the actual Express app from the server instance
         app = (apiServer as unknown as { app: express.Express }).app;
@@ -137,7 +137,7 @@ describe("ApiServer real setup", () => {
     test("should properly initialize with real methods", () => {
         // Create a mocked DataStore
         const dataStore = new DataStore() as jest.Mocked<DataStore>;
-        
+
         // Create a Map with the test DataStore
         const dataStoresByGuild = new Map<string, DataStore>();
         dataStoresByGuild.set("test-guild-id", dataStore);
