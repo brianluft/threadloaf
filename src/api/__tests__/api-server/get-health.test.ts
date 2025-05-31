@@ -29,8 +29,11 @@ describe("ApiServer GET /health", () => {
         const dataStoresByGuild = new Map<string, DataStore>();
         dataStoresByGuild.set("test-guild-id", dataStore);
 
-        // Create a server instance
-        const server = new ApiServer(3000, dataStoresByGuild);
+        // Create mock Discord clients map
+        const discordClientsByGuild = new Map();
+
+        // Create a server instance with authentication disabled for tests
+        const server = new ApiServer(3000, dataStoresByGuild, discordClientsByGuild, false);
 
         // Create a mock Express app
         const mockApp = {
@@ -46,8 +49,8 @@ describe("ApiServer GET /health", () => {
         // @ts-ignore - access private method
         server.setupRoutes();
 
-        // Get the health route handler (2nd GET route)
-        const healthHandler = mockApp.get.mock.calls[1][1];
+        // Get the health route handler (3rd GET route, after OAuth callback and forum-threads)
+        const healthHandler = mockApp.get.mock.calls[2][1];
 
         // Create mock response
         const mockRes = {

@@ -4,7 +4,10 @@
  */
 
 import express, { Request, Response, NextFunction } from "express";
+import axios from "axios";
+import jwt from "jsonwebtoken";
 import { DataStore, StoredMessage } from "./data-store";
+import { DiscordClient } from "./discord-client";
 
 // Type definitions for the new multi-channel messages endpoint
 type MultiChannelMessagesRequest = {
@@ -16,14 +19,32 @@ type MultiChannelMessagesResponse = {
     [channelId: string]: StoredMessage[];
 };
 
+// OAuth2 type definitions
+type AuthorizedRequest<P = any, ResBody = any, ReqBody = any> = Request<P, ResBody, ReqBody> & { userId?: string };
+
+type AuthCacheEntry = {
+    isGuildMember: boolean;
+    expiresAt: number; // timestamp
+};
+
 export class ApiServer {
     private app = express();
     private port: number;
     private dataStoresByGuild: Map<string, DataStore>;
+    private discordClientsByGuild: Map<string, DiscordClient>;
+    private authCache = new Map<string, AuthCacheEntry>(); // key: "userId:guildId"
+    private authenticationEnabled: boolean;
 
-    constructor(port: number, dataStoresByGuild: Map<string, DataStore>) {
+    constructor(
+        port: number,
+        dataStoresByGuild: Map<string, DataStore>,
+        discordClientsByGuild: Map<string, DiscordClient>,
+        authenticationEnabled: boolean = true,
+    ) {
         this.port = port;
         this.dataStoresByGuild = dataStoresByGuild;
+        this.discordClientsByGuild = discordClientsByGuild;
+        this.authenticationEnabled = authenticationEnabled;
         this.setupMiddleware();
         this.setupRoutes();
         this.setupErrorHandling();
@@ -77,16 +98,157 @@ export class ApiServer {
     }
 
     /**
+     * Check if a user is a member of a guild, using cache when possible
+     */
+    private async isUserGuildMember(userId: string, guildId: string): Promise<boolean> {
+        const cacheKey = `${userId}:${guildId}`;
+        const cached = this.authCache.get(cacheKey);
+
+        // Check if cache entry exists and is not expired
+        if (cached && cached.expiresAt > Date.now()) {
+            return cached.isGuildMember;
+        }
+
+        try {
+            // Get the Discord client for this guild
+            const discordClient = this.discordClientsByGuild.get(guildId);
+            if (!discordClient) {
+                return false;
+            }
+
+            // Check guild membership via Discord API
+            const guild = discordClient.getClient().guilds.cache.get(guildId);
+            if (!guild) {
+                return false;
+            }
+
+            const member = await guild.members.fetch(userId);
+            const isGuildMember = member !== null;
+
+            // Cache the result for 24 hours
+            this.authCache.set(cacheKey, {
+                isGuildMember,
+                expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+            });
+
+            return isGuildMember;
+        } catch (error) {
+            console.error("Error checking guild membership:", error);
+            return false;
+        }
+    }
+
+    /**
+     * Middleware to require authentication and guild membership
+     */
+    private requireGuildMember(req: AuthorizedRequest<any, any, any>, res: Response, next: NextFunction): void {
+        // Skip authentication if disabled (for tests)
+        if (!this.authenticationEnabled) {
+            req.userId = "test-user-id";
+            next();
+            return;
+        }
+
+        const auth = req.headers.authorization ?? "";
+        const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+
+        if (!token) {
+            res.status(401).json({ error: "Authentication required" });
+            return;
+        }
+
+        try {
+            const jwtSecret = process.env.JWT_SECRET!;
+            const payload = jwt.verify(token, jwtSecret) as { sub: string };
+            req.userId = payload.sub;
+            next();
+        } catch (error) {
+            res.status(401).json({ error: "Invalid token" });
+            return;
+        }
+    }
+
+    /**
      * Setup API routes
      */
     private setupRoutes(): void {
+        // OAuth2 callback endpoint
+        this.app.get("/auth/callback", async (req: Request, res: Response): Promise<void> => {
+            try {
+                const { code, state } = req.query;
+
+                if (!code || !state || typeof code !== "string" || typeof state !== "string") {
+                    res.status(400).send("Missing code or state parameter");
+                    return;
+                }
+
+                // Exchange code for access token
+                const tokenResponse = await axios.post(
+                    "https://discord.com/api/oauth2/token",
+                    new URLSearchParams({
+                        client_id: process.env.DISCORD_CLIENT_ID!,
+                        client_secret: process.env.DISCORD_CLIENT_SECRET!,
+                        grant_type: "authorization_code",
+                        code,
+                        redirect_uri: process.env.DISCORD_REDIRECT_URI!,
+                    }),
+                    {
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded",
+                        },
+                    },
+                );
+
+                const { access_token } = tokenResponse.data;
+
+                // Get user information
+                const userResponse = await axios.get("https://discord.com/api/users/@me", {
+                    headers: {
+                        Authorization: `Bearer ${access_token}`,
+                    },
+                });
+
+                const userId = userResponse.data.id;
+
+                // Verify user is a member of at least one of our configured guilds
+                let isValidUser = false;
+                for (const guildId of this.dataStoresByGuild.keys()) {
+                    if (await this.isUserGuildMember(userId, guildId)) {
+                        isValidUser = true;
+                        break;
+                    }
+                }
+
+                if (!isValidUser) {
+                    res.status(403).send("User is not a member of any configured guild");
+                    return;
+                }
+
+                // Create JWT token
+                const jwtSecret = process.env.JWT_SECRET!;
+                const jwtToken = jwt.sign({ sub: userId }, jwtSecret, { expiresIn: "7d" });
+
+                // Send token back to extension
+                res.set("Content-Type", "text/html").send(`
+                    <script>
+                        window.opener.postMessage({type: 'oauth-callback', jwt: "${jwtToken}"}, '*');
+                        window.close();
+                    </script>
+                `);
+            } catch (error) {
+                console.error("OAuth callback error:", error);
+                res.status(500).send("Authentication failed");
+            }
+        });
+
         // Get messages for multiple channels
         this.app.post(
             "/:guildId/messages",
-            (
-                req: Request<{ guildId: string }, MultiChannelMessagesResponse, MultiChannelMessagesRequest>,
+            this.requireGuildMember.bind(this),
+            async (
+                req: AuthorizedRequest<{ guildId: string }, MultiChannelMessagesResponse, MultiChannelMessagesRequest>,
                 res: Response,
-            ): void => {
+            ): Promise<void> => {
                 try {
                     const { guildId } = req.params;
                     const { channelIds, maxMessagesPerChannel } = req.body;
@@ -113,6 +275,15 @@ export class ApiServer {
                         return;
                     }
 
+                    // Verify user is a member of this guild (skip in test mode)
+                    if (this.authenticationEnabled) {
+                        const isGuildMember = await this.isUserGuildMember(req.userId!, guildId);
+                        if (!isGuildMember) {
+                            res.status(403).json({ error: "Access denied" });
+                            return;
+                        }
+                    }
+
                     // Fetch messages for each channel
                     const result: MultiChannelMessagesResponse = {};
                     for (const channelId of channelIds) {
@@ -132,45 +303,58 @@ export class ApiServer {
         );
 
         // Get all forum threads with their latest replies
-        this.app.get("/:guildId/forum-threads", (req: Request<{ guildId: string }>, res: Response): void => {
-            try {
-                const { guildId } = req.params;
+        this.app.get(
+            "/:guildId/forum-threads",
+            this.requireGuildMember.bind(this),
+            async (req: AuthorizedRequest<{ guildId: string }>, res: Response): Promise<void> => {
+                try {
+                    const { guildId } = req.params;
 
-                // Check if the guild ID is valid (configured)
-                const dataStore = this.dataStoresByGuild.get(guildId);
-                if (!dataStore) {
-                    res.status(400).json({ error: "Invalid guild ID" });
-                    return;
+                    // Check if the guild ID is valid (configured)
+                    const dataStore = this.dataStoresByGuild.get(guildId);
+                    if (!dataStore) {
+                        res.status(400).json({ error: "Invalid guild ID" });
+                        return;
+                    }
+
+                    // Verify user is a member of this guild (skip in test mode)
+                    if (this.authenticationEnabled) {
+                        const isGuildMember = await this.isUserGuildMember(req.userId!, guildId);
+                        if (!isGuildMember) {
+                            res.status(403).json({ error: "Access denied" });
+                            return;
+                        }
+                    }
+
+                    const forumThreads = dataStore.getAllForumThreads();
+
+                    // Map to response format with latest replies
+                    const threads = forumThreads.map((thread) => {
+                        // Get all messages for this thread
+                        const allMessages = dataStore.getMessagesForChannel(thread.id);
+
+                        // Assuming the first message is the root post, get up to 5 latest replies
+                        const latestReplies =
+                            allMessages.length > 1
+                                ? allMessages.slice(1).slice(-5) // Skip first message and take last 5
+                                : [];
+
+                        return {
+                            threadId: thread.id,
+                            title: thread.title,
+                            createdBy: thread.createdBy,
+                            createdAt: thread.createdAt,
+                            latestReplies,
+                        };
+                    });
+
+                    res.json(threads);
+                } catch (error) {
+                    console.error("Error fetching forum threads:", error);
+                    res.status(500).json({ error: "Failed to fetch forum threads" });
                 }
-
-                const forumThreads = dataStore.getAllForumThreads();
-
-                // Map to response format with latest replies
-                const threads = forumThreads.map((thread) => {
-                    // Get all messages for this thread
-                    const allMessages = dataStore.getMessagesForChannel(thread.id);
-
-                    // Assuming the first message is the root post, get up to 5 latest replies
-                    const latestReplies =
-                        allMessages.length > 1
-                            ? allMessages.slice(1).slice(-5) // Skip first message and take last 5
-                            : [];
-
-                    return {
-                        threadId: thread.id,
-                        title: thread.title,
-                        createdBy: thread.createdBy,
-                        createdAt: thread.createdAt,
-                        latestReplies,
-                    };
-                });
-
-                res.json(threads);
-            } catch (error) {
-                console.error("Error fetching forum threads:", error);
-                res.status(500).json({ error: "Failed to fetch forum threads" });
-            }
-        });
+            },
+        );
 
         // Health check endpoint
         this.app.get("/health", (_, res) => {

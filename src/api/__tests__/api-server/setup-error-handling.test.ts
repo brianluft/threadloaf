@@ -17,8 +17,9 @@ describe("ApiServer setupErrorHandling", () => {
     });
 
     test("should setup error handling middleware", () => {
+        const discordClientsByGuild = new Map();
         // Create the server
-        const server = new ApiServer(3000, dataStoresByGuild);
+        const server = new ApiServer(3000, dataStoresByGuild, discordClientsByGuild, false);
 
         // Create a mock Express app
         const mockApp = {
@@ -49,8 +50,9 @@ describe("ApiServer setupErrorHandling", () => {
             throw new Error("Test error");
         });
 
+        const discordClientsByGuild = new Map();
         // Create the server
-        const server = new ApiServer(3000, dataStoresByGuild);
+        const server = new ApiServer(3000, dataStoresByGuild, discordClientsByGuild, false);
 
         // Get the error handler by calling setupErrorHandling
         // @ts-ignore - access private method to get error handler
@@ -86,8 +88,9 @@ describe("ApiServer setupErrorHandling", () => {
             throw "string error";
         });
 
+        const discordClientsByGuild = new Map();
         // Create the server
-        const server = new ApiServer(3000, dataStoresByGuild);
+        const server = new ApiServer(3000, dataStoresByGuild, discordClientsByGuild, false);
 
         // Get the error handler by calling setupErrorHandling
         // @ts-ignore - access private method to get error handler

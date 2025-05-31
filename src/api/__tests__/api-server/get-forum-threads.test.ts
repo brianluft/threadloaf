@@ -177,8 +177,11 @@ describe("ApiServer GET /:guildId/forum-threads", () => {
         const dataStoresByGuild = new Map<string, DataStore>();
         dataStoresByGuild.set(TEST_GUILD_ID, dataStore);
 
-        // Create a server instance
-        const server = new ApiServer(3000, dataStoresByGuild);
+        // Create mock Discord clients map
+        const discordClientsByGuild = new Map();
+
+        // Create a server instance with authentication disabled for tests
+        const server = new ApiServer(3000, dataStoresByGuild, discordClientsByGuild, false);
 
         // Create a mock Express app
         const mockApp = {
@@ -194,8 +197,9 @@ describe("ApiServer GET /:guildId/forum-threads", () => {
         // @ts-ignore - access private method
         server.setupRoutes();
 
-        // Get the forum-threads route handler (1st GET route)
-        const threadsHandler = mockApp.get.mock.calls[0][1];
+        // Get the forum-threads route handler (2nd GET route, after OAuth callback)
+        // Index [1][2] because it has middleware: [path, middleware, handler]
+        const threadsHandler = mockApp.get.mock.calls[1][2];
 
         // Mock data
         const mockThreads: ThreadMeta[] = [

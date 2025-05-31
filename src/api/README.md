@@ -49,10 +49,34 @@ This API ingests Discord messages from the last 24 hours in a single Discord ser
       - Read Message History
    - Integration Type: Guild Install
    - Copy the generated URL and visit it to grant permission and join the server.
+
+### OAuth2 Application Setup (for Browser Extension Authentication)
+
+For browser extension authentication, you'll need a separate OAuth2 application:
+
+1. Create a **second** Discord application at [Discord Developer Portal](https://discord.com/developers/applications) (separate from the bot)
+2. Under **OAuth2 → General**:
+   - Add `http://localhost:3000/auth/callback` as a redirect URI
+   - Copy the Client ID and Client Secret to your `.env` file as `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET`
+3. **Generate a JWT secret**: Create a random 256-bit key for JWT signing and add it to your `.env` file as `JWT_SECRET`. You can generate one using:
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+4. Update your `.env` file with the OAuth2 credentials:
+   ```
+   DISCORD_CLIENT_ID=your_oauth2_client_id_here
+   DISCORD_CLIENT_SECRET=your_oauth2_client_secret_here
+   DISCORD_REDIRECT_URI=http://localhost:3000/auth/callback
+   JWT_SECRET=your_generated_jwt_secret_here
+   ```
+
+The OAuth2 application enables secure authentication for the browser extension, allowing only guild members to access the API.
    
 ## API Endpoints
 
-All endpoints require a `guildId` parameter in the URL path. The API will return a 400 error if an invalid or unconfigured guild ID is provided.
+**Authentication Required**: All endpoints (except `/health`) require Bearer token authentication in the `Authorization` header. Tokens are obtained through the OAuth2 flow via the browser extension.
+
+All endpoints require a `guildId` parameter in the URL path. The API will return a 400 error if an invalid or unconfigured guild ID is provided, and a 403 error if the authenticated user is not a member of the specified guild.
 
 ### GET /:guildId/messages/:channelId
 
@@ -118,9 +142,15 @@ Returns all forum threads with their latest 5 replies from the last 24 hours for
 }
 ```
 
+### GET /auth/callback
+
+OAuth2 callback endpoint for browser extension authentication. This endpoint handles the Discord OAuth2 authorization code flow and returns a JWT token to the extension.
+
+**Note**: This endpoint is typically called automatically by Discord during the OAuth2 flow and not directly by clients.
+
 ### GET /health
 
-Health check endpoint that returns a status of "ok" if the service is running.
+Health check endpoint that returns a status of "ok" if the service is running. This endpoint does not require authentication.
 
 ## Development
 

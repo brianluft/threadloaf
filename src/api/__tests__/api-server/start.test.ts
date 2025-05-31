@@ -27,7 +27,8 @@ describe("ApiServer start", () => {
         dataStoresByGuild.set("test-guild-id", dataStore);
 
         // Create server with mocked app
-        const server = new ApiServer(3456, dataStoresByGuild);
+        const discordClientsByGuild = new Map();
+        const server = new ApiServer(3456, dataStoresByGuild, discordClientsByGuild, false);
 
         // @ts-ignore - replace app.listen with mock
         server.app.listen = listenMock;

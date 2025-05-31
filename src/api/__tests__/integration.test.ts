@@ -132,7 +132,8 @@ describe("Integration Tests", () => {
         discordClient = new DiscordClient(TEST_TOKEN, TEST_GUILD_ID, dataStore);
 
         // Create and mock the API server with the Map of DataStores
-        apiServer = new ApiServer(TEST_PORT, dataStoresByGuild);
+        const discordClientsByGuild = new Map();
+        apiServer = new ApiServer(TEST_PORT, dataStoresByGuild, discordClientsByGuild, false);
         app = express();
 
         // Setup express routes for testing

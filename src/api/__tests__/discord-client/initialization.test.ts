@@ -10,6 +10,7 @@ describe("DiscordClient Initialization", () => {
     let mockClient: jest.Mocked<Client>;
     let dataStore: jest.Mocked<DataStore>;
     let clientOnHandlers: Record<string, Function> = {};
+    let discordClient: DiscordClient;
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -32,7 +33,7 @@ describe("DiscordClient Initialization", () => {
         jest.spyOn(require("discord.js"), "Client").mockImplementation(() => mockClient);
 
         // Create the DiscordClient instance
-        new DiscordClient(TEST_TOKEN, TEST_GUILD_ID, dataStore);
+        discordClient = new DiscordClient(TEST_TOKEN, TEST_GUILD_ID, dataStore);
     });
 
     test("should set up event handlers", () => {
@@ -168,5 +169,14 @@ describe("DiscordClient Initialization", () => {
         // Restore mocks
         consoleErrorSpy.mockRestore();
         global.setInterval = originalSetInterval;
+    });
+
+    test("should return Discord client instance via getClient method", () => {
+        // Call the getClient method
+        const client = discordClient.getClient();
+
+        // Verify it returns the expected client instance
+        expect(client).toBe(mockClient);
+        expect(client).toBeDefined();
     });
 });

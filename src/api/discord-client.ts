@@ -36,6 +36,13 @@ export class DiscordClient {
     }
 
     /**
+     * Get the Discord client instance for OAuth2 operations
+     */
+    getClient(): Client {
+        return this.client;
+    }
+
+    /**
      * Setup all event handlers for the Discord client
      */
     private setupEventHandlers(): void {

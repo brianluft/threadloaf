@@ -12,7 +12,15 @@ import { ApiServer } from "./api-server";
 dotenv.config();
 
 // Check for required environment variables
-const requiredEnvVars = ["DISCORD_TOKEN", "GUILD_IDS", "PORT"];
+const requiredEnvVars = [
+    "DISCORD_TOKEN",
+    "GUILD_IDS",
+    "PORT",
+    "JWT_SECRET",
+    "DISCORD_CLIENT_ID",
+    "DISCORD_CLIENT_SECRET",
+    "DISCORD_REDIRECT_URI",
+];
 const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName]);
 
 if (missingEnvVars.length > 0) {
@@ -53,8 +61,8 @@ for (const guildId of guildIds) {
     discordClientsByGuild.set(guildId, discordClient);
 }
 
-// Initialize and start the API server with all data stores
-const apiServer = new ApiServer(port, dataStoresByGuild);
+// Initialize and start the API server with all data stores and Discord clients
+const apiServer = new ApiServer(port, dataStoresByGuild, discordClientsByGuild);
 apiServer.start();
 
 // Handle process termination

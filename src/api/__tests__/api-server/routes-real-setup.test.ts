@@ -21,7 +21,8 @@ describe("ApiServer routes - real setup", () => {
         dataStoresByGuild = new Map<string, DataStore>();
         dataStoresByGuild.set(TEST_GUILD_ID, dataStore);
 
-        apiServer = new ApiServer(3000, dataStoresByGuild);
+        const discordClientsByGuild = new Map();
+        apiServer = new ApiServer(3000, dataStoresByGuild, discordClientsByGuild, false);
         // Access the actual Express app from the server instance
         app = (apiServer as unknown as { app: express.Express }).app;
     });
@@ -176,8 +177,10 @@ describe("ApiServer real setup", () => {
         const dataStoresByGuild = new Map<string, DataStore>();
         dataStoresByGuild.set("test-guild-id", dataStore);
 
+        const discordClientsByGuild = new Map();
+
         // This tests that the constructor runs without error and properly calls internal methods
-        const apiServer = new ApiServer(3000, dataStoresByGuild);
+        const apiServer = new ApiServer(3000, dataStoresByGuild, discordClientsByGuild, false);
 
         // Verify server was created
         expect(apiServer).toBeDefined();
