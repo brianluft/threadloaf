@@ -48,10 +48,10 @@ Read THREAD_LIST_EXAMPLE.html, an export of the Discord forum channel's thread l
 We are going to bulk load the recent replies to the threads we see and display them underneath the thread.
 This gives the user a quick at-a-glance preview of each thread's recent activity.
 
-- [ ] This functionality is disabled by default and enabled when the user logs into the user options and moves the "Number of most recent thread replies to show in thread list:" slider above zero.
-- [ ] We already have a DOM watcher, don't add a new one. Modify it to detect when new thread list entries are added to the DOM. It's the li.card_* element.
-- [ ] Debounce these events for new thread list entries, because they will come in fast when the user is scrolling. Don't fire the debounced event until the events stop for 1 full second.
-- [ ] When we get the debounced event, collect all the visible thread IDs (these are channel IDs and embedded in the `data-item-id` attribute on the div.mainCard_*, first child of li.card_*).
-- [ ] Call our API in the background to retrieve the last N messages for those threads. If a previous API call is still in flight, cancel it and issue a new one. N is the number the user configured in the user options, the slider for the number of msot recent thread replies to show in the thread list.
-- [ ] Update the DOM to show those messages underneath each thread in the thread list. Make sure you update the correct DOM element in case it changed while the API call was in flight; verify the `data-item-id`.
-- [ ] Don't show errors to the user, just log them to the console.
+- [X] This functionality is disabled by default and enabled when the user logs into the user options and moves the "Number of most recent thread replies to show in thread list:" slider above zero.
+- [X] We already have a DOM watcher, don't add a new one. Modify it to detect when new thread list entries are added to the DOM. It's the li.card_* element.
+- [X] Debounce these events for new thread list entries, because they will come in fast when the user is scrolling. Don't fire the debounced event until the events stop for 1 full second.
+- [X] When we get the debounced event, collect all the visible thread IDs (these are channel IDs and embedded in the `data-item-id` attribute on the div.mainCard_*, first child of li.card_*).
+- [X] Call our API in the background to retrieve the last N messages for those threads. If a previous API call is still in flight, cancel it and issue a new one. N is the number the user configured in the user options, the slider for the number of msot recent thread replies to show in the thread list.
+- [X] Update the DOM to show those messages underneath each thread in the thread list. Make sure you update the correct DOM element in case it changed while the API call was in flight; verify the `data-item-id`.
+- [X] Don't show errors to the user, just log them to the console.

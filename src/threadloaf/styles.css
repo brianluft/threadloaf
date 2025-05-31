@@ -378,3 +378,44 @@ div[class*="page_"] > div {
 body.threadloaf-visible div[class*="messagesWrapper_"] div[class*="scrollerContent_"] > div[class*="container_"] {
     position: initial;
 }
+
+/* Thread list replies - recent replies shown underneath threads */
+.threadloaf-thread-replies {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: color-mix(in oklab, var(--background-primary) 95%, var(--text-normal) 5%);
+    border-radius: 8px;
+    border-left: 3px solid var(--brand-500);
+}
+
+.threadloaf-thread-reply {
+    margin-bottom: 4px;
+    font-size: 12px;
+    line-height: 1.4;
+    display: flex;
+    gap: 0;
+}
+
+.threadloaf-thread-reply:last-child {
+    margin-bottom: 0;
+}
+
+.threadloaf-reply-author {
+    color: var(--mention-foreground);
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.threadloaf-reply-separator {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.threadloaf-reply-content {
+    color: var(--text-normal);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+}

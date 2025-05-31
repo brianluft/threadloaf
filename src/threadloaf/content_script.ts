@@ -9,6 +9,7 @@ import { ContextMenuManager } from "./ContextMenuManager";
 import { UserOptionsProvider } from "./UserOptionsProvider";
 import { ScrollButtonManager } from "./ScrollButtonManager";
 import { MessageSelector } from "./MessageSelector";
+import { ThreadListReplyFetcher } from "./ThreadListReplyFetcher";
 
 (async function (): Promise<void> {
     const userOptions = await UserOptionsProvider.loadInitialOptions();
@@ -22,6 +23,7 @@ import { MessageSelector } from "./MessageSelector";
     const messageTreeBuilder = new MessageTreeBuilder();
     const domParser = new DomParser(state);
     const scrollButtonManager = new ScrollButtonManager();
+    const threadListReplyFetcher = new ThreadListReplyFetcher(userOptionsProvider);
     const threadRenderer = new ThreadRenderer(
         state,
         domParser,
@@ -38,5 +40,5 @@ import { MessageSelector } from "./MessageSelector";
         uncollapseBottomPane: () => threadRenderer.uncollapseBottomPane(),
     });
 
-    new Threadloaf(state, domParser, domMutator, threadRenderer);
+    new Threadloaf(state, domParser, domMutator, threadRenderer, threadListReplyFetcher);
 })();

@@ -2,6 +2,7 @@ import { DomParser } from "./DomParser";
 import { ThreadloafState } from "./ThreadloafState";
 import { ThreadRenderer } from "./ThreadRenderer";
 import { DomMutator } from "./DomMutator";
+import { ThreadListReplyFetcher } from "./ThreadListReplyFetcher";
 
 /**
  * Main entry point and controller for the Threadloaf extension.
@@ -15,17 +16,20 @@ export class Threadloaf {
     private domParser: DomParser;
     private domMutator: DomMutator;
     private threadRenderer: ThreadRenderer;
+    private threadListReplyFetcher: ThreadListReplyFetcher;
 
     public constructor(
         state: ThreadloafState,
         domParser: DomParser,
         domMutator: DomMutator,
         threadRenderer: ThreadRenderer,
+        threadListReplyFetcher: ThreadListReplyFetcher,
     ) {
         this.state = state;
         this.domParser = domParser;
         this.domMutator = domMutator;
         this.threadRenderer = threadRenderer;
+        this.threadListReplyFetcher = threadListReplyFetcher;
         this.initialize();
     }
 
@@ -37,7 +41,10 @@ export class Threadloaf {
             return;
         }
         this.domMutator.injectStyles();
-        this.domParser.setupMutationObserver(() => this.threadRenderer.renderThread());
+        this.domParser.setupMutationObserver(
+            () => this.threadRenderer.renderThread(),
+            () => this.threadListReplyFetcher.handleThreadListChange(),
+        );
         this.setupPolling();
 
         // Find initial thread container and set up initial view

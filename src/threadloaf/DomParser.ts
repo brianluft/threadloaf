@@ -46,9 +46,10 @@ export class DomParser {
     }
 
     // Attach a MutationObserver to monitor DOM changes
-    public setupMutationObserver(renderThread: () => void): void {
+    public setupMutationObserver(renderThread: () => void, onThreadListChange?: () => void): void {
         this.state.observer = new MutationObserver((mutations) => {
             let shouldRerender = false;
+            let shouldCheckThreadList = false;
 
             for (const mutation of mutations) {
                 const changedNodes = Array.from(mutation.addedNodes).concat(Array.from(mutation.removedNodes));
@@ -95,6 +96,13 @@ export class DomParser {
                         ),
                 );
 
+                // Check for thread list changes (li.card_* elements)
+                const hasThreadListChanges = changedNodes.some(
+                    (node) =>
+                        node instanceof HTMLElement &&
+                        (node.matches('li[class*="card_"]') || node.querySelector('li[class*="card_"]')),
+                );
+
                 if (
                     hasMessageChanges ||
                     hasReactionChanges ||
@@ -103,6 +111,13 @@ export class DomParser {
                     hasContentContainerChanges
                 ) {
                     shouldRerender = true;
+                }
+
+                if (hasThreadListChanges) {
+                    shouldCheckThreadList = true;
+                }
+
+                if (shouldRerender) {
                     break;
                 }
             }
@@ -113,6 +128,10 @@ export class DomParser {
                     this.state.threadContainer = newThreadContainer;
                     renderThread();
                 }
+            }
+
+            if (shouldCheckThreadList && onThreadListChange) {
+                onThreadListChange();
             }
         });
 
