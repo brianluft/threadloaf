@@ -14,9 +14,25 @@
 GET {{baseUrl}}/health
 
 ###
-# Get Messages for Channel/Thread
-# Replace the guildId and channelId with actual Discord guild/channel IDs
-GET {{baseUrl}}/{{guildId}}/messages/{{channelId}}
+# Get Messages for Multiple Channels/Threads
+# Replace the guildId and channelIds with actual Discord guild/channel IDs
+POST {{baseUrl}}/{{guildId}}/messages
+Content-Type: application/json
+
+{
+  "channelIds": ["{{channelId}}", "1334738913197293622", "1334738913197293623"],
+  "maxMessagesPerChannel": 10
+}
+
+###
+# Get Messages for Single Channel (using array with one element)
+POST {{baseUrl}}/{{guildId}}/messages
+Content-Type: application/json
+
+{
+  "channelIds": ["{{channelId}}"],
+  "maxMessagesPerChannel": 5
+}
 
 ###
 # Get All Forum Threads for a Guild
@@ -25,11 +41,32 @@ GET {{baseUrl}}/{{guildId}}/forum-threads
 
 ###
 # Test Error Handling - Invalid Guild ID
-GET {{baseUrl}}/invalid-guild-id/messages/{{channelId}}
+POST {{baseUrl}}/invalid-guild-id/messages
+Content-Type: application/json
+
+{
+  "channelIds": ["{{channelId}}"],
+  "maxMessagesPerChannel": 10
+}
 
 ###
-# Test Error Handling - Invalid Channel ID
-GET {{baseUrl}}/{{guildId}}/messages/invalid-id
+# Test Error Handling - Missing channelIds
+POST {{baseUrl}}/{{guildId}}/messages
+Content-Type: application/json
+
+{
+  "maxMessagesPerChannel": 10
+}
+
+###
+# Test Error Handling - Invalid maxMessagesPerChannel
+POST {{baseUrl}}/{{guildId}}/messages
+Content-Type: application/json
+
+{
+  "channelIds": ["{{channelId}}"],
+  "maxMessagesPerChannel": -1
+}
 
 ###
 # Test Non-existent Endpoint

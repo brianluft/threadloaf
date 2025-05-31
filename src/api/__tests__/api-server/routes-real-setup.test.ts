@@ -5,7 +5,7 @@ import express from "express";
 
 jest.mock("../../data-store");
 
-// Add real setup routes tests to cover uncovered code in GET /messages
+// Add real setup routes tests to cover uncovered code in POST /messages
 describe("ApiServer routes - real setup", () => {
     let apiServer: ApiServer;
     let dataStore: jest.Mocked<DataStore>;
@@ -26,8 +26,9 @@ describe("ApiServer routes - real setup", () => {
         app = (apiServer as unknown as { app: express.Express }).app;
     });
 
-    test("GET /:guildId/messages/:channelId real setup success", async () => {
-        const channelId = "channel123";
+    test("POST /:guildId/messages real setup success", async () => {
+        const channelIds = ["channel123"];
+        const maxMessagesPerChannel = 10;
         const messages: StoredMessage[] = [
             {
                 id: "msg1",
@@ -39,15 +40,18 @@ describe("ApiServer routes - real setup", () => {
 
         dataStore.getMessagesForChannel.mockReturnValue(messages);
 
-        const response = await request(app).get(`/${TEST_GUILD_ID}/messages/${channelId}`);
+        const response = await request(app)
+            .post(`/${TEST_GUILD_ID}/messages`)
+            .send({ channelIds, maxMessagesPerChannel });
 
         expect(response.status).toBe(200);
-        expect(response.body).toEqual(messages);
-        expect(dataStore.getMessagesForChannel).toHaveBeenCalledWith(channelId);
+        expect(response.body).toEqual({ channel123: messages });
+        expect(dataStore.getMessagesForChannel).toHaveBeenCalledWith("channel123");
     });
 
-    test("GET /:guildId/messages/:channelId real setup error", async () => {
-        const channelId = "error-channel";
+    test("POST /:guildId/messages real setup error", async () => {
+        const channelIds = ["error-channel"];
+        const maxMessagesPerChannel = 10;
         const error = new Error("Test failure");
         dataStore.getMessagesForChannel.mockImplementation(() => {
             throw error;
@@ -55,7 +59,9 @@ describe("ApiServer routes - real setup", () => {
 
         const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
-        const response = await request(app).get(`/${TEST_GUILD_ID}/messages/${channelId}`);
+        const response = await request(app)
+            .post(`/${TEST_GUILD_ID}/messages`)
+            .send({ channelIds, maxMessagesPerChannel });
 
         expect(response.status).toBe(500);
         expect(response.body).toEqual({ error: "Failed to fetch messages" });
@@ -64,11 +70,14 @@ describe("ApiServer routes - real setup", () => {
         consoleErrorSpy.mockRestore();
     });
 
-    test("GET /:guildId/messages/:channelId with invalid guild ID", async () => {
-        const channelId = "channel123";
+    test("POST /:guildId/messages with invalid guild ID", async () => {
+        const channelIds = ["channel123"];
+        const maxMessagesPerChannel = 10;
         const invalidGuildId = "invalid-guild-id";
 
-        const response = await request(app).get(`/${invalidGuildId}/messages/${channelId}`);
+        const response = await request(app)
+            .post(`/${invalidGuildId}/messages`)
+            .send({ channelIds, maxMessagesPerChannel });
 
         expect(response.status).toBe(400);
         expect(response.body).toEqual({ error: "Invalid guild ID" });

@@ -183,6 +183,7 @@ describe("ApiServer GET /:guildId/forum-threads", () => {
         // Create a mock Express app
         const mockApp = {
             get: jest.fn(),
+            post: jest.fn(),
         };
 
         // Replace the app with our mock
@@ -193,8 +194,8 @@ describe("ApiServer GET /:guildId/forum-threads", () => {
         // @ts-ignore - access private method
         server.setupRoutes();
 
-        // Get the forum-threads route handler (2nd GET route)
-        const threadsHandler = mockApp.get.mock.calls[1][1];
+        // Get the forum-threads route handler (1st GET route)
+        const threadsHandler = mockApp.get.mock.calls[0][1];
 
         // Mock data
         const mockThreads: ThreadMeta[] = [

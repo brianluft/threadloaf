@@ -13,10 +13,10 @@ We support only a single GUILD_ID. We need to support monitoring multiple indepe
 # Return messages from multiple channels in one request (API)
 Our design for `/:guildId/messages/:channelId` forces the client to make lots of requests. Let's fix that.
 
-- [ ] Instead of a single channel ID in the url path, make it multiple channel IDs in a JSON POST body.
-- [ ] Change the JSON response to an object where the channel IDs are keys and the list of messages are values.
-- [ ] Add a mandatory property to the JSON: `maxMessagesPerChannel`. Limit the response to the most recent messages up to this limit *per channel*.
-- [ ] Update tests and regain 100% code/branch test coverage.
+- [X] Instead of a single channel ID in the url path, make it multiple channel IDs in a JSON POST body.
+- [X] Change the JSON response to an object where the channel IDs are keys and the list of messages are values.
+- [X] Add a mandatory property to the JSON: `maxMessagesPerChannel`. Limit the response to the most recent messages up to this limit *per channel*.
+- [X] Update tests and regain 100% code/branch test coverage.
 
 # OAuth2 authentication (API and browser extension)
 Our API does not implement authentication at all, it's open to the public.

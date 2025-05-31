@@ -35,6 +35,7 @@ describe("ApiServer GET /health", () => {
         // Create a mock Express app
         const mockApp = {
             get: jest.fn(),
+            post: jest.fn(),
         };
 
         // Replace the app with our mock
@@ -45,8 +46,8 @@ describe("ApiServer GET /health", () => {
         // @ts-ignore - access private method
         server.setupRoutes();
 
-        // Get the health route handler (3rd GET route)
-        const healthHandler = mockApp.get.mock.calls[2][1];
+        // Get the health route handler (2nd GET route)
+        const healthHandler = mockApp.get.mock.calls[1][1];
 
         // Create mock response
         const mockRes = {

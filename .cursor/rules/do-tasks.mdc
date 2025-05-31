@@ -7,11 +7,10 @@ Carefully follow this process step by step.
 
 1. Read the file [TASKS.md](mdc:project/TASKS.md).
 2. Perform the next unchecked task. You may do multiple consecutive tasks at once if it makes sense.
-4. Run the API tests.
+4. Run the API tests. Line and branch coverage must reach 100%, NO exceptions. You're not done until it's 100%.
 5. If everything is good, format the code with `/workspaces/threadloaf/scripts/format.sh`.
 6. Update TASKS.md to check off the tasks you completed.
 7. Commit to git with a short commit message.
 8. STOP. You must give me an opportunity to review.
 
 The tasks are expected to be doable. If you run into serious problems, STOP and ask for help.
-

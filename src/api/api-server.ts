@@ -6,6 +6,16 @@
 import express, { Request, Response, NextFunction } from "express";
 import { DataStore, StoredMessage } from "./data-store";
 
+// Type definitions for the new multi-channel messages endpoint
+type MultiChannelMessagesRequest = {
+    channelIds: string[];
+    maxMessagesPerChannel: number;
+};
+
+type MultiChannelMessagesResponse = {
+    [channelId: string]: StoredMessage[];
+};
+
 export class ApiServer {
     private app = express();
     private port: number;
@@ -70,12 +80,31 @@ export class ApiServer {
      * Setup API routes
      */
     private setupRoutes(): void {
-        // Get messages for a specific channel or thread
-        this.app.get(
-            "/:guildId/messages/:channelId",
-            (req: Request<{ guildId: string; channelId: string }>, res: Response): void => {
+        // Get messages for multiple channels
+        this.app.post(
+            "/:guildId/messages",
+            (
+                req: Request<{ guildId: string }, MultiChannelMessagesResponse, MultiChannelMessagesRequest>,
+                res: Response,
+            ): void => {
                 try {
-                    const { guildId, channelId } = req.params;
+                    const { guildId } = req.params;
+                    const { channelIds, maxMessagesPerChannel } = req.body;
+
+                    // Validate request body
+                    if (!channelIds || !Array.isArray(channelIds)) {
+                        res.status(400).json({ error: "channelIds must be an array" });
+                        return;
+                    }
+
+                    if (
+                        maxMessagesPerChannel === undefined ||
+                        typeof maxMessagesPerChannel !== "number" ||
+                        maxMessagesPerChannel < 0
+                    ) {
+                        res.status(400).json({ error: "maxMessagesPerChannel must be a non-negative number" });
+                        return;
+                    }
 
                     // Check if the guild ID is valid (configured)
                     const dataStore = this.dataStoresByGuild.get(guildId);
@@ -84,8 +113,17 @@ export class ApiServer {
                         return;
                     }
 
-                    const messages = dataStore.getMessagesForChannel(channelId);
-                    res.json(messages);
+                    // Fetch messages for each channel
+                    const result: MultiChannelMessagesResponse = {};
+                    for (const channelId of channelIds) {
+                        const allMessages = dataStore.getMessagesForChannel(channelId);
+                        // Get the most recent messages up to the limit
+                        const limitedMessages =
+                            maxMessagesPerChannel === 0 ? [] : allMessages.slice(-maxMessagesPerChannel);
+                        result[channelId] = limitedMessages;
+                    }
+
+                    res.json(result);
                 } catch (error) {
                     console.error("Error fetching messages:", error);
                     res.status(500).json({ error: "Failed to fetch messages" });
