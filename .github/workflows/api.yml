@@ -1,0 +1,51 @@
+name: Build API
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: warp-ubuntu-latest-x64-2x
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 'latest'
+        
+    - name: Install dependencies
+      working-directory: ./src/api
+      run: npm install
+      
+    - name: Build API
+      working-directory: ./src/api
+      run: npm run build
+      
+    - name: Test API
+      working-directory: ./src/api
+      run: npm test
+
+    - name: Create deployment package
+      working-directory: ./src/api
+      run: |
+        mkdir -p ../../deploy/api
+        cp -r dist/ ../../deploy/api/
+        cp package*.json ../../deploy/api/
+        cp env.example ../../deploy/api/
+        cd ../../deploy/api
+        npm install --production
+        cd ..
+        zip -r api-deployment.zip api/
+
+    - name: Upload deployment artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: api-deployment
+        path: |
+          deploy/api-deployment.zip
+        if-no-files-found: error 
