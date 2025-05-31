@@ -25,12 +25,12 @@ We will use one short OAuth2 sign-in the first time a member installs the browse
 - [X] Read AUTHENTICATION.md with a complete description of the technique.
 - [X] Environment file will provide signing secret. Update Discord Bot Setup readme to describe how to generate this.
 - [X] Update readme Discord Bot Setup section, we need a second OAuth2 application for Threadloaf Login. The redirect needs to be some path in http://localhost:3000 for our testing.
-- [ ] In the browser extension's user options popup, add a group box "Chatty@Home API".
-    - [ ] Instruction label that explains that members of the Chatty@Home discord server (only) have access to an online API enabling extra features. They must log in for these features to become enabled.
-    - [ ] Label "Login:", value is a read-only label "not logged in" (which becomes "logged in") and a 
+- [X] In the browser extension's user options popup, add a group box "Chatty@Home API".
+    - [X] Instruction label that explains that members of the Chatty@Home discord server (only) have access to an online API enabling extra features. They must log in for these features to become enabled.
+    - [X] Label "Login:", value is a read-only label "not logged in" (which becomes "logged in") and a 
     button "Log in" (which becomes "Log out"). The button kicks off the OAuth2 login process in a new window. If we're logged in, we show that and the button is for logging out. The login must be persisted across sessions.
-    - [ ] When logged in, the normally-disabled options inside the group box are enabled. For now there's only one, the following:
-    - [ ] Slider for "Number of most recent thread replies to show in thread list:" (find more concise wording for this) from 0 to 20
+    - [X] When logged in, the normally-disabled options inside the group box are enabled. For now there's only one, the following:
+    - [X] Slider for "Number of most recent thread replies to show in thread list:" (find more concise wording for this) from 0 to 20
 - [X] Implement the login flow on the server and client sides both. The client should end up holding a token signed by the server that it can use to make API calls. The client should persist this token.
 - [X] We want the token to last forever. We do not implement revocation.
 - [X] Update tests and regain 100% code/branch test coverage.

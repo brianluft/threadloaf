@@ -11,6 +11,9 @@ export class UserOptions {
     public ownName = "";
     public defaultSplit = 60;
     public threadListAppearance = ThreadListAppearance.Compact;
+    public isLoggedIn = false;
+    public authToken = "";
+    public threadRepliesCount = 0;
 
     public constructor(init?: Partial<UserOptions>) {
         Object.assign(this, init);
@@ -33,6 +36,9 @@ export class UserOptions {
                 ownName: (obj as UserOptions).ownName ?? defaultOptions.ownName,
                 defaultSplit: (obj as UserOptions).defaultSplit ?? defaultOptions.defaultSplit,
                 threadListAppearance: (obj as UserOptions).threadListAppearance ?? defaultOptions.threadListAppearance,
+                isLoggedIn: (obj as UserOptions).isLoggedIn ?? defaultOptions.isLoggedIn,
+                authToken: (obj as UserOptions).authToken ?? defaultOptions.authToken,
+                threadRepliesCount: (obj as UserOptions).threadRepliesCount ?? defaultOptions.threadRepliesCount,
             });
         }
         return defaultOptions;

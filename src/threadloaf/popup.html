@@ -67,6 +67,38 @@
         input[type="radio"] {
             margin-left: 2em;
         }
+
+        fieldset {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin: 1.5em 0;
+            padding: 1em;
+        }
+
+        legend {
+            font-weight: bold;
+            padding: 0 0.5em;
+        }
+
+        #loginButton {
+            margin-left: 0.5em;
+            padding: 4px 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            background-color: #f8f8f8;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        #loginButton:hover {
+            background-color: #e8e8e8;
+        }
+
+        #loginButton:disabled {
+            background-color: #f0f0f0;
+            color: #666;
+            cursor: not-allowed;
+        }
     </style>
     <script src="popup.js"></script>
 </head>
@@ -116,6 +148,23 @@
         <input type="range" id="defaultSplit" min="25" max="75" step="5" value="60">
         <span id="defaultSplitValue">60%</span>
     </div>
+
+    <fieldset id="apiGroupBox">
+        <legend>Chatty@Home API</legend>
+        <p>Members of the Chatty@Home discord server have access to an online API enabling extra features. You must log in for these features to become enabled.</p>
+        
+        <div class="option-row">
+            <label for="loginStatus">Login:</label>
+            <span id="loginStatus">not logged in</span>
+            <button type="button" id="loginButton">Log in</button>
+        </div>
+        
+        <div class="option-row">
+            <label for="threadRepliesSlider">Recent thread replies to show:</label>
+            <input type="range" id="threadRepliesSlider" min="0" max="20" step="1" value="0" disabled>
+            <span id="threadRepliesValue">0</span>
+        </div>
+    </fieldset>
 
     <details>
         <summary>About Threadloaf</summary>
