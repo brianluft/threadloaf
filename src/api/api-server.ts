@@ -9,11 +9,11 @@ import { DataStore, StoredMessage } from "./data-store";
 export class ApiServer {
     private app = express();
     private port: number;
-    private dataStore: DataStore;
+    private dataStoresByGuild: Map<string, DataStore>;
 
-    constructor(port: number, dataStore: DataStore) {
+    constructor(port: number, dataStoresByGuild: Map<string, DataStore>) {
         this.port = port;
-        this.dataStore = dataStore;
+        this.dataStoresByGuild = dataStoresByGuild;
         this.setupMiddleware();
         this.setupRoutes();
         this.setupErrorHandling();
@@ -74,7 +74,18 @@ export class ApiServer {
         this.app.get("/messages/:channelId", (req, res) => {
             try {
                 const channelId = req.params.channelId;
-                const messages = this.dataStore.getMessagesForChannel(channelId);
+                
+                // For now, search across all guilds for the channel
+                // TODO: This will be updated when we add guild ID to the URL path
+                let messages: StoredMessage[] = [];
+                for (const dataStore of this.dataStoresByGuild.values()) {
+                    const channelMessages = dataStore.getMessagesForChannel(channelId);
+                    if (channelMessages.length > 0) {
+                        messages = channelMessages;
+                        break;
+                    }
+                }
+                
                 res.json(messages);
             } catch (error) {
                 console.error("Error fetching messages:", error);
@@ -85,29 +96,37 @@ export class ApiServer {
         // Get all forum threads with their latest replies
         this.app.get("/forum-threads", (req, res) => {
             try {
-                const forumThreads = this.dataStore.getAllForumThreads();
+                const allThreads: any[] = [];
+                
+                // Collect threads from all guilds
+                // TODO: This will be updated when we add guild ID to the URL path
+                for (const dataStore of this.dataStoresByGuild.values()) {
+                    const forumThreads = dataStore.getAllForumThreads();
 
-                // Map to response format with latest replies
-                const response = forumThreads.map((thread) => {
-                    // Get all messages for this thread
-                    const allMessages = this.dataStore.getMessagesForChannel(thread.id);
+                    // Map to response format with latest replies
+                    const guildThreads = forumThreads.map((thread) => {
+                        // Get all messages for this thread
+                        const allMessages = dataStore.getMessagesForChannel(thread.id);
 
-                    // Assuming the first message is the root post, get up to 5 latest replies
-                    const latestReplies =
-                        allMessages.length > 1
-                            ? allMessages.slice(1).slice(-5) // Skip first message and take last 5
-                            : [];
+                        // Assuming the first message is the root post, get up to 5 latest replies
+                        const latestReplies =
+                            allMessages.length > 1
+                                ? allMessages.slice(1).slice(-5) // Skip first message and take last 5
+                                : [];
 
-                    return {
-                        threadId: thread.id,
-                        title: thread.title,
-                        createdBy: thread.createdBy,
-                        createdAt: thread.createdAt,
-                        latestReplies,
-                    };
-                });
+                        return {
+                            threadId: thread.id,
+                            title: thread.title,
+                            createdBy: thread.createdBy,
+                            createdAt: thread.createdAt,
+                            latestReplies,
+                        };
+                    });
+                    
+                    allThreads.push(...guildThreads);
+                }
 
-                res.json(response);
+                res.json(allThreads);
             } catch (error) {
                 console.error("Error fetching forum threads:", error);
                 res.status(500).json({ error: "Failed to fetch forum threads" });

@@ -1,105 +1,113 @@
+import express from "express";
 import { ApiServer } from "../../api-server";
 import { DataStore } from "../../data-store";
-import express from "express";
-import { createShared } from "./shared";
+import request from "supertest";
 
 jest.mock("../../data-store");
 
 describe("ApiServer setupErrorHandling", () => {
     let dataStore: jest.Mocked<DataStore>;
+    let dataStoresByGuild: Map<string, DataStore>;
 
     beforeEach(() => {
         jest.clearAllMocks();
-
-        const x = createShared();
-        dataStore = x.dataStore;
+        dataStore = new DataStore() as jest.Mocked<DataStore>;
+        dataStoresByGuild = new Map<string, DataStore>();
+        dataStoresByGuild.set("test-guild-id", dataStore);
     });
 
-    test("should register error handling middleware", () => {
-        // Create an actual express app to test middleware
-        const realApp = express();
+    test("should setup error handling middleware", () => {
+        // Create the server
+        const server = new ApiServer(3000, dataStoresByGuild);
 
-        // Spy on express.use to verify middleware is set up
-        const useSpy = jest.spyOn(realApp, "use");
+        // Create a mock Express app
+        const mockApp = {
+            use: jest.fn(),
+        };
 
-        // Create new server with actual app
-        const server = new ApiServer(3000, dataStore);
-
-        // @ts-ignore - replace app with our test app
-        server.app = realApp;
+        // Replace the app with our mock
+        // @ts-ignore - access private property
+        server.app = mockApp;
 
         // Call setupErrorHandling
-        // @ts-ignore - access private method for testing
+        // @ts-ignore - access private method
         server.setupErrorHandling();
 
-        // Verify middleware was added
-        expect(useSpy).toHaveBeenCalledTimes(1);
-
-        // We can verify that the bound method is registered, but can't easily test its behavior here
-        expect(useSpy).toHaveBeenCalled();
+        // Verify error handling middleware was added
+        expect(mockApp.use).toHaveBeenCalledWith(expect.any(Function));
     });
 
-    describe("errorHandler", () => {
-        test("should handle Error objects correctly", () => {
-            // Create server
-            const server = new ApiServer(3000, dataStore);
-
-            // Create mock request, response, next
-            const mockError = new Error("Test error message");
-            const mockRequest = {} as Request;
-            const mockResponse = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn(),
-            } as unknown as Response;
-            const mockNext = jest.fn();
-
-            // Spy on console.error
-            const consoleErrorSpy = jest.spyOn(console, "error");
-            consoleErrorSpy.mockImplementation(() => {});
-
-            // Call the error handler directly
-            // @ts-ignore - access private method for testing
-            server.errorHandler(mockError, mockRequest, mockResponse, mockNext);
-
-            // Verify error was handled correctly
-            expect(mockResponse.status).toHaveBeenCalledWith(500);
-            expect(mockResponse.json).toHaveBeenCalledWith({ error: "Internal server error" });
-            expect(mockNext).toHaveBeenCalled();
-            expect(consoleErrorSpy).toHaveBeenCalledWith("API error:", "Test error message");
-
-            // Restore console.error
-            consoleErrorSpy.mockRestore();
+    test("should handle errors by logging and returning 500", async () => {
+        // Create actual express app
+        const app = express();
+        
+        // Setup JSON middleware
+        app.use(express.json());
+        
+        // Add a route that throws an error
+        app.get("/error", () => {
+            throw new Error("Test error");
         });
 
-        test("should handle non-Error objects thrown as errors", () => {
-            // Create server
-            const server = new ApiServer(3000, dataStore);
+        // Create the server
+        const server = new ApiServer(3000, dataStoresByGuild);
+        
+        // Get the error handler by calling setupErrorHandling
+        // @ts-ignore - access private method to get error handler
+        const errorHandler = server.errorHandler.bind(server);
+        
+        // Add the error handler manually after the route
+        app.use(errorHandler);
 
-            // Use a string as the error - this tests handling of different error types
-            const nonErrorObject = "This is not an Error object";
-            const mockRequest = {} as Request;
-            const mockResponse = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn(),
-            } as unknown as Response;
-            const mockNext = jest.fn();
+        // Mock console.error
+        const consoleErrorSpy = jest.spyOn(console, "error");
+        consoleErrorSpy.mockImplementation(() => {});
 
-            // Spy on console.error
-            const consoleErrorSpy = jest.spyOn(console, "error");
-            consoleErrorSpy.mockImplementation(() => {});
+        // Test the error handling
+        const response = await request(app).get("/error");
 
-            // Call the error handler with non-Error object
-            // @ts-ignore - access private method and pass non-Error
-            server.errorHandler(nonErrorObject, mockRequest, mockResponse, mockNext);
+        expect(response.status).toBe(500);
+        expect(response.body).toEqual({ error: "Internal server error" });
+        expect(consoleErrorSpy).toHaveBeenCalledWith("API error:", "Test error");
 
-            // Verify error handling behaves the same
-            expect(mockResponse.status).toHaveBeenCalledWith(500);
-            expect(mockResponse.json).toHaveBeenCalledWith({ error: "Internal server error" });
-            expect(mockNext).toHaveBeenCalled();
-            expect(consoleErrorSpy).toHaveBeenCalledWith("API error:", nonErrorObject);
+        // Restore console.error
+        consoleErrorSpy.mockRestore();
+    });
 
-            // Restore console.error
-            consoleErrorSpy.mockRestore();
+    test("should handle non-Error objects by logging them", async () => {
+        // Create actual express app
+        const app = express();
+        
+        // Setup JSON middleware
+        app.use(express.json());
+        
+        // Add a route that throws a non-Error object
+        app.get("/error", () => {
+            throw "string error";
         });
+
+        // Create the server
+        const server = new ApiServer(3000, dataStoresByGuild);
+        
+        // Get the error handler by calling setupErrorHandling
+        // @ts-ignore - access private method to get error handler
+        const errorHandler = server.errorHandler.bind(server);
+        
+        // Add the error handler manually after the route
+        app.use(errorHandler);
+
+        // Mock console.error
+        const consoleErrorSpy = jest.spyOn(console, "error");
+        consoleErrorSpy.mockImplementation(() => {});
+
+        // Test the error handling
+        const response = await request(app).get("/error");
+
+        expect(response.status).toBe(500);
+        expect(response.body).toEqual({ error: "Internal server error" });
+        expect(consoleErrorSpy).toHaveBeenCalledWith("API error:", "string error");
+
+        // Restore console.error
+        consoleErrorSpy.mockRestore();
     });
 });

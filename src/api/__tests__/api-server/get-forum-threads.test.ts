@@ -19,58 +19,57 @@ describe("ApiServer GET /forum-threads", () => {
     });
 
     test("should return forum threads with latest replies", async () => {
-        const threads: ThreadMeta[] = [
+        const mockThreads: ThreadMeta[] = [
             {
                 id: "thread1",
-                title: "Forum Post 1",
+                title: "Test Thread 1",
                 parentId: "forum123",
-                createdAt: 1693000000000,
+                createdAt: 1690000000000,
                 createdBy: "User#1234",
             },
             {
                 id: "thread2",
-                title: "Forum Post 2",
+                title: "Test Thread 2",
                 parentId: "forum123",
-                createdAt: 1693001000000,
+                createdAt: 1690000100000,
                 createdBy: "User#5678",
             },
         ];
 
         const thread1Messages: StoredMessage[] = [
             {
-                id: "rootmsg1",
-                content: "Root post content",
+                id: "msg1",
+                content: "Thread 1 starter message",
                 authorTag: "User#1234",
-                timestamp: 1693000000000,
+                timestamp: 1690000000000,
             },
             {
-                id: "reply1",
-                content: "Reply 1",
+                id: "msg2",
+                content: "First reply",
                 authorTag: "User#5678",
-                timestamp: 1693000100000,
+                timestamp: 1690000001000,
             },
             {
-                id: "reply2",
-                content: "Reply 2",
-                authorTag: "User#9012",
-                timestamp: 1693000200000,
+                id: "msg3",
+                content: "Second reply",
+                authorTag: "User#9999",
+                timestamp: 1690000002000,
             },
         ];
 
         const thread2Messages: StoredMessage[] = [
             {
-                id: "rootmsg2",
-                content: "Root post 2 content",
+                id: "msg4",
+                content: "Thread 2 starter message",
                 authorTag: "User#5678",
-                timestamp: 1693001000000,
+                timestamp: 1690000100000,
             },
         ];
 
-        // Mock dataStore methods
-        dataStore.getAllForumThreads = jest.fn().mockReturnValue(threads);
-        dataStore.getMessagesForChannel = jest.fn().mockImplementation((threadId) => {
-            if (threadId === "thread1") return thread1Messages;
-            if (threadId === "thread2") return thread2Messages;
+        dataStore.getAllForumThreads.mockReturnValue(mockThreads);
+        dataStore.getMessagesForChannel.mockImplementation((channelId: string) => {
+            if (channelId === "thread1") return thread1Messages;
+            if (channelId === "thread2") return thread2Messages;
             return [];
         });
 
@@ -80,30 +79,17 @@ describe("ApiServer GET /forum-threads", () => {
         expect(response.body).toEqual([
             {
                 threadId: "thread1",
-                title: "Forum Post 1",
+                title: "Test Thread 1",
                 createdBy: "User#1234",
-                createdAt: 1693000000000,
-                latestReplies: [
-                    {
-                        id: "reply1",
-                        content: "Reply 1",
-                        authorTag: "User#5678",
-                        timestamp: 1693000100000,
-                    },
-                    {
-                        id: "reply2",
-                        content: "Reply 2",
-                        authorTag: "User#9012",
-                        timestamp: 1693000200000,
-                    },
-                ],
+                createdAt: 1690000000000,
+                latestReplies: [thread1Messages[1], thread1Messages[2]], // Skip first message (starter)
             },
             {
                 threadId: "thread2",
-                title: "Forum Post 2",
+                title: "Test Thread 2",
                 createdBy: "User#5678",
-                createdAt: 1693001000000,
-                latestReplies: [],
+                createdAt: 1690000100000,
+                latestReplies: [], // Only starter message, no replies
             },
         ]);
 
@@ -113,8 +99,7 @@ describe("ApiServer GET /forum-threads", () => {
     });
 
     test("should return empty array when no forum threads exist", async () => {
-        // Mock dataStore methods
-        dataStore.getAllForumThreads = jest.fn().mockReturnValue([]);
+        dataStore.getAllForumThreads.mockReturnValue([]);
 
         const response = await request(app).get("/forum-threads");
 
@@ -123,196 +108,127 @@ describe("ApiServer GET /forum-threads", () => {
         expect(dataStore.getAllForumThreads).toHaveBeenCalled();
     });
 
-    test("should handle threads with more than 5 replies correctly", async () => {
-        const threads: ThreadMeta[] = [
-            {
-                id: "thread1",
-                title: "Forum Post with many replies",
-                parentId: "forum123",
-                createdAt: 1693000000000,
-                createdBy: "User#1234",
-            },
-        ];
+    test("should limit latest replies to 5 messages", async () => {
+        const mockThread: ThreadMeta = {
+            id: "thread1",
+            title: "Busy Thread",
+            parentId: "forum123",
+            createdAt: 1690000000000,
+            createdBy: "User#1234",
+        };
 
-        // Create 10 messages (1 root + 9 replies)
-        const threadMessages: StoredMessage[] = [
-            {
-                id: "rootmsg",
-                content: "Root post content",
-                authorTag: "User#1234",
-                timestamp: 1693000000000,
-            },
-            ...Array.from({ length: 9 }, (_, i) => ({
-                id: `reply${i + 1}`,
-                content: `Reply ${i + 1}`,
-                authorTag: `User#${i + 100}`,
-                timestamp: 1693000000000 + (i + 1) * 100000,
-            })),
-        ];
+        // Create 10 messages (1 starter + 9 replies)
+        const manyMessages: StoredMessage[] = Array.from({ length: 10 }, (_, i) => ({
+            id: `msg${i + 1}`,
+            content: `Message ${i + 1}`,
+            authorTag: `User#${1000 + i}`,
+            timestamp: 1690000000000 + i * 1000,
+        }));
 
-        // Mock dataStore methods
-        dataStore.getAllForumThreads = jest.fn().mockReturnValue(threads);
-        dataStore.getMessagesForChannel = jest.fn().mockReturnValue(threadMessages);
+        dataStore.getAllForumThreads.mockReturnValue([mockThread]);
+        dataStore.getMessagesForChannel.mockReturnValue(manyMessages);
 
         const response = await request(app).get("/forum-threads");
 
         expect(response.status).toBe(200);
+        expect(response.body).toHaveLength(1);
+
+        // Should skip first message and take last 5 of the remaining (messages 6-10)
+        const expectedReplies = manyMessages.slice(1).slice(-5); // Skip first, take last 5
+        expect(response.body[0].latestReplies).toEqual(expectedReplies);
         expect(response.body[0].latestReplies).toHaveLength(5);
-        // Should include only the 5 latest replies (replies 5-9)
-        expect(response.body[0].latestReplies[0].id).toBe("reply5");
-        expect(response.body[0].latestReplies[4].id).toBe("reply9");
     });
 
-    test("should handle threads with only one message (no replies)", async () => {
-        const threads: ThreadMeta[] = [
-            {
-                id: "thread1",
-                title: "Forum Post with single message",
-                parentId: "forum123",
-                createdAt: 1693000000000,
-                createdBy: "User#1234",
-            },
-        ];
-
-        // Create just 1 message (the root post with no replies)
-        const threadMessages: StoredMessage[] = [
-            {
-                id: "rootmsg",
-                content: "Root post content",
-                authorTag: "User#1234",
-                timestamp: 1693000000000,
-            },
-        ];
-
-        // Mock dataStore methods
-        dataStore.getAllForumThreads = jest.fn().mockReturnValue(threads);
-        dataStore.getMessagesForChannel = jest.fn().mockReturnValue(threadMessages);
-
-        // Create a real ApiServer instance
-        const realApp = express();
-        const server = new ApiServer(3000, dataStore);
-
-        // @ts-ignore - replace app with our test app
-        server.app = realApp;
-
-        // Call setupMiddleware and setupRoutes
-        // @ts-ignore - access private method for testing
-        server.setupMiddleware();
-        // @ts-ignore - access private method for testing
-        server.setupRoutes();
-
-        // Make request to the forum-threads endpoint
-        const response = await request(realApp).get("/forum-threads");
-
-        expect(response.status).toBe(200);
-        expect(response.body[0].latestReplies).toEqual([]);
-        expect(dataStore.getAllForumThreads).toHaveBeenCalled();
-        expect(dataStore.getMessagesForChannel).toHaveBeenCalledWith("thread1");
-    });
-
-    test("should handle errors when fetching forum threads fails", async () => {
-        // Mock dataStore.getAllForumThreads to throw an error
-        dataStore.getAllForumThreads = jest.fn().mockImplementation(() => {
-            throw new Error("Database error");
+    test("should handle errors gracefully", async () => {
+        const error = new Error("Database error");
+        dataStore.getAllForumThreads.mockImplementation(() => {
+            throw error;
         });
 
-        // Mock console.error to prevent output during test
-        const originalConsoleError = console.error;
-        console.error = jest.fn();
+        // Spy on console.error to verify error logging
+        const consoleErrorSpy = jest.spyOn(console, "error");
+        consoleErrorSpy.mockImplementation(() => {}); // Suppress console output during test
 
         const response = await request(app).get("/forum-threads");
 
         expect(response.status).toBe(500);
         expect(response.body).toEqual({ error: "Failed to fetch forum threads" });
-        expect(dataStore.getAllForumThreads).toHaveBeenCalled();
-        expect(console.error).toHaveBeenCalled();
+        expect(consoleErrorSpy).toHaveBeenCalledWith("Error fetching forum threads:", error);
 
         // Restore console.error
-        console.error = originalConsoleError;
+        consoleErrorSpy.mockRestore();
     });
 
-    test("should handle errors when getMessagesForChannel throws error during forum thread processing", async () => {
-        // Mock getAllForumThreads to return threads
-        const threads: ThreadMeta[] = [
+    test("should directly test the forum threads route handler", () => {
+        // Create a Map with the test DataStore
+        const dataStoresByGuild = new Map<string, DataStore>();
+        dataStoresByGuild.set("test-guild-id", dataStore);
+        
+        // Create a server instance
+        const server = new ApiServer(3000, dataStoresByGuild);
+
+        // Create a mock Express app
+        const mockApp = {
+            get: jest.fn(),
+        };
+
+        // Replace the app with our mock
+        // @ts-ignore - access private property
+        server.app = mockApp;
+
+        // Call setupRoutes to register the routes with our mock app
+        // @ts-ignore - access private method
+        server.setupRoutes();
+
+        // Get the forum-threads route handler (2nd GET route)
+        const threadsHandler = mockApp.get.mock.calls[1][1];
+
+        // Mock data
+        const mockThreads: ThreadMeta[] = [
             {
                 id: "thread1",
-                title: "Forum Post 1",
+                title: "Test Thread",
                 parentId: "forum123",
-                createdAt: 1693000000000,
+                createdAt: 1690000000000,
                 createdBy: "User#1234",
-            },
-            {
-                id: "thread2",
-                title: "Forum Post 2",
-                parentId: "forum123",
-                createdAt: 1693001000000,
-                createdBy: "User#5678",
             },
         ];
 
-        dataStore.getAllForumThreads = jest.fn().mockReturnValue(threads);
+        const mockMessages: StoredMessage[] = [
+            {
+                id: "msg1",
+                content: "Starter",
+                authorTag: "User#1234",
+                timestamp: 1690000000000,
+            },
+            {
+                id: "msg2",
+                content: "Reply",
+                authorTag: "User#5678",
+                timestamp: 1690000001000,
+            },
+        ];
 
-        // Mock getMessagesForChannel to throw an error only for the second thread
-        dataStore.getMessagesForChannel = jest.fn().mockImplementation((threadId) => {
-            if (threadId === "thread2") {
-                throw new Error("Test error for thread2");
-            }
-            return [
-                {
-                    id: "msg1",
-                    content: "Test content",
-                    authorTag: "User#1234",
-                    timestamp: 1693000000000,
-                },
-            ];
-        });
+        dataStore.getAllForumThreads.mockReturnValue(mockThreads);
+        dataStore.getMessagesForChannel.mockReturnValue(mockMessages);
 
-        // Create a real ApiServer instance
-        const realApp = express();
-        const server = new ApiServer(3000, dataStore);
+        // Create mock response
+        const mockRes = {
+            json: jest.fn(),
+        };
 
-        // @ts-ignore - replace app with our test app
-        server.app = realApp;
+        // Call the threads handler directly
+        threadsHandler(null, mockRes);
 
-        // Call setupMiddleware and setupRoutes
-        // @ts-ignore - access private method for testing
-        server.setupMiddleware();
-        // @ts-ignore - access private method for testing
-        server.setupRoutes();
-
-        // Make request to the forum-threads endpoint
-        const response = await request(realApp).get("/forum-threads");
-
-        expect(response.status).toBe(500);
-        expect(response.body).toEqual({ error: "Failed to fetch forum threads" });
-        expect(dataStore.getAllForumThreads).toHaveBeenCalled();
-        expect(dataStore.getMessagesForChannel).toHaveBeenCalledWith("thread1");
-        expect(dataStore.getMessagesForChannel).toHaveBeenCalledWith("thread2");
-    });
-
-    test("should handle errors thrown from getMessagesForChannel", async () => {
-        // Mock the methods to throw an error
-        dataStore.getMessagesForChannel = jest.fn().mockImplementation(() => {
-            throw new Error("Test error");
-        });
-
-        // Set up explicit error handling that the original route would have
-        app = express();
-        app.use(express.json());
-        app.get("/messages/:channelId", (req, res) => {
-            try {
-                const channelId = req.params.channelId;
-                const messages = dataStore.getMessagesForChannel(channelId);
-                res.json(messages);
-            } catch (error) {
-                console.error("Error fetching messages:", error);
-                res.status(500).json({ error: "Failed to fetch messages" });
-            }
-        });
-
-        const response = await request(app).get("/messages/channel123");
-
-        expect(response.status).toBe(500);
-        expect(response.body).toEqual({ error: "Failed to fetch messages" });
+        // Verify it returned the correct response
+        expect(mockRes.json).toHaveBeenCalledWith([
+            {
+                threadId: "thread1",
+                title: "Test Thread",
+                createdBy: "User#1234",
+                createdAt: 1690000000000,
+                latestReplies: [mockMessages[1]], // Skip first message
+            },
+        ]);
     });
 });

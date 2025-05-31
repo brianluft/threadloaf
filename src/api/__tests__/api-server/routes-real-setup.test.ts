@@ -9,12 +9,18 @@ jest.mock("../../data-store");
 describe("ApiServer routes - real setup", () => {
     let apiServer: ApiServer;
     let dataStore: jest.Mocked<DataStore>;
+    let dataStoresByGuild: Map<string, DataStore>;
     let app: express.Express;
 
     beforeEach(() => {
         jest.clearAllMocks();
         dataStore = new DataStore() as jest.Mocked<DataStore>;
-        apiServer = new ApiServer(3000, dataStore);
+        
+        // Create a Map with the test DataStore
+        dataStoresByGuild = new Map<string, DataStore>();
+        dataStoresByGuild.set("test-guild-id", dataStore);
+        
+        apiServer = new ApiServer(3000, dataStoresByGuild);
         // Access the actual Express app from the server instance
         app = (apiServer as unknown as { app: express.Express }).app;
     });
@@ -124,5 +130,25 @@ describe("ApiServer routes - real setup", () => {
         expect(consoleErrorSpy).toHaveBeenCalledWith("Error fetching forum threads:", error);
 
         consoleErrorSpy.mockRestore();
+    });
+});
+
+describe("ApiServer real setup", () => {
+    test("should properly initialize with real methods", () => {
+        // Create a mocked DataStore
+        const dataStore = new DataStore() as jest.Mocked<DataStore>;
+        
+        // Create a Map with the test DataStore
+        const dataStoresByGuild = new Map<string, DataStore>();
+        dataStoresByGuild.set("test-guild-id", dataStore);
+
+        // This tests that the constructor runs without error and properly calls internal methods
+        const apiServer = new ApiServer(3000, dataStoresByGuild);
+
+        // Verify server was created
+        expect(apiServer).toBeDefined();
+
+        // Verify the server has the expected properties
+        expect(apiServer).toHaveProperty("start");
     });
 });

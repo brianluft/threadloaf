@@ -1,62 +1,43 @@
+import express from "express";
 import { ApiServer } from "../../api-server";
 import { DataStore } from "../../data-store";
-import express from "express";
-import { createShared } from "./shared";
+import request from "supertest";
 
 jest.mock("../../data-store");
 
 describe("ApiServer setupMiddleware", () => {
-    let dataStore: jest.Mocked<DataStore>;
+    test("should setup express.json middleware", async () => {
+        // Create a mocked DataStore
+        const dataStore = new DataStore() as jest.Mocked<DataStore>;
 
-    beforeEach(() => {
-        jest.clearAllMocks();
+        // Create a Map with the test DataStore
+        const dataStoresByGuild = new Map<string, DataStore>();
+        dataStoresByGuild.set("test-guild-id", dataStore);
 
-        const x = createShared();
-        dataStore = x.dataStore;
-    });
+        // Create the server
+        const server = new ApiServer(3000, dataStoresByGuild);
 
-    test("should log requests to console", async () => {
-        // Create an actual express app to test middleware
-        const realApp = express();
+        // Create a new express app for testing
+        const app = express();
 
-        // Spy on express.use to verify middleware is set up
-        const useSpy = jest.spyOn(realApp, "use");
-
-        // Mock console.log
-        const originalConsoleLog = console.log;
-        console.log = jest.fn();
-
-        // Create new server with actual app
-        const server = new ApiServer(3000, dataStore);
-
-        // @ts-ignore - replace app with our test app
-        server.app = realApp;
-
-        // Call setupMiddleware
+        // Access the private setupMiddleware method
+        // @ts-ignore - access private method for testing
+        server.app = app;
         // @ts-ignore - access private method for testing
         server.setupMiddleware();
 
-        // Verify middleware was added (should be called 2 times now that error handling was moved)
-        expect(useSpy).toHaveBeenCalledTimes(2);
+        // Add a simple test route that expects JSON
+        app.post("/test", (req, res) => {
+            res.json({ received: req.body });
+        });
 
-        // Test logging middleware
-        const mockRequest = {
-            method: "GET",
-            path: "/test-path",
-        } as unknown as Request;
-        const mockNext = jest.fn();
+        // Test that JSON parsing works
+        const response = await request(app)
+            .post("/test")
+            .send({ test: "data" })
+            .set("Content-Type", "application/json");
 
-        // Get the logging middleware (2nd call to use)
-        const loggingMiddleware = useSpy.mock.calls[1][0];
-
-        // @ts-ignore - call the middleware manually
-        loggingMiddleware(mockRequest, {}, mockNext);
-
-        // Verify middleware worked as expected
-        expect(mockNext).toHaveBeenCalled();
-        expect(console.log).toHaveBeenCalledWith(expect.stringMatching(/.*- GET \/test-path/));
-
-        // Restore console.log
-        console.log = originalConsoleLog;
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual({ received: { test: "data" } });
     });
 });

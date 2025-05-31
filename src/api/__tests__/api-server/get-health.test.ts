@@ -25,8 +25,12 @@ describe("ApiServer GET /health", () => {
     });
 
     test("should directly test the health endpoint route handler", () => {
+        // Create a Map with the test DataStore
+        const dataStoresByGuild = new Map<string, DataStore>();
+        dataStoresByGuild.set("test-guild-id", dataStore);
+        
         // Create a server instance
-        const server = new ApiServer(3000, dataStore);
+        const server = new ApiServer(3000, dataStoresByGuild);
 
         // Create a mock Express app
         const mockApp = {

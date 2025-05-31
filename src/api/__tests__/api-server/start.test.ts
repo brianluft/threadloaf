@@ -22,8 +22,12 @@ describe("ApiServer start", () => {
             return { on: jest.fn() };
         });
 
+        // Create a Map with the test DataStore
+        const dataStoresByGuild = new Map<string, DataStore>();
+        dataStoresByGuild.set("test-guild-id", dataStore);
+
         // Create server with mocked app
-        const server = new ApiServer(3456, dataStore);
+        const server = new ApiServer(3456, dataStoresByGuild);
 
         // @ts-ignore - replace app.listen with mock
         server.app.listen = listenMock;

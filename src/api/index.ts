@@ -12,7 +12,7 @@ import { ApiServer } from "./api-server";
 dotenv.config();
 
 // Check for required environment variables
-const requiredEnvVars = ["DISCORD_TOKEN", "GUILD_ID", "PORT"];
+const requiredEnvVars = ["DISCORD_TOKEN", "GUILD_IDS", "PORT"];
 const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName]);
 
 if (missingEnvVars.length > 0) {
@@ -23,17 +23,35 @@ if (missingEnvVars.length > 0) {
 
 // Get environment variables
 const token = process.env.DISCORD_TOKEN!;
-const guildId = process.env.GUILD_ID!;
+const guildIdsString = process.env.GUILD_IDS!;
 const port = parseInt(process.env.PORT!) || 3000;
 
-// Initialize the data store
-const dataStore = new DataStore();
+// Parse guild IDs from comma-separated string
+const guildIds = guildIdsString.split(",").map(id => id.trim()).filter(id => id.length > 0);
 
-// Initialize the Discord client
-const discordClient = new DiscordClient(token, guildId, dataStore);
+if (guildIds.length === 0) {
+    console.error("No valid guild IDs found in GUILD_IDS environment variable");
+    process.exit(1);
+}
 
-// Initialize and start the API server
-const apiServer = new ApiServer(port, dataStore);
+console.log(`Monitoring ${guildIds.length} guild(s): ${guildIds.join(", ")}`);
+
+// Create separate DataStore and DiscordClient instances for each guild
+const dataStoresByGuild = new Map<string, DataStore>();
+const discordClientsByGuild = new Map<string, DiscordClient>();
+
+for (const guildId of guildIds) {
+    // Initialize the data store for this guild
+    const dataStore = new DataStore();
+    dataStoresByGuild.set(guildId, dataStore);
+
+    // Initialize the Discord client for this guild
+    const discordClient = new DiscordClient(token, guildId, dataStore);
+    discordClientsByGuild.set(guildId, discordClient);
+}
+
+// Initialize and start the API server with all data stores
+const apiServer = new ApiServer(port, dataStoresByGuild);
 apiServer.start();
 
 // Handle process termination

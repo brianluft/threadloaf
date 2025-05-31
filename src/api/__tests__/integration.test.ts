@@ -66,6 +66,7 @@ jest.mock("discord.js", () => {
 
 describe("Integration Tests", () => {
     let dataStore: DataStore;
+    let dataStoresByGuild: Map<string, DataStore>;
     let discordClient: DiscordClient;
     let apiServer: ApiServer;
     let mockClient: jest.Mocked<Client>;
@@ -124,36 +125,53 @@ describe("Integration Tests", () => {
 
         // Create the data store
         dataStore = new DataStore();
+        dataStoresByGuild = new Map();
+        dataStoresByGuild.set(TEST_GUILD_ID, dataStore);
 
         // Create Discord client - this sets up the event handlers
         discordClient = new DiscordClient(TEST_TOKEN, TEST_GUILD_ID, dataStore);
 
-        // Create and mock the API server
-        apiServer = new ApiServer(TEST_PORT, dataStore);
+        // Create and mock the API server with the Map of DataStores
+        apiServer = new ApiServer(TEST_PORT, dataStoresByGuild);
         app = express();
 
         // Setup express routes for testing
         app.get("/messages/:channelId", (req, res) => {
             const channelId = req.params.channelId;
-            const messages = dataStore.getMessagesForChannel(channelId);
+            // Search across all guilds for the channel
+            let messages: any[] = [];
+            for (const guildDataStore of dataStoresByGuild.values()) {
+                const channelMessages = guildDataStore.getMessagesForChannel(channelId);
+                if (channelMessages.length > 0) {
+                    messages = channelMessages;
+                    break;
+                }
+            }
             res.json(messages);
         });
 
         app.get("/forum-threads", (req, res) => {
-            const forumThreads = dataStore.getAllForumThreads();
-            const response = forumThreads.map((thread) => {
-                const allMessages = dataStore.getMessagesForChannel(thread.id);
-                const latestReplies = allMessages.length > 1 ? allMessages.slice(1).slice(-5) : [];
+            const allThreads: any[] = [];
+            
+            // Collect threads from all guilds
+            for (const guildDataStore of dataStoresByGuild.values()) {
+                const forumThreads = guildDataStore.getAllForumThreads();
+                const guildThreads = forumThreads.map((thread) => {
+                    const allMessages = guildDataStore.getMessagesForChannel(thread.id);
+                    const latestReplies = allMessages.length > 1 ? allMessages.slice(1).slice(-5) : [];
 
-                return {
-                    threadId: thread.id,
-                    title: thread.title,
-                    createdBy: thread.createdBy,
-                    createdAt: thread.createdAt,
-                    latestReplies,
-                };
-            });
-            res.json(response);
+                    return {
+                        threadId: thread.id,
+                        title: thread.title,
+                        createdBy: thread.createdBy,
+                        createdAt: thread.createdAt,
+                        latestReplies,
+                    };
+                });
+                
+                allThreads.push(...guildThreads);
+            }
+            res.json(allThreads);
         });
 
         // Mock setInterval to prevent actual timers
