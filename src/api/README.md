@@ -35,14 +35,21 @@ This API ingests Discord messages from the last 24 hours in a single Discord ser
 
 1. Create a new Discord application and bot at [Discord Developer Portal](https://discord.com/developers/applications)
 2. Enable the following Privileged Gateway Intents:
-   - SERVER MEMBERS
-   - MESSAGE CONTENT
+   - Message Content
 3. Generate a Bot Token and add it to your `.env` file
-4. Invite the bot to your server with the following permissions:
-   - Read Messages/View Channels
-   - Read Message History
-   - Use Public Threads
-
+4. Invite the bot to your server. Under OAuth2:
+   - Add Redirect: `https://example.com/callback` (it's not used but Discord requires it)
+   - Scopes
+      - bot
+      - guilds
+      - messages.read
+   - Select Redirect URL: Choose the one entered earlier
+   - Bot Permissions
+      - View Channels
+      - Read Message History
+   - Integration Type: Guild Install
+   - Copy the generated URL and visit it to grant permission and join the server.
+   
 ## API Endpoints
 
 ### GET /messages/:channelId
