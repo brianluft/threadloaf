@@ -1,0 +1,31 @@
+###
+# Threadloaf API Testing
+# Use this file with VSCode REST Client extension to test API endpoints
+###
+
+### Variables
+@baseUrl = http://localhost:3000
+@channelId = 1334738913197293621
+
+###
+# Health Check Endpoint
+# Tests if the API server is running
+GET {{baseUrl}}/health
+
+###
+# Get Messages for Channel/Thread
+# Replace the channelId with an actual Discord channel/thread ID
+GET {{baseUrl}}/messages/{{channelId}}
+
+###
+# Get All Forum Threads
+# Returns all forum threads with their latest replies
+GET {{baseUrl}}/forum-threads
+
+###
+# Test Error Handling - Invalid Channel ID
+GET {{baseUrl}}/messages/invalid-id
+
+###
+# Test Non-existent Endpoint
+GET {{baseUrl}}/non-existent-endpoint 
