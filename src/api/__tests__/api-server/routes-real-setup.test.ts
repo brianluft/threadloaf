@@ -11,6 +11,7 @@ describe("ApiServer routes - real setup", () => {
     let dataStore: jest.Mocked<DataStore>;
     let dataStoresByGuild: Map<string, DataStore>;
     let app: express.Express;
+    const TEST_GUILD_ID = "test-guild-id";
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -18,14 +19,14 @@ describe("ApiServer routes - real setup", () => {
 
         // Create a Map with the test DataStore
         dataStoresByGuild = new Map<string, DataStore>();
-        dataStoresByGuild.set("test-guild-id", dataStore);
+        dataStoresByGuild.set(TEST_GUILD_ID, dataStore);
 
         apiServer = new ApiServer(3000, dataStoresByGuild);
         // Access the actual Express app from the server instance
         app = (apiServer as unknown as { app: express.Express }).app;
     });
 
-    test("GET /messages/:channelId real setup success", async () => {
+    test("GET /:guildId/messages/:channelId real setup success", async () => {
         const channelId = "channel123";
         const messages: StoredMessage[] = [
             {
@@ -38,14 +39,14 @@ describe("ApiServer routes - real setup", () => {
 
         dataStore.getMessagesForChannel.mockReturnValue(messages);
 
-        const response = await request(app).get(`/messages/${channelId}`);
+        const response = await request(app).get(`/${TEST_GUILD_ID}/messages/${channelId}`);
 
         expect(response.status).toBe(200);
         expect(response.body).toEqual(messages);
         expect(dataStore.getMessagesForChannel).toHaveBeenCalledWith(channelId);
     });
 
-    test("GET /messages/:channelId real setup error", async () => {
+    test("GET /:guildId/messages/:channelId real setup error", async () => {
         const channelId = "error-channel";
         const error = new Error("Test failure");
         dataStore.getMessagesForChannel.mockImplementation(() => {
@@ -54,7 +55,7 @@ describe("ApiServer routes - real setup", () => {
 
         const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
-        const response = await request(app).get(`/messages/${channelId}`);
+        const response = await request(app).get(`/${TEST_GUILD_ID}/messages/${channelId}`);
 
         expect(response.status).toBe(500);
         expect(response.body).toEqual({ error: "Failed to fetch messages" });
@@ -63,7 +64,19 @@ describe("ApiServer routes - real setup", () => {
         consoleErrorSpy.mockRestore();
     });
 
-    test("GET /forum-threads real setup success", async () => {
+    test("GET /:guildId/messages/:channelId with invalid guild ID", async () => {
+        const channelId = "channel123";
+        const invalidGuildId = "invalid-guild-id";
+
+        const response = await request(app).get(`/${invalidGuildId}/messages/${channelId}`);
+
+        expect(response.status).toBe(400);
+        expect(response.body).toEqual({ error: "Invalid guild ID" });
+        // Should not call dataStore methods for invalid guild
+        expect(dataStore.getMessagesForChannel).not.toHaveBeenCalled();
+    });
+
+    test("GET /:guildId/forum-threads real setup success", async () => {
         const threads: ThreadMeta[] = [
             {
                 id: "thread1",
@@ -94,7 +107,7 @@ describe("ApiServer routes - real setup", () => {
             channelId === "thread1" ? thread1Messages : thread2Messages,
         );
 
-        const response = await request(app).get("/forum-threads");
+        const response = await request(app).get(`/${TEST_GUILD_ID}/forum-threads`);
 
         expect(response.status).toBe(200);
         expect(response.body).toEqual([
@@ -115,7 +128,7 @@ describe("ApiServer routes - real setup", () => {
         ]);
     });
 
-    test("GET /forum-threads real setup error", async () => {
+    test("GET /:guildId/forum-threads real setup error", async () => {
         const error = new Error("Test failure");
         dataStore.getAllForumThreads.mockImplementation(() => {
             throw error;
@@ -123,13 +136,25 @@ describe("ApiServer routes - real setup", () => {
 
         const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
-        const response = await request(app).get("/forum-threads");
+        const response = await request(app).get(`/${TEST_GUILD_ID}/forum-threads`);
 
         expect(response.status).toBe(500);
         expect(response.body).toEqual({ error: "Failed to fetch forum threads" });
         expect(consoleErrorSpy).toHaveBeenCalledWith("Error fetching forum threads:", error);
 
         consoleErrorSpy.mockRestore();
+    });
+
+    test("GET /:guildId/forum-threads with invalid guild ID", async () => {
+        const invalidGuildId = "invalid-guild-id";
+
+        const response = await request(app).get(`/${invalidGuildId}/forum-threads`);
+
+        expect(response.status).toBe(400);
+        expect(response.body).toEqual({ error: "Invalid guild ID" });
+        // Should not call dataStore methods for invalid guild
+        expect(dataStore.getAllForumThreads).not.toHaveBeenCalled();
+        expect(dataStore.getMessagesForChannel).not.toHaveBeenCalled();
     });
 });
 

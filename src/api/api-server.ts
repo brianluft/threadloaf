@@ -71,62 +71,63 @@ export class ApiServer {
      */
     private setupRoutes(): void {
         // Get messages for a specific channel or thread
-        this.app.get("/messages/:channelId", (req, res) => {
-            try {
-                const channelId = req.params.channelId;
+        this.app.get(
+            "/:guildId/messages/:channelId",
+            (req: Request<{ guildId: string; channelId: string }>, res: Response): void => {
+                try {
+                    const { guildId, channelId } = req.params;
 
-                // For now, search across all guilds for the channel
-                // TODO: This will be updated when we add guild ID to the URL path
-                let messages: StoredMessage[] = [];
-                for (const dataStore of this.dataStoresByGuild.values()) {
-                    const channelMessages = dataStore.getMessagesForChannel(channelId);
-                    if (channelMessages.length > 0) {
-                        messages = channelMessages;
-                        break;
+                    // Check if the guild ID is valid (configured)
+                    const dataStore = this.dataStoresByGuild.get(guildId);
+                    if (!dataStore) {
+                        res.status(400).json({ error: "Invalid guild ID" });
+                        return;
                     }
-                }
 
-                res.json(messages);
-            } catch (error) {
-                console.error("Error fetching messages:", error);
-                res.status(500).json({ error: "Failed to fetch messages" });
-            }
-        });
+                    const messages = dataStore.getMessagesForChannel(channelId);
+                    res.json(messages);
+                } catch (error) {
+                    console.error("Error fetching messages:", error);
+                    res.status(500).json({ error: "Failed to fetch messages" });
+                }
+            },
+        );
 
         // Get all forum threads with their latest replies
-        this.app.get("/forum-threads", (req, res) => {
+        this.app.get("/:guildId/forum-threads", (req: Request<{ guildId: string }>, res: Response): void => {
             try {
-                const allThreads: any[] = [];
+                const { guildId } = req.params;
 
-                // Collect threads from all guilds
-                // TODO: This will be updated when we add guild ID to the URL path
-                for (const dataStore of this.dataStoresByGuild.values()) {
-                    const forumThreads = dataStore.getAllForumThreads();
-
-                    // Map to response format with latest replies
-                    const guildThreads = forumThreads.map((thread) => {
-                        // Get all messages for this thread
-                        const allMessages = dataStore.getMessagesForChannel(thread.id);
-
-                        // Assuming the first message is the root post, get up to 5 latest replies
-                        const latestReplies =
-                            allMessages.length > 1
-                                ? allMessages.slice(1).slice(-5) // Skip first message and take last 5
-                                : [];
-
-                        return {
-                            threadId: thread.id,
-                            title: thread.title,
-                            createdBy: thread.createdBy,
-                            createdAt: thread.createdAt,
-                            latestReplies,
-                        };
-                    });
-
-                    allThreads.push(...guildThreads);
+                // Check if the guild ID is valid (configured)
+                const dataStore = this.dataStoresByGuild.get(guildId);
+                if (!dataStore) {
+                    res.status(400).json({ error: "Invalid guild ID" });
+                    return;
                 }
 
-                res.json(allThreads);
+                const forumThreads = dataStore.getAllForumThreads();
+
+                // Map to response format with latest replies
+                const threads = forumThreads.map((thread) => {
+                    // Get all messages for this thread
+                    const allMessages = dataStore.getMessagesForChannel(thread.id);
+
+                    // Assuming the first message is the root post, get up to 5 latest replies
+                    const latestReplies =
+                        allMessages.length > 1
+                            ? allMessages.slice(1).slice(-5) // Skip first message and take last 5
+                            : [];
+
+                    return {
+                        threadId: thread.id,
+                        title: thread.title,
+                        createdBy: thread.createdBy,
+                        createdAt: thread.createdAt,
+                        latestReplies,
+                    };
+                });
+
+                res.json(threads);
             } catch (error) {
                 console.error("Error fetching forum threads:", error);
                 res.status(500).json({ error: "Failed to fetch forum threads" });

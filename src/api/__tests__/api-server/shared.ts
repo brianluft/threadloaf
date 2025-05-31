@@ -1,6 +1,6 @@
 import { ApiServer } from "../../api-server";
 import { DataStore } from "../../data-store";
-import express from "express";
+import express, { Request, Response } from "express";
 
 export function createShared(): {
     dataStore: jest.Mocked<DataStore>;
@@ -27,49 +27,54 @@ export function createShared(): {
     });
     // @ts-ignore - access private method for testing
     apiServer.setupRoutes = jest.fn().mockImplementation(() => {
-        app.get("/messages/:channelId", (req, res) => {
-            try {
-                const channelId = req.params.channelId;
-                // Search across all guilds for the channel (for backward compatibility with tests)
-                let messages: any[] = [];
-                for (const guildDataStore of dataStoresByGuild.values()) {
-                    const channelMessages = guildDataStore.getMessagesForChannel(channelId);
-                    if (channelMessages.length > 0) {
-                        messages = channelMessages;
-                        break;
+        app.get(
+            "/:guildId/messages/:channelId",
+            (req: Request<{ guildId: string; channelId: string }>, res: Response): void => {
+                try {
+                    const { guildId, channelId } = req.params;
+
+                    // Check if the guild ID is valid (configured)
+                    const guildDataStore = dataStoresByGuild.get(guildId);
+                    if (!guildDataStore) {
+                        res.status(400).json({ error: "Invalid guild ID" });
+                        return;
                     }
-                }
-                res.json(messages);
-            } catch (error) {
-                console.error("Error fetching messages:", error);
-                res.status(500).json({ error: "Failed to fetch messages" });
-            }
-        });
 
-        app.get("/forum-threads", (req, res) => {
+                    const messages = guildDataStore.getMessagesForChannel(channelId);
+                    res.json(messages);
+                } catch (error) {
+                    console.error("Error fetching messages:", error);
+                    res.status(500).json({ error: "Failed to fetch messages" });
+                }
+            },
+        );
+
+        app.get("/:guildId/forum-threads", (req: Request<{ guildId: string }>, res: Response): void => {
             try {
-                const allThreads: any[] = [];
+                const { guildId } = req.params;
 
-                // Collect threads from all guilds
-                for (const guildDataStore of dataStoresByGuild.values()) {
-                    const forumThreads = guildDataStore.getAllForumThreads();
-                    const guildThreads = forumThreads.map((thread) => {
-                        const allMessages = guildDataStore.getMessagesForChannel(thread.id);
-                        const latestReplies = allMessages.length > 1 ? allMessages.slice(1).slice(-5) : [];
-
-                        return {
-                            threadId: thread.id,
-                            title: thread.title,
-                            createdBy: thread.createdBy,
-                            createdAt: thread.createdAt,
-                            latestReplies,
-                        };
-                    });
-
-                    allThreads.push(...guildThreads);
+                // Check if the guild ID is valid (configured)
+                const guildDataStore = dataStoresByGuild.get(guildId);
+                if (!guildDataStore) {
+                    res.status(400).json({ error: "Invalid guild ID" });
+                    return;
                 }
 
-                res.json(allThreads);
+                const forumThreads = guildDataStore.getAllForumThreads();
+                const threads = forumThreads.map((thread) => {
+                    const allMessages = guildDataStore.getMessagesForChannel(thread.id);
+                    const latestReplies = allMessages.length > 1 ? allMessages.slice(1).slice(-5) : [];
+
+                    return {
+                        threadId: thread.id,
+                        title: thread.title,
+                        createdBy: thread.createdBy,
+                        createdAt: thread.createdAt,
+                        latestReplies,
+                    };
+                });
+
+                res.json(threads);
             } catch (error) {
                 console.error("Error fetching forum threads:", error);
                 res.status(500).json({ error: "Failed to fetch forum threads" });

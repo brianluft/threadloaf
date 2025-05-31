@@ -6,9 +6,10 @@ import { createShared } from "./shared";
 
 jest.mock("../../data-store");
 
-describe("ApiServer GET /forum-threads", () => {
+describe("ApiServer GET /:guildId/forum-threads", () => {
     let dataStore: jest.Mocked<DataStore>;
     let app: express.Express;
+    const TEST_GUILD_ID = "test-guild-id";
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -18,7 +19,7 @@ describe("ApiServer GET /forum-threads", () => {
         app = x.app;
     });
 
-    test("should return forum threads with latest replies", async () => {
+    test("should return forum threads with latest replies for valid guild", async () => {
         const mockThreads: ThreadMeta[] = [
             {
                 id: "thread1",
@@ -73,7 +74,7 @@ describe("ApiServer GET /forum-threads", () => {
             return [];
         });
 
-        const response = await request(app).get("/forum-threads");
+        const response = await request(app).get(`/${TEST_GUILD_ID}/forum-threads`);
 
         expect(response.status).toBe(200);
         expect(response.body).toEqual([
@@ -101,11 +102,23 @@ describe("ApiServer GET /forum-threads", () => {
     test("should return empty array when no forum threads exist", async () => {
         dataStore.getAllForumThreads.mockReturnValue([]);
 
-        const response = await request(app).get("/forum-threads");
+        const response = await request(app).get(`/${TEST_GUILD_ID}/forum-threads`);
 
         expect(response.status).toBe(200);
         expect(response.body).toEqual([]);
         expect(dataStore.getAllForumThreads).toHaveBeenCalled();
+    });
+
+    test("should return 400 error for invalid guild ID", async () => {
+        const invalidGuildId = "invalid-guild-id";
+
+        const response = await request(app).get(`/${invalidGuildId}/forum-threads`);
+
+        expect(response.status).toBe(400);
+        expect(response.body).toEqual({ error: "Invalid guild ID" });
+        // Should not call dataStore methods for invalid guild
+        expect(dataStore.getAllForumThreads).not.toHaveBeenCalled();
+        expect(dataStore.getMessagesForChannel).not.toHaveBeenCalled();
     });
 
     test("should limit latest replies to 5 messages", async () => {
@@ -128,7 +141,7 @@ describe("ApiServer GET /forum-threads", () => {
         dataStore.getAllForumThreads.mockReturnValue([mockThread]);
         dataStore.getMessagesForChannel.mockReturnValue(manyMessages);
 
-        const response = await request(app).get("/forum-threads");
+        const response = await request(app).get(`/${TEST_GUILD_ID}/forum-threads`);
 
         expect(response.status).toBe(200);
         expect(response.body).toHaveLength(1);
@@ -149,7 +162,7 @@ describe("ApiServer GET /forum-threads", () => {
         const consoleErrorSpy = jest.spyOn(console, "error");
         consoleErrorSpy.mockImplementation(() => {}); // Suppress console output during test
 
-        const response = await request(app).get("/forum-threads");
+        const response = await request(app).get(`/${TEST_GUILD_ID}/forum-threads`);
 
         expect(response.status).toBe(500);
         expect(response.body).toEqual({ error: "Failed to fetch forum threads" });
@@ -162,7 +175,7 @@ describe("ApiServer GET /forum-threads", () => {
     test("should directly test the forum threads route handler", () => {
         // Create a Map with the test DataStore
         const dataStoresByGuild = new Map<string, DataStore>();
-        dataStoresByGuild.set("test-guild-id", dataStore);
+        dataStoresByGuild.set(TEST_GUILD_ID, dataStore);
 
         // Create a server instance
         const server = new ApiServer(3000, dataStoresByGuild);
@@ -212,13 +225,16 @@ describe("ApiServer GET /forum-threads", () => {
         dataStore.getAllForumThreads.mockReturnValue(mockThreads);
         dataStore.getMessagesForChannel.mockReturnValue(mockMessages);
 
-        // Create mock response
+        // Create mock request and response
+        const mockReq = {
+            params: { guildId: TEST_GUILD_ID },
+        };
         const mockRes = {
             json: jest.fn(),
         };
 
         // Call the threads handler directly
-        threadsHandler(null, mockRes);
+        threadsHandler(mockReq, mockRes);
 
         // Verify it returned the correct response
         expect(mockRes.json).toHaveBeenCalledWith([

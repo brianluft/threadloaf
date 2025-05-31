@@ -5,6 +5,7 @@
 
 ### Variables
 @baseUrl = http://localhost:3000
+@guildId = test-guild-id
 @channelId = 1334738913197293621
 
 ###
@@ -14,17 +15,21 @@ GET {{baseUrl}}/health
 
 ###
 # Get Messages for Channel/Thread
-# Replace the channelId with an actual Discord channel/thread ID
-GET {{baseUrl}}/messages/{{channelId}}
+# Replace the guildId and channelId with actual Discord guild/channel IDs
+GET {{baseUrl}}/{{guildId}}/messages/{{channelId}}
 
 ###
-# Get All Forum Threads
-# Returns all forum threads with their latest replies
-GET {{baseUrl}}/forum-threads
+# Get All Forum Threads for a Guild
+# Returns all forum threads with their latest replies for the specified guild
+GET {{baseUrl}}/{{guildId}}/forum-threads
+
+###
+# Test Error Handling - Invalid Guild ID
+GET {{baseUrl}}/invalid-guild-id/messages/{{channelId}}
 
 ###
 # Test Error Handling - Invalid Channel ID
-GET {{baseUrl}}/messages/invalid-id
+GET {{baseUrl}}/{{guildId}}/messages/invalid-id
 
 ###
 # Test Non-existent Endpoint

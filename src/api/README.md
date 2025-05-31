@@ -52,9 +52,15 @@ This API ingests Discord messages from the last 24 hours in a single Discord ser
    
 ## API Endpoints
 
-### GET /messages/:channelId
+All endpoints require a `guildId` parameter in the URL path. The API will return a 400 error if an invalid or unconfigured guild ID is provided.
 
-Returns all messages from the specified channel or thread from the last 24 hours.
+### GET /:guildId/messages/:channelId
+
+Returns all messages from the specified channel or thread from the last 24 hours for the given guild.
+
+**Parameters:**
+- `guildId` - Discord guild/server ID that must be configured in the environment
+- `channelId` - Discord channel or thread ID
 
 **Response:**
 ```json
@@ -69,9 +75,19 @@ Returns all messages from the specified channel or thread from the last 24 hours
 ]
 ```
 
-### GET /forum-threads
+**Error Response (Invalid Guild ID):**
+```json
+{
+  "error": "Invalid guild ID"
+}
+```
 
-Returns all forum threads with their latest 5 replies from the last 24 hours.
+### GET /:guildId/forum-threads
+
+Returns all forum threads with their latest 5 replies from the last 24 hours for the given guild.
+
+**Parameters:**
+- `guildId` - Discord guild/server ID that must be configured in the environment
 
 **Response:**
 ```json
@@ -93,6 +109,13 @@ Returns all forum threads with their latest 5 replies from the last 24 hours.
   },
   ...
 ]
+```
+
+**Error Response (Invalid Guild ID):**
+```json
+{
+  "error": "Invalid guild ID"
+}
 ```
 
 ### GET /health

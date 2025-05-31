@@ -5,10 +5,10 @@ We support only a single GUILD_ID. We need to support monitoring multiple indepe
 
 - [X] Environment file will provide a list of guild IDs instead of just one.
 - [X] API: Use a separate DiscordClient and DataStore per guild to keep them separate.
-- [ ] Update API endpoints so they all take a guild ID in the URL path, at the beginning. e.g. `/:guildId/messages/:channelId`.
-- [ ] Return a 400 error if the client's guild ID is not one of our configured guild IDs, but don't leak what the right ones are.
-- [ ] Update readme and test.http with updated endpoints
-- [ ] Update tests and regain 100% code/branch test coverage.
+- [X] Update API endpoints so they all take a guild ID in the URL path, at the beginning. e.g. `/:guildId/messages/:channelId`.
+- [X] Return a 400 error if the client's guild ID is not one of our configured guild IDs, but don't leak what the right ones are.
+- [X] Update readme and test.http with updated endpoints
+- [X] Update tests and regain 100% code/branch test coverage.
 
 # Return messages from multiple channels in one request (API)
 Our design for `/:guildId/messages/:channelId` forces the client to make lots of requests. Let's fix that.

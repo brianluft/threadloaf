@@ -5,9 +5,10 @@ import { createShared } from "./shared";
 
 jest.mock("../../data-store");
 
-describe("ApiServer GET /messages/:channelId", () => {
+describe("ApiServer GET /:guildId/messages/:channelId", () => {
     let dataStore: jest.Mocked<DataStore>;
     let app: express.Express;
+    const TEST_GUILD_ID = "test-guild-id";
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -17,7 +18,7 @@ describe("ApiServer GET /messages/:channelId", () => {
         app = x.app;
     });
 
-    test("should return messages for a valid channel ID", async () => {
+    test("should return messages for a valid guild and channel ID", async () => {
         const channelId = "channel123";
         const messages: StoredMessage[] = [
             {
@@ -37,7 +38,7 @@ describe("ApiServer GET /messages/:channelId", () => {
         // Mock dataStore.getMessagesForChannel
         dataStore.getMessagesForChannel = jest.fn().mockReturnValue(messages);
 
-        const response = await request(app).get(`/messages/${channelId}`);
+        const response = await request(app).get(`/${TEST_GUILD_ID}/messages/${channelId}`);
 
         expect(response.status).toBe(200);
         expect(response.body).toEqual(messages);
@@ -50,11 +51,23 @@ describe("ApiServer GET /messages/:channelId", () => {
         // Mock dataStore.getMessagesForChannel
         dataStore.getMessagesForChannel = jest.fn().mockReturnValue([]);
 
-        const response = await request(app).get(`/messages/${channelId}`);
+        const response = await request(app).get(`/${TEST_GUILD_ID}/messages/${channelId}`);
 
         expect(response.status).toBe(200);
         expect(response.body).toEqual([]);
         expect(dataStore.getMessagesForChannel).toHaveBeenCalledWith(channelId);
+    });
+
+    test("should return 400 error for invalid guild ID", async () => {
+        const invalidGuildId = "invalid-guild-id";
+        const channelId = "channel123";
+
+        const response = await request(app).get(`/${invalidGuildId}/messages/${channelId}`);
+
+        expect(response.status).toBe(400);
+        expect(response.body).toEqual({ error: "Invalid guild ID" });
+        // Should not call dataStore methods for invalid guild
+        expect(dataStore.getMessagesForChannel).not.toHaveBeenCalled();
     });
 
     test("should handle errors when fetching messages fails", async () => {
@@ -71,7 +84,7 @@ describe("ApiServer GET /messages/:channelId", () => {
             throw mockError;
         });
 
-        const response = await request(app).get(`/messages/${channelId}`);
+        const response = await request(app).get(`/${TEST_GUILD_ID}/messages/${channelId}`);
 
         // Assert the response status and body
         expect(response.status).toBe(500);
