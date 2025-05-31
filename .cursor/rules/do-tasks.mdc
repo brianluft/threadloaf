@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+Read the file [TASKS.md](mdc:project/TASKS.md).
+Perform the next unchecked task.
+Take it to completion, check it off the list, and commit the updated tasks file to git.
+Repeat until all tasks are complete.
