@@ -25,10 +25,21 @@
         }
     },
     "permissions": ["storage"],
+    "host_permissions": [
+        "http://localhost/*",
+        "https://api.threadloaf.com/*"
+    ],
     "content_scripts": [
       {
         "matches": ["*://discord.com/channels/*"],
         "js": ["content_script.js"]
+      },
+      {
+        "matches": [
+          "http://localhost/auth/callback*",
+          "https://api.threadloaf.com/auth/callback*"
+        ],
+        "js": ["oauth_callback.js"]
       }
     ],
     "web_accessible_resources": [{
@@ -40,7 +51,8 @@
         "threadloaf-128.png",
         "test-data/*",
         "content_script.js.map",
-        "popup.js.map"
+        "popup.js.map",
+        "oauth_callback.js.map"
       ],
       "matches": ["*://discord.com/*"]
     }]

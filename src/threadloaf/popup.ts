@@ -160,7 +160,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             // Log in - start OAuth2 flow
             hideLoginError(); // Hide any previous error message
             try {
-                await startOAuth2Flow(optionsProvider);
+                await startOAuth2Flow();
                 updateLoginUI();
             } catch (error) {
                 console.error("Login failed:", error);
@@ -179,7 +179,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 });
 
-async function startOAuth2Flow(optionsProvider: UserOptionsProvider): Promise<void> {
+async function startOAuth2Flow(): Promise<void> {
     return new Promise(async (resolve, reject) => {
         try {
             // Fetch OAuth2 configuration from the API
@@ -220,61 +220,12 @@ async function startOAuth2Flow(optionsProvider: UserOptionsProvider): Promise<vo
                 return;
             }
 
-            // Function to handle successful OAuth callback
-            const handleOAuthSuccess = (jwt: string): void => {
-                clearInterval(checkClosed);
-                clearInterval(statusPolling);
-                if (!popup.closed) {
-                    popup.close();
-                }
-
-                const options = optionsProvider.getOptions();
-                options.isLoggedIn = true;
-                options.authToken = jwt;
-                optionsProvider
-                    .setOptions(options)
-                    .then(() => {
-                        resolve();
-                    })
-                    .catch((error) => {
-                        console.error("Failed to save options to storage:", error);
-                        reject(error);
-                    });
-            };
-
-            // Function to handle OAuth error (currently not used but kept for potential future error handling)
-            // const handleOAuthError = (error: string): void => {
-            //     clearInterval(checkClosed);
-            //     clearInterval(statusPolling);
-            //     if (!popup.closed) {
-            //         popup.close();
-            //     }
-            //     reject(new Error(error || "OAuth2 authentication failed"));
-            // };
-
-            // Poll the API server for authentication status
-            const statusPolling = setInterval(async () => {
-                try {
-                    const response = await fetch(`http://localhost:3000/auth/status/${state}`);
-                    if (response.ok) {
-                        const result = await response.json();
-                        handleOAuthSuccess(result.jwt);
-                    } else if (response.status === 404) {
-                        // Authentication not complete yet, continue polling
-                    } else {
-                        console.error("Error polling authentication status:", response.status);
-                    }
-                } catch (error) {
-                    console.error("Error polling authentication status:", error);
-                }
-            }, 1000);
-
-            // Listen for popup to close without successful auth
+            // Just wait for the popup to close - the content script handles everything else
             const checkClosed = setInterval(() => {
                 if (popup.closed) {
                     clearInterval(checkClosed);
-                    clearInterval(statusPolling);
-                    reject(new Error("OAuth2 authentication was cancelled"));
+                    // Resolve immediately - the content script will have handled saving the token
+                    resolve();
                 }
             }, 1000);
         } catch (error) {

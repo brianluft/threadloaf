@@ -28,18 +28,13 @@ type AuthCacheEntry = {
     expiresAt: number; // timestamp
 };
 
-type PendingAuthToken = {
-    jwt: string;
-    expiresAt: number; // timestamp
-};
-
 export class ApiServer {
     private app = express();
     private port: number;
     private dataStoresByGuild: Map<string, DataStore>;
     private discordClientsByGuild: Map<string, DiscordClient>;
     private authCache = new Map<string, AuthCacheEntry>(); // key: "userId:guildId"
-    private pendingAuthTokens = new Map<string, PendingAuthToken>(); // key: state parameter
+
     private authenticationEnabled: boolean;
 
     constructor(
@@ -55,7 +50,6 @@ export class ApiServer {
         this.setupMiddleware();
         this.setupRoutes();
         this.setupErrorHandling();
-        this.startTokenCleanup();
     }
 
     /**
@@ -65,24 +59,6 @@ export class ApiServer {
         this.app.listen(this.port, () => {
             console.log(`API server listening on port ${this.port}`);
         });
-    }
-
-    /**
-     * Start periodic cleanup of expired auth tokens
-     */
-    private startTokenCleanup(): void {
-        // Clean up expired tokens every 5 minutes
-        setInterval(
-            () => {
-                const now = Date.now();
-                for (const [state, token] of this.pendingAuthTokens.entries()) {
-                    if (token.expiresAt < now) {
-                        this.pendingAuthTokens.delete(state);
-                    }
-                }
-            },
-            5 * 60 * 1000,
-        );
     }
 
     /**
@@ -221,9 +197,9 @@ export class ApiServer {
     private setupRoutes(): void {
         // OAuth2 callback endpoint
         this.app.get("/auth/callback", async (req: Request, res: Response): Promise<void> => {
-            try {
-                const { code, state } = req.query;
+            const { code, state } = req.query;
 
+            try {
                 if (!code || !state || typeof code !== "string" || typeof state !== "string") {
                     res.status(400).send("Missing code or state parameter");
                     return;
@@ -275,27 +251,22 @@ export class ApiServer {
                 const jwtSecret = process.env.JWT_SECRET!;
                 const jwtToken = jwt.sign({ sub: userId }, jwtSecret, { expiresIn: "7d" });
 
-                // Store the JWT token temporarily for the extension to retrieve
-                // We'll use a simple in-memory store with the state as the key
-                this.pendingAuthTokens.set(state, {
-                    jwt: jwtToken,
-                    expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
-                });
-
-                // Show success page that closes itself
+                // Make the token available to the extension content script via DOM
                 res.set("Content-Type", "text/html").send(`
-                    <script>
-                        // Close the window immediately
-                        window.close();
-                        // Fallback: if window.close() doesn't work, show a message
-                        setTimeout(() => {
-                            document.body.innerHTML = '<h2>Authentication successful!</h2><p>You can close this window.</p>';
-                        }, 1000);
-                    </script>
+                    <!-- Hidden data for extension content script -->
+                    <div id="threadloaf-oauth-data" style="display: none;" data-jwt="${jwtToken}" data-state="${state}" data-status="success"></div>
+                    <h2>Logging into Threadloaf...</h2>
                 `);
             } catch (error) {
                 console.error("OAuth callback error:", error);
-                res.status(500).send("Authentication failed");
+
+                // Make the error available to the extension content script via DOM
+                res.set("Content-Type", "text/html").send(`
+                    <!-- Hidden data for extension content script -->
+                    <div id="threadloaf-oauth-data" style="display: none;" data-error="Authentication failed" data-state="${state || "unknown"}" data-status="error"></div>
+                    <h2>Authentication failed!</h2>
+                    <p>Please close this window and try again.</p>
+                `);
             }
         });
 
@@ -420,28 +391,6 @@ export class ApiServer {
                 clientId: process.env.DISCORD_CLIENT_ID!,
                 redirectUri: process.env.DISCORD_REDIRECT_URI!,
             });
-        });
-
-        // OAuth2 status polling endpoint (no auth required - needed for login flow)
-        this.app.get("/auth/status/:state", (req: Request<{ state: string }>, res: Response): void => {
-            const { state } = req.params;
-            const pendingAuth = this.pendingAuthTokens.get(state);
-
-            if (!pendingAuth) {
-                res.status(404).json({ error: "Authentication session not found" });
-                return;
-            }
-
-            if (pendingAuth.expiresAt < Date.now()) {
-                // Clean up expired token
-                this.pendingAuthTokens.delete(state);
-                res.status(404).json({ error: "Authentication session expired" });
-                return;
-            }
-
-            // Return the JWT token and clean up
-            this.pendingAuthTokens.delete(state);
-            res.json({ jwt: pendingAuth.jwt });
         });
 
         // Health check endpoint
