@@ -212,12 +212,78 @@ async function startOAuth2Flow(options: UserOptions, optionsProvider: UserOption
                 return;
             }
 
+            // Function to handle successful OAuth callback
+            const handleOAuthSuccess = (jwt: string): void => {
+                clearInterval(checkClosed);
+                clearInterval(storageCheck);
+                window.removeEventListener("message", messageListener);
+                if (!popup.closed) {
+                    popup.close();
+                }
+
+                options.isLoggedIn = true;
+                options.authToken = jwt;
+                optionsProvider
+                    .setOptions(options)
+                    .then(() => {
+                        resolve();
+                    })
+                    .catch(reject);
+            };
+
+            // Function to handle OAuth error
+            const handleOAuthError = (error: string): void => {
+                clearInterval(checkClosed);
+                clearInterval(storageCheck);
+                window.removeEventListener("message", messageListener);
+                if (!popup.closed) {
+                    popup.close();
+                }
+                reject(new Error(error || "OAuth2 authentication failed"));
+            };
+
+            // Check localStorage for OAuth result (fallback method)
+            const storageCheck = setInterval(() => {
+                try {
+                    const storedResult = localStorage.getItem("threadloaf-oauth-result");
+                    if (storedResult) {
+                        localStorage.removeItem("threadloaf-oauth-result"); // Clean up
+                        const result = JSON.parse(storedResult);
+                        if (result.type === "oauth-callback" && result.jwt) {
+                            handleOAuthSuccess(result.jwt);
+                        } else if (result.type === "oauth-error") {
+                            handleOAuthError(result.error);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error checking localStorage for OAuth result:", error);
+                }
+            }, 500);
+
             // Listen for popup to close without successful auth
             const checkClosed = setInterval(() => {
                 if (popup.closed) {
-                    clearInterval(checkClosed);
-                    window.removeEventListener("message", messageListener);
-                    reject(new Error("OAuth2 authentication was cancelled"));
+                    // Give localStorage check one more chance before rejecting
+                    setTimeout(() => {
+                        try {
+                            const storedResult = localStorage.getItem("threadloaf-oauth-result");
+                            if (storedResult) {
+                                localStorage.removeItem("threadloaf-oauth-result");
+                                const result = JSON.parse(storedResult);
+                                if (result.type === "oauth-callback" && result.jwt) {
+                                    handleOAuthSuccess(result.jwt);
+                                    return;
+                                }
+                            }
+                        } catch (error) {
+                            console.error("Final localStorage check failed:", error);
+                        }
+
+                        clearInterval(checkClosed);
+                        clearInterval(storageCheck);
+                        window.removeEventListener("message", messageListener);
+                        reject(new Error("OAuth2 authentication was cancelled"));
+                    }, 1000);
                 }
             }, 1000);
 
@@ -228,23 +294,9 @@ async function startOAuth2Flow(options: UserOptions, optionsProvider: UserOption
                 }
 
                 if (event.data.type === "oauth-callback" && event.data.jwt) {
-                    clearInterval(checkClosed);
-                    window.removeEventListener("message", messageListener);
-                    popup.close();
-
-                    options.isLoggedIn = true;
-                    options.authToken = event.data.jwt;
-                    optionsProvider
-                        .setOptions(options)
-                        .then(() => {
-                            resolve();
-                        })
-                        .catch(reject);
+                    handleOAuthSuccess(event.data.jwt);
                 } else if (event.data.type === "oauth-error") {
-                    clearInterval(checkClosed);
-                    window.removeEventListener("message", messageListener);
-                    popup.close();
-                    reject(new Error(event.data.error || "OAuth2 authentication failed"));
+                    handleOAuthError(event.data.error);
                 }
             };
 

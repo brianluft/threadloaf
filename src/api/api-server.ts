@@ -253,8 +253,44 @@ export class ApiServer {
                 // Send token back to extension
                 res.set("Content-Type", "text/html").send(`
                     <script>
-                        window.opener.postMessage({type: 'oauth-callback', jwt: "${jwtToken}"}, '*');
-                        window.close();
+                        try {
+                            // Try multiple approaches to communicate with the extension
+                            const message = {type: 'oauth-callback', jwt: "${jwtToken}"};
+                            
+                            // First try window.opener (traditional popup approach)
+                            if (window.opener && !window.opener.closed) {
+                                window.opener.postMessage(message, '*');
+                            }
+                            // Also try parent window (in case of iframe)
+                            else if (window.parent && window.parent !== window) {
+                                window.parent.postMessage(message, '*');
+                            }
+                            // Finally, broadcast to all windows (fallback)
+                            else {
+                                // Use localStorage as a fallback communication method
+                                localStorage.setItem('threadloaf-oauth-result', JSON.stringify(message));
+                                // Also try top window
+                                if (window.top && window.top !== window) {
+                                    window.top.postMessage(message, '*');
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Failed to send OAuth result:', error);
+                            // Fallback: store in localStorage for extension to check
+                            try {
+                                localStorage.setItem('threadloaf-oauth-result', JSON.stringify({
+                                    type: 'oauth-callback', 
+                                    jwt: "${jwtToken}"
+                                }));
+                            } catch (storageError) {
+                                console.error('Failed to store OAuth result:', storageError);
+                            }
+                        }
+                        
+                        // Close the window after a short delay to ensure message is sent
+                        setTimeout(() => {
+                            window.close();
+                        }, 500);
                     </script>
                 `);
             } catch (error) {
