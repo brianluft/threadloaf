@@ -43,6 +43,9 @@ describe("ApiServer setupMiddleware", () => {
     });
 
     test("should use default authenticationEnabled value when not specified", () => {
+        // Clear TESTING_MODE to ensure default behavior
+        delete process.env.TESTING_MODE;
+
         // Create a mocked DataStore
         const dataStore = new DataStore() as jest.Mocked<DataStore>;
 

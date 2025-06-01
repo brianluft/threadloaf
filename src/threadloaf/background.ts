@@ -1,13 +1,8 @@
 interface ApiMessage {
     id: string;
     content: string;
-    author: {
-        id: string;
-        username: string;
-        displayName?: string;
-    };
-    timestamp: string;
-    channelId: string;
+    authorTag: string;
+    timestamp: number;
 }
 
 interface ApiMessagesResponse {

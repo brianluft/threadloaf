@@ -3,13 +3,8 @@ import { UserOptionsProvider } from "./UserOptionsProvider";
 interface ApiMessage {
     id: string;
     content: string;
-    author: {
-        id: string;
-        username: string;
-        displayName?: string;
-    };
-    timestamp: string;
-    channelId: string;
+    authorTag: string;
+    timestamp: number;
 }
 
 interface ApiMessagesResponse {
@@ -228,7 +223,7 @@ export class ThreadListReplyFetcher {
         // Create author span
         const authorSpan = document.createElement("span");
         authorSpan.classList.add("threadloaf-reply-author");
-        authorSpan.textContent = message.author?.username || "Unknown";
+        authorSpan.textContent = message.authorTag || "Unknown";
 
         // Create content span
         const contentSpan = document.createElement("span");

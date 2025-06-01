@@ -41,12 +41,21 @@ export class ApiServer {
         port: number,
         dataStoresByGuild: Map<string, DataStore>,
         discordClientsByGuild: Map<string, DiscordClient>,
-        authenticationEnabled: boolean = true,
+        authenticationEnabled?: boolean,
     ) {
         this.port = port;
         this.dataStoresByGuild = dataStoresByGuild;
         this.discordClientsByGuild = discordClientsByGuild;
-        this.authenticationEnabled = authenticationEnabled;
+
+        // If authenticationEnabled is explicitly provided, use it (for tests)
+        // Otherwise, read from environment variable
+        if (authenticationEnabled !== undefined) {
+            this.authenticationEnabled = authenticationEnabled;
+        } else {
+            const testingMode = process.env.TESTING_MODE === "true";
+            this.authenticationEnabled = !testingMode;
+        }
+
         this.setupMiddleware();
         this.setupRoutes();
         this.setupErrorHandling();
@@ -165,7 +174,7 @@ export class ApiServer {
      * Middleware to require authentication and guild membership
      */
     private requireGuildMember(req: AuthorizedRequest<any, any, any>, res: Response, next: NextFunction): void {
-        // Skip authentication if disabled (for tests)
+        // Skip authentication if disabled (for tests or testing mode)
         if (!this.authenticationEnabled) {
             req.userId = "test-user-id";
             next();
