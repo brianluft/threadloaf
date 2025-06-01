@@ -124,7 +124,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Update UI based on login status
     function updateLoginUI(): void {
-        if (options.isLoggedIn) {
+        const currentOptions = optionsProvider.getOptions();
+        if (currentOptions.isLoggedIn) {
             loginStatus.textContent = "Logged in";
             loginButton.textContent = "Log out";
             threadRepliesSlider.disabled = false;
@@ -134,26 +135,33 @@ document.addEventListener("DOMContentLoaded", async () => {
             loginButton.textContent = "Log in";
             threadRepliesSlider.disabled = true;
         }
+        // Update thread replies slider value
+        threadRepliesSlider.value = currentOptions.threadRepliesCount.toString();
+        threadRepliesValue.textContent = currentOptions.threadRepliesCount.toString();
     }
+
+    // Listen for storage changes to update the UI when login state changes
+    optionsProvider.addChangeListener((newOptions: UserOptions) => {
+        updateLoginUI();
+    });
 
     // Set initial state
     updateLoginUI();
-    threadRepliesSlider.value = options.threadRepliesCount.toString();
-    threadRepliesValue.textContent = options.threadRepliesCount.toString();
 
     // Handle login/logout button click
     loginButton.addEventListener("click", async () => {
-        if (options.isLoggedIn) {
+        const currentOptions = optionsProvider.getOptions();
+        if (currentOptions.isLoggedIn) {
             // Log out
-            options.isLoggedIn = false;
-            options.authToken = "";
-            await optionsProvider.setOptions(options);
+            currentOptions.isLoggedIn = false;
+            currentOptions.authToken = "";
+            await optionsProvider.setOptions(currentOptions);
             updateLoginUI();
         } else {
             // Log in - start OAuth2 flow
             hideLoginError(); // Hide any previous error message
             try {
-                await startOAuth2Flow(options, optionsProvider);
+                await startOAuth2Flow(optionsProvider);
                 updateLoginUI();
             } catch (error) {
                 console.error("Login failed:", error);
@@ -166,12 +174,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     threadRepliesSlider.addEventListener("input", async () => {
         const newVal = parseInt(threadRepliesSlider.value, 10);
         threadRepliesValue.textContent = newVal.toString();
-        options.threadRepliesCount = newVal;
-        await optionsProvider.setOptions(options);
+        const currentOptions = optionsProvider.getOptions();
+        currentOptions.threadRepliesCount = newVal;
+        await optionsProvider.setOptions(currentOptions);
     });
 });
 
-async function startOAuth2Flow(options: UserOptions, optionsProvider: UserOptionsProvider): Promise<void> {
+async function startOAuth2Flow(optionsProvider: UserOptionsProvider): Promise<void> {
     return new Promise(async (resolve, reject) => {
         try {
             // Fetch OAuth2 configuration from the API
@@ -221,6 +230,7 @@ async function startOAuth2Flow(options: UserOptions, optionsProvider: UserOption
                     popup.close();
                 }
 
+                const options = optionsProvider.getOptions();
                 options.isLoggedIn = true;
                 options.authToken = jwt;
                 optionsProvider
