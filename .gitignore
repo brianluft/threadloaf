@@ -24,5 +24,4 @@ ehthumbs.db
 Thumbs.db 
 
 .env
-api_pid
 api_log

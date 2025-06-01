@@ -1,3 +1,5 @@
+AIs do not update this file. Humans only.
+
 # Multi-server support (API)
 We support only a single GUILD_ID. We need to support monitoring multiple independent servers.
 
@@ -53,3 +55,11 @@ This gives the user a quick at-a-glance preview of each thread's recent activity
 - [X] Call our API in the background to retrieve the last N messages for those threads. If a previous API call is still in flight, cancel it and issue a new one. N is the number the user configured in the user options, the slider for the number of msot recent thread replies to show in the thread list.
 - [X] Update the DOM to show those messages underneath each thread in the thread list. Make sure you update the correct DOM element in case it changed while the API call was in flight; verify the `data-item-id`.
 - [X] Don't show errors to the user, just log them to the console.
+
+# Bugs
+- [x] UI improvements to the browser extension's user options popup, in the new Chatty@Home API section
+    - [x] Remove the "Login:" label and simply write "Not logged in" or "Logged in" with the button.
+    - [x] Capitalize "Discord"
+    - [x] Make the instructions ("Members of the...") more succinct. One sentence only.
+- [x] OAuth2 debugging
+    - [x] When I click the log in button, the login window doesn't appear, and this is logged to the console: "Cross-Origin Request Blocked: The Same Originl Policy disallows reading the remote resource at http://localhost:3000/auth/config. (Reason: CORS header 'Access-Control-Allow-Origin' missing). Status code: 200.

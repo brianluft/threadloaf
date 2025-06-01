@@ -16,7 +16,6 @@ npm run build
 # Run the API in the background
 npm start 2>&1 >api_log &
 PID=$!
-echo "$PID" > ../../api_pid
 
 # Give it a few seconds to crash at startup, if it wants to do that.
 sleep 3

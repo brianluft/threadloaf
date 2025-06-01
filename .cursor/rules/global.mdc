@@ -10,7 +10,12 @@ We have a Discord bot to give us quick access to the last 24 hours of messages v
 All npm commands must be run from `src/threadloaf` or `src/api`, not the root.
 The absolute path of the workspace root is `/workspaces/threadloaf/`. Use absolute paths in command executions.
 `src/threadloaf` is the extension. Run `/workspaces/threadloaf/scripts/build-threadloaf.sh` to build.
-`src/api` is the API/bot. Run `/workspaces/threadloaf/scripts/test-api.sh` to build and test.
+`src/api` is the API/bot. Run `/workspaces/threadloaf/scripts/test-api.sh` to build and run unit tests.
+
+Run `/workspaces/threadloaf/scripts/start-api.sh` (in the FOREGROUND! not the background) to build and run the API.
+It will automatically kill any previously running API process.
+It will daemonize itself automatically once the server is ready.
+While running, you can make curl requests to http://localhost:3000 for interactive testing.
 
 # Browser Extension
 

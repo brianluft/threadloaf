@@ -144,7 +144,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 updateLoginUI();
             } catch (error) {
                 console.error("Login failed:", error);
-                // Could show user-friendly error message here
+                alert(`Login failed: ${error instanceof Error ? error.message : "Unknown error"}`);
             }
         }
     });
@@ -162,9 +162,18 @@ async function startOAuth2Flow(options: UserOptions, optionsProvider: UserOption
     return new Promise(async (resolve, reject) => {
         try {
             // Fetch OAuth2 configuration from the API
-            const configResponse = await fetch("http://localhost:3000/auth/config");
+            let configResponse: Response;
+            try {
+                configResponse = await fetch("http://localhost:3000/auth/config");
+            } catch (fetchError) {
+                // This typically happens with CORS or network errors
+                throw new Error(
+                    `Cannot connect to API server. Make sure it's running on localhost:3000. Error: ${fetchError instanceof Error ? fetchError.message : "Network error"}`,
+                );
+            }
+
             if (!configResponse.ok) {
-                throw new Error(`Failed to fetch OAuth2 config: ${configResponse.status}`);
+                throw new Error(`Failed to fetch OAuth2 config: HTTP ${configResponse.status}`);
             }
             const config = await configResponse.json();
 
