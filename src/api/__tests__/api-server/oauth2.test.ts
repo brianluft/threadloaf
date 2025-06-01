@@ -96,7 +96,8 @@ describe("ApiServer OAuth2", () => {
             const response = await request(app).get("/auth/callback").query({ code: "test-code", state: "test-state" });
 
             expect(response.status).toBe(200);
-            expect(response.text).toContain("mock-jwt-token");
+            expect(response.text).toContain("OAuth authentication successful");
+            expect(response.text).toContain("window.close()");
             expect(mockedAxios.post).toHaveBeenCalledWith(
                 "https://discord.com/api/oauth2/token",
                 expect.any(URLSearchParams),
@@ -153,6 +154,160 @@ describe("ApiServer OAuth2", () => {
 
             expect(response.status).toBe(500);
             expect(response.text).toBe("Authentication failed");
+        });
+    });
+
+    describe("OAuth2 status endpoint", () => {
+        test("should return JWT token for valid state", async () => {
+            // First, complete OAuth flow to store token
+            const mockTokenResponse = {
+                data: {
+                    access_token: "mock-access-token",
+                },
+            };
+
+            const mockUserResponse = {
+                data: {
+                    id: "user-123",
+                },
+            };
+
+            mockedAxios.post.mockResolvedValueOnce(mockTokenResponse);
+            mockedAxios.get.mockResolvedValueOnce(mockUserResponse);
+            mockedJwt.sign.mockReturnValue("mock-jwt-token" as any);
+
+            // Mock guild membership check
+            mockFetch.mockResolvedValue({ id: "user-123" });
+
+            // Complete OAuth callback to store token
+            await request(app).get("/auth/callback").query({ code: "test-code", state: "test-state" });
+
+            // Now poll for the status
+            const statusResponse = await request(app).get("/auth/status/test-state");
+
+            expect(statusResponse.status).toBe(200);
+            expect(statusResponse.body).toEqual({ jwt: "mock-jwt-token" });
+        });
+
+        test("should return 404 for non-existent state", async () => {
+            const response = await request(app).get("/auth/status/non-existent-state");
+
+            expect(response.status).toBe(404);
+            expect(response.body).toEqual({ error: "Authentication session not found" });
+        });
+
+        test("should return 404 for expired state", async () => {
+            // Create a separate API server instance to test expiration
+            const dataStoresByGuild = new Map<string, DataStore>();
+            const discordClientsByGuild = new Map<string, DiscordClient>();
+            dataStoresByGuild.set(TEST_GUILD_ID, dataStore);
+            discordClientsByGuild.set(TEST_GUILD_ID, discordClient);
+
+            const testApiServer = new ApiServer(3001, dataStoresByGuild, discordClientsByGuild, true);
+            // @ts-ignore - access private property for testing
+            const testApp = testApiServer.app;
+
+            // Manually add an expired token to the server
+            // @ts-ignore - access private property for testing
+            testApiServer.pendingAuthTokens.set("expired-state", {
+                jwt: "expired-jwt-token",
+                expiresAt: Date.now() - 1000, // Already expired
+            });
+
+            const response = await request(testApp).get("/auth/status/expired-state");
+
+            expect(response.status).toBe(404);
+            expect(response.body).toEqual({ error: "Authentication session expired" });
+        });
+
+        test("should clean up token after successful retrieval", async () => {
+            // First, complete OAuth flow to store token
+            const mockTokenResponse = {
+                data: {
+                    access_token: "mock-access-token",
+                },
+            };
+
+            const mockUserResponse = {
+                data: {
+                    id: "user-123",
+                },
+            };
+
+            mockedAxios.post.mockResolvedValueOnce(mockTokenResponse);
+            mockedAxios.get.mockResolvedValueOnce(mockUserResponse);
+            mockedJwt.sign.mockReturnValue("mock-jwt-token" as any);
+
+            // Mock guild membership check
+            mockFetch.mockResolvedValue({ id: "user-123" });
+
+            // Complete OAuth callback to store token
+            await request(app).get("/auth/callback").query({ code: "test-code", state: "test-state-cleanup" });
+
+            // First status poll should succeed
+            const firstResponse = await request(app).get("/auth/status/test-state-cleanup");
+            expect(firstResponse.status).toBe(200);
+            expect(firstResponse.body).toEqual({ jwt: "mock-jwt-token" });
+
+            // Second status poll should fail (token cleaned up)
+            const secondResponse = await request(app).get("/auth/status/test-state-cleanup");
+            expect(secondResponse.status).toBe(404);
+            expect(secondResponse.body).toEqual({ error: "Authentication session not found" });
+        });
+
+        test("should periodically clean up expired tokens", async () => {
+            // Create a separate API server instance to test cleanup
+            const dataStoresByGuild = new Map<string, DataStore>();
+            const discordClientsByGuild = new Map<string, DiscordClient>();
+            dataStoresByGuild.set(TEST_GUILD_ID, dataStore);
+            discordClientsByGuild.set(TEST_GUILD_ID, discordClient);
+
+            const testApiServer = new ApiServer(3002, dataStoresByGuild, discordClientsByGuild, true);
+
+            // Add both expired and valid tokens
+            // @ts-ignore - access private property for testing
+            testApiServer.pendingAuthTokens.set("expired-token", {
+                jwt: "expired-jwt",
+                expiresAt: Date.now() - 1000, // Expired
+            });
+
+            // @ts-ignore - access private property for testing
+            testApiServer.pendingAuthTokens.set("valid-token", {
+                jwt: "valid-jwt",
+                expiresAt: Date.now() + 60000, // Valid for 1 minute
+            });
+
+            // Verify both tokens exist initially
+            // @ts-ignore - access private property for testing
+            expect(testApiServer.pendingAuthTokens.size).toBe(2);
+
+            // Mock setInterval to manually trigger cleanup
+            const originalSetInterval = global.setInterval;
+            let cleanupFunction: () => void;
+
+            // @ts-ignore - Mock setInterval for testing
+            global.setInterval = jest.fn((fn: () => void, _interval: number) => {
+                cleanupFunction = fn;
+                return 1 as any; // Mock timer ID
+            });
+
+            // Restart the server to trigger cleanup setup
+            // @ts-ignore - access private method for testing
+            testApiServer.startTokenCleanup();
+
+            // Manually trigger the cleanup
+            cleanupFunction!();
+
+            // Verify only the expired token was removed
+            // @ts-ignore - access private property for testing
+            expect(testApiServer.pendingAuthTokens.size).toBe(1);
+            // @ts-ignore - access private property for testing
+            expect(testApiServer.pendingAuthTokens.has("valid-token")).toBe(true);
+            // @ts-ignore - access private property for testing
+            expect(testApiServer.pendingAuthTokens.has("expired-token")).toBe(false);
+
+            // Restore setInterval
+            global.setInterval = originalSetInterval;
         });
     });
 

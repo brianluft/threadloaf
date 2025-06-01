@@ -49,8 +49,10 @@ describe("ApiServer GET /health", () => {
         // @ts-ignore - access private method
         server.setupRoutes();
 
-        // Get the health route handler (4th GET route, after OAuth callback, OAuth config, and forum-threads)
-        const healthHandler = mockApp.get.mock.calls[3][1];
+        // Get the health route handler (it should be the last GET route)
+        const getCalls = mockApp.get.mock.calls;
+        const healthRouteCall = getCalls.find((call) => call[0] === "/health");
+        const healthHandler = healthRouteCall[1];
 
         // Create mock response
         const mockRes = {

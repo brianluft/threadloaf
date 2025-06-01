@@ -1,5 +1,4 @@
 import { UserOptionsProvider } from "./UserOptionsProvider";
-import { UserOptions } from "./UserOptions";
 import { ThreadListAppearance } from "./ThreadListAppearance";
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -141,7 +140,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Listen for storage changes to update the UI when login state changes
-    optionsProvider.addChangeListener((newOptions: UserOptions) => {
+    optionsProvider.addChangeListener(() => {
         updateLoginUI();
     });
 
@@ -214,7 +213,9 @@ async function startOAuth2Flow(optionsProvider: UserOptionsProvider): Promise<vo
             const authUrl = `https://discord.com/api/oauth2/authorize?${params.toString()}`;
 
             // Open OAuth2 popup
+            console.log("Opening OAuth popup with URL:", authUrl);
             const popup = window.open(authUrl, "oauth2-login", "width=500,height=600,scrollbars=yes,resizable=yes");
+            console.log("Popup window object:", popup);
 
             if (!popup) {
                 reject(new Error("Failed to open popup window"));
@@ -223,94 +224,68 @@ async function startOAuth2Flow(optionsProvider: UserOptionsProvider): Promise<vo
 
             // Function to handle successful OAuth callback
             const handleOAuthSuccess = (jwt: string): void => {
+                console.log("handleOAuthSuccess called with JWT:", jwt);
                 clearInterval(checkClosed);
-                clearInterval(storageCheck);
-                window.removeEventListener("message", messageListener);
+                clearInterval(statusPolling);
                 if (!popup.closed) {
                     popup.close();
                 }
 
                 const options = optionsProvider.getOptions();
+                console.log("Current options before update:", options);
                 options.isLoggedIn = true;
                 options.authToken = jwt;
+                console.log("Options after update:", options);
                 optionsProvider
                     .setOptions(options)
                     .then(() => {
+                        console.log("Successfully saved options to storage");
                         resolve();
                     })
-                    .catch(reject);
+                    .catch((error) => {
+                        console.error("Failed to save options to storage:", error);
+                        reject(error);
+                    });
             };
 
-            // Function to handle OAuth error
-            const handleOAuthError = (error: string): void => {
-                clearInterval(checkClosed);
-                clearInterval(storageCheck);
-                window.removeEventListener("message", messageListener);
-                if (!popup.closed) {
-                    popup.close();
-                }
-                reject(new Error(error || "OAuth2 authentication failed"));
-            };
+            // Function to handle OAuth error (currently not used but kept for potential future error handling)
+            // const handleOAuthError = (error: string): void => {
+            //     clearInterval(checkClosed);
+            //     clearInterval(statusPolling);
+            //     if (!popup.closed) {
+            //         popup.close();
+            //     }
+            //     reject(new Error(error || "OAuth2 authentication failed"));
+            // };
 
-            // Check localStorage for OAuth result (fallback method)
-            const storageCheck = setInterval(() => {
+            // Poll the API server for authentication status
+            console.log("Starting API polling for OAuth result with state:", state);
+            const statusPolling = setInterval(async () => {
                 try {
-                    const storedResult = localStorage.getItem("threadloaf-oauth-result");
-                    if (storedResult) {
-                        localStorage.removeItem("threadloaf-oauth-result"); // Clean up
-                        const result = JSON.parse(storedResult);
-                        if (result.type === "oauth-callback" && result.jwt) {
-                            handleOAuthSuccess(result.jwt);
-                        } else if (result.type === "oauth-error") {
-                            handleOAuthError(result.error);
-                        }
+                    const response = await fetch(`http://localhost:3000/auth/status/${state}`);
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log("Authentication successful! Received JWT from API");
+                        handleOAuthSuccess(result.jwt);
+                    } else if (response.status === 404) {
+                        // Authentication not complete yet, continue polling
+                        console.log("Authentication not complete yet, continuing to poll...");
+                    } else {
+                        console.error("Error polling authentication status:", response.status);
                     }
                 } catch (error) {
-                    console.error("Error checking localStorage for OAuth result:", error);
+                    console.error("Error polling authentication status:", error);
                 }
-            }, 500);
+            }, 1000);
 
             // Listen for popup to close without successful auth
             const checkClosed = setInterval(() => {
                 if (popup.closed) {
-                    // Give localStorage check one more chance before rejecting
-                    setTimeout(() => {
-                        try {
-                            const storedResult = localStorage.getItem("threadloaf-oauth-result");
-                            if (storedResult) {
-                                localStorage.removeItem("threadloaf-oauth-result");
-                                const result = JSON.parse(storedResult);
-                                if (result.type === "oauth-callback" && result.jwt) {
-                                    handleOAuthSuccess(result.jwt);
-                                    return;
-                                }
-                            }
-                        } catch (error) {
-                            console.error("Final localStorage check failed:", error);
-                        }
-
-                        clearInterval(checkClosed);
-                        clearInterval(storageCheck);
-                        window.removeEventListener("message", messageListener);
-                        reject(new Error("OAuth2 authentication was cancelled"));
-                    }, 1000);
+                    clearInterval(checkClosed);
+                    clearInterval(statusPolling);
+                    reject(new Error("OAuth2 authentication was cancelled"));
                 }
             }, 1000);
-
-            // Listen for messages from the popup (OAuth2 callback)
-            const messageListener = (event: MessageEvent): void => {
-                if (event.origin !== "http://localhost:3000") {
-                    return;
-                }
-
-                if (event.data.type === "oauth-callback" && event.data.jwt) {
-                    handleOAuthSuccess(event.data.jwt);
-                } else if (event.data.type === "oauth-error") {
-                    handleOAuthError(event.data.error);
-                }
-            };
-
-            window.addEventListener("message", messageListener);
         } catch (error) {
             reject(error);
         }

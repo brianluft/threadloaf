@@ -28,12 +28,18 @@ type AuthCacheEntry = {
     expiresAt: number; // timestamp
 };
 
+type PendingAuthToken = {
+    jwt: string;
+    expiresAt: number; // timestamp
+};
+
 export class ApiServer {
     private app = express();
     private port: number;
     private dataStoresByGuild: Map<string, DataStore>;
     private discordClientsByGuild: Map<string, DiscordClient>;
     private authCache = new Map<string, AuthCacheEntry>(); // key: "userId:guildId"
+    private pendingAuthTokens = new Map<string, PendingAuthToken>(); // key: state parameter
     private authenticationEnabled: boolean;
 
     constructor(
@@ -49,6 +55,7 @@ export class ApiServer {
         this.setupMiddleware();
         this.setupRoutes();
         this.setupErrorHandling();
+        this.startTokenCleanup();
     }
 
     /**
@@ -58,6 +65,24 @@ export class ApiServer {
         this.app.listen(this.port, () => {
             console.log(`API server listening on port ${this.port}`);
         });
+    }
+
+    /**
+     * Start periodic cleanup of expired auth tokens
+     */
+    private startTokenCleanup(): void {
+        // Clean up expired tokens every 5 minutes
+        setInterval(
+            () => {
+                const now = Date.now();
+                for (const [state, token] of this.pendingAuthTokens.entries()) {
+                    if (token.expiresAt < now) {
+                        this.pendingAuthTokens.delete(state);
+                    }
+                }
+            },
+            5 * 60 * 1000,
+        );
     }
 
     /**
@@ -250,47 +275,23 @@ export class ApiServer {
                 const jwtSecret = process.env.JWT_SECRET!;
                 const jwtToken = jwt.sign({ sub: userId }, jwtSecret, { expiresIn: "7d" });
 
-                // Send token back to extension
+                // Store the JWT token temporarily for the extension to retrieve
+                // We'll use a simple in-memory store with the state as the key
+                this.pendingAuthTokens.set(state, {
+                    jwt: jwtToken,
+                    expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
+                });
+
+                // Show success page that closes itself
                 res.set("Content-Type", "text/html").send(`
                     <script>
-                        try {
-                            // Try multiple approaches to communicate with the extension
-                            const message = {type: 'oauth-callback', jwt: "${jwtToken}"};
-                            
-                            // First try window.opener (traditional popup approach)
-                            if (window.opener && !window.opener.closed) {
-                                window.opener.postMessage(message, '*');
-                            }
-                            // Also try parent window (in case of iframe)
-                            else if (window.parent && window.parent !== window) {
-                                window.parent.postMessage(message, '*');
-                            }
-                            // Finally, broadcast to all windows (fallback)
-                            else {
-                                // Use localStorage as a fallback communication method
-                                localStorage.setItem('threadloaf-oauth-result', JSON.stringify(message));
-                                // Also try top window
-                                if (window.top && window.top !== window) {
-                                    window.top.postMessage(message, '*');
-                                }
-                            }
-                        } catch (error) {
-                            console.error('Failed to send OAuth result:', error);
-                            // Fallback: store in localStorage for extension to check
-                            try {
-                                localStorage.setItem('threadloaf-oauth-result', JSON.stringify({
-                                    type: 'oauth-callback', 
-                                    jwt: "${jwtToken}"
-                                }));
-                            } catch (storageError) {
-                                console.error('Failed to store OAuth result:', storageError);
-                            }
-                        }
-                        
-                        // Close the window after a short delay to ensure message is sent
+                        console.log('OAuth authentication successful - closing window');
+                        // Close the window immediately
+                        window.close();
+                        // Fallback: if window.close() doesn't work, show a message
                         setTimeout(() => {
-                            window.close();
-                        }, 500);
+                            document.body.innerHTML = '<h2>Authentication successful!</h2><p>You can close this window.</p>';
+                        }, 1000);
                     </script>
                 `);
             } catch (error) {
@@ -420,6 +421,28 @@ export class ApiServer {
                 clientId: process.env.DISCORD_CLIENT_ID!,
                 redirectUri: process.env.DISCORD_REDIRECT_URI!,
             });
+        });
+
+        // OAuth2 status polling endpoint (no auth required - needed for login flow)
+        this.app.get("/auth/status/:state", (req: Request<{ state: string }>, res: Response): void => {
+            const { state } = req.params;
+            const pendingAuth = this.pendingAuthTokens.get(state);
+
+            if (!pendingAuth) {
+                res.status(404).json({ error: "Authentication session not found" });
+                return;
+            }
+
+            if (pendingAuth.expiresAt < Date.now()) {
+                // Clean up expired token
+                this.pendingAuthTokens.delete(state);
+                res.status(404).json({ error: "Authentication session expired" });
+                return;
+            }
+
+            // Return the JWT token and clean up
+            this.pendingAuthTokens.delete(state);
+            res.json({ jwt: pendingAuth.jwt });
         });
 
         // Health check endpoint
