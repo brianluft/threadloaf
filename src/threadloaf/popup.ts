@@ -159,67 +159,76 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function startOAuth2Flow(options: UserOptions, optionsProvider: UserOptionsProvider): Promise<void> {
-    return new Promise((resolve, reject) => {
-        // For now, we'll implement a placeholder that simulates the OAuth2 flow
-        // The actual implementation would open a popup window to the OAuth2 endpoint
-        // and handle the callback with the authorization code
-
-        // TODO: Implement real OAuth2 flow
-        // This is a placeholder implementation
-        const authUrl = "http://localhost:3000/auth/discord";
-
-        // Open OAuth2 popup
-        const popup = window.open(authUrl, "oauth2-login", "width=500,height=600,scrollbars=yes,resizable=yes");
-
-        if (!popup) {
-            reject(new Error("Failed to open popup window"));
-            return;
-        }
-
-        // Listen for popup to close or send message
-        const checkClosed = setInterval(() => {
-            if (popup.closed) {
-                clearInterval(checkClosed);
-                // For now, we'll simulate a successful login
-                // In real implementation, we'd check for the auth token
-                options.isLoggedIn = true;
-                options.authToken = "simulated-token";
-                optionsProvider
-                    .setOptions(options)
-                    .then(() => {
-                        resolve();
-                    })
-                    .catch(reject);
+    return new Promise(async (resolve, reject) => {
+        try {
+            // Fetch OAuth2 configuration from the API
+            const configResponse = await fetch("http://localhost:3000/auth/config");
+            if (!configResponse.ok) {
+                throw new Error(`Failed to fetch OAuth2 config: ${configResponse.status}`);
             }
-        }, 1000);
+            const config = await configResponse.json();
 
-        // Listen for messages from the popup (real OAuth2 callback)
-        const messageListener = (event: MessageEvent): void => {
-            if (event.origin !== "http://localhost:3000") {
+            // Generate a random state parameter for security
+            const state = crypto.randomUUID();
+
+            // Construct the Discord OAuth2 authorization URL
+            const params = new URLSearchParams({
+                client_id: config.clientId,
+                redirect_uri: config.redirectUri,
+                response_type: "code",
+                scope: "identify guilds",
+                state: state,
+            });
+
+            const authUrl = `https://discord.com/api/oauth2/authorize?${params.toString()}`;
+
+            // Open OAuth2 popup
+            const popup = window.open(authUrl, "oauth2-login", "width=500,height=600,scrollbars=yes,resizable=yes");
+
+            if (!popup) {
+                reject(new Error("Failed to open popup window"));
                 return;
             }
 
-            if (event.data.type === "oauth2-success" && event.data.token) {
-                clearInterval(checkClosed);
-                window.removeEventListener("message", messageListener);
-                popup.close();
+            // Listen for popup to close without successful auth
+            const checkClosed = setInterval(() => {
+                if (popup.closed) {
+                    clearInterval(checkClosed);
+                    window.removeEventListener("message", messageListener);
+                    reject(new Error("OAuth2 authentication was cancelled"));
+                }
+            }, 1000);
 
-                options.isLoggedIn = true;
-                options.authToken = event.data.token;
-                optionsProvider
-                    .setOptions(options)
-                    .then(() => {
-                        resolve();
-                    })
-                    .catch(reject);
-            } else if (event.data.type === "oauth2-error") {
-                clearInterval(checkClosed);
-                window.removeEventListener("message", messageListener);
-                popup.close();
-                reject(new Error(event.data.error || "OAuth2 authentication failed"));
-            }
-        };
+            // Listen for messages from the popup (OAuth2 callback)
+            const messageListener = (event: MessageEvent): void => {
+                if (event.origin !== "http://localhost:3000") {
+                    return;
+                }
 
-        window.addEventListener("message", messageListener);
+                if (event.data.type === "oauth-callback" && event.data.jwt) {
+                    clearInterval(checkClosed);
+                    window.removeEventListener("message", messageListener);
+                    popup.close();
+
+                    options.isLoggedIn = true;
+                    options.authToken = event.data.jwt;
+                    optionsProvider
+                        .setOptions(options)
+                        .then(() => {
+                            resolve();
+                        })
+                        .catch(reject);
+                } else if (event.data.type === "oauth-error") {
+                    clearInterval(checkClosed);
+                    window.removeEventListener("message", messageListener);
+                    popup.close();
+                    reject(new Error(event.data.error || "OAuth2 authentication failed"));
+                }
+            };
+
+            window.addEventListener("message", messageListener);
+        } catch (error) {
+            reject(error);
+        }
     });
 }

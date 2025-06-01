@@ -356,6 +356,14 @@ export class ApiServer {
             },
         );
 
+        // OAuth2 configuration endpoint (no auth required - needed for login flow)
+        this.app.get("/auth/config", (_, res: Response): void => {
+            res.json({
+                clientId: process.env.DISCORD_CLIENT_ID!,
+                redirectUri: process.env.DISCORD_REDIRECT_URI!,
+            });
+        });
+
         // Health check endpoint
         this.app.get("/health", (_, res) => {
             res.json({ status: "ok" });

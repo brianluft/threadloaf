@@ -60,6 +60,18 @@ describe("ApiServer OAuth2", () => {
         app = apiServer.app;
     });
 
+    describe("OAuth2 config endpoint", () => {
+        test("should return OAuth2 configuration", async () => {
+            const response = await request(app).get("/auth/config");
+
+            expect(response.status).toBe(200);
+            expect(response.body).toEqual({
+                clientId: "test-client-id",
+                redirectUri: "http://localhost:3000/auth/callback",
+            });
+        });
+    });
+
     describe("OAuth2 callback endpoint", () => {
         test("should handle successful OAuth2 callback", async () => {
             const mockTokenResponse = {

@@ -180,6 +180,18 @@ Returns all forum threads with their latest 5 replies from the last 24 hours for
 }
 ```
 
+### GET /auth/config
+
+Returns OAuth2 configuration needed by the browser extension to initiate the authentication flow. This endpoint does not require authentication.
+
+**Response:**
+```json
+{
+  "clientId": "123456789012345678",
+  "redirectUri": "http://localhost:3000/auth/callback"
+}
+```
+
 ### GET /auth/callback
 
 OAuth2 callback endpoint for browser extension authentication. This endpoint handles the Discord OAuth2 authorization code flow and returns a JWT token to the extension.
