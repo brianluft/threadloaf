@@ -69,3 +69,4 @@ This gives the user a quick at-a-glance preview of each thread's recent activity
     Uncaught TypeError: window.opener is null
         <anonymous> http://localhost:3000/auth/callback?code=pfkQfc2ozQJinIXEAifakIJEf3lPk8&state=bb4841d0-dbe9-4f23-85fa-f7ed1c987885:3
     callback:3:25
+- [x] Extension user options popup - our login OAuth2 flow redirects back to our callback and then closes the login window, as expected. But then the user options popup's "Not logged in" label doesn't change. It doesn't seem to have gotten the message that we are logged in. Reloading the extension doesn't change it either; it seems the token was not persisted either.

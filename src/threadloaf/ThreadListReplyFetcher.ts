@@ -112,7 +112,7 @@ export class ThreadListReplyFetcher {
     }
 
     /**
-     * Fetches messages from the API for the given thread IDs.
+     * Fetches messages from the API for the given thread IDs using message passing to background script.
      */
     private async fetchMessages(
         threadIds: string[],
@@ -127,24 +127,39 @@ export class ThreadListReplyFetcher {
             throw new Error("Could not determine guild ID from URL");
         }
 
-        const response = await fetch(`http://localhost:3000/${guildId}/messages`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${options.authToken}`,
-            },
-            body: JSON.stringify({
-                channelIds: threadIds,
-                maxMessagesPerChannel: maxMessages,
-            }),
-            signal,
+        // Use message passing to background script to avoid CSP issues
+        return new Promise((resolve, reject) => {
+            // Handle abort signal
+            const abortHandler = (): void => {
+                reject(new Error("Request aborted"));
+            };
+            signal.addEventListener("abort", abortHandler);
+
+            chrome.runtime.sendMessage(
+                {
+                    type: "FETCH_MESSAGES",
+                    guildId,
+                    channelIds: threadIds,
+                    maxMessagesPerChannel: maxMessages,
+                    authToken: options.authToken,
+                },
+                (response: { success: boolean; data?: ApiMessagesResponse; error?: string }): void => {
+                    // Clean up abort handler
+                    signal.removeEventListener("abort", abortHandler);
+
+                    if (chrome.runtime.lastError) {
+                        reject(new Error(`Chrome runtime error: ${chrome.runtime.lastError.message}`));
+                        return;
+                    }
+
+                    if (response.success && response.data) {
+                        resolve(response.data);
+                    } else {
+                        reject(new Error(response.error || "Unknown error"));
+                    }
+                },
+            );
         });
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        return await response.json();
     }
 
     /**

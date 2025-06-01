@@ -29,6 +29,9 @@
         "http://localhost/*",
         "https://api.threadloaf.com/*"
     ],
+    "background": {
+        "scripts": ["background.js"]
+    },
     "content_scripts": [
       {
         "matches": ["*://discord.com/channels/*"],
