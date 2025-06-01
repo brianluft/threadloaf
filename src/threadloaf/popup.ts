@@ -213,9 +213,7 @@ async function startOAuth2Flow(optionsProvider: UserOptionsProvider): Promise<vo
             const authUrl = `https://discord.com/api/oauth2/authorize?${params.toString()}`;
 
             // Open OAuth2 popup
-            console.log("Opening OAuth popup with URL:", authUrl);
             const popup = window.open(authUrl, "oauth2-login", "width=500,height=600,scrollbars=yes,resizable=yes");
-            console.log("Popup window object:", popup);
 
             if (!popup) {
                 reject(new Error("Failed to open popup window"));
@@ -224,7 +222,6 @@ async function startOAuth2Flow(optionsProvider: UserOptionsProvider): Promise<vo
 
             // Function to handle successful OAuth callback
             const handleOAuthSuccess = (jwt: string): void => {
-                console.log("handleOAuthSuccess called with JWT:", jwt);
                 clearInterval(checkClosed);
                 clearInterval(statusPolling);
                 if (!popup.closed) {
@@ -232,14 +229,11 @@ async function startOAuth2Flow(optionsProvider: UserOptionsProvider): Promise<vo
                 }
 
                 const options = optionsProvider.getOptions();
-                console.log("Current options before update:", options);
                 options.isLoggedIn = true;
                 options.authToken = jwt;
-                console.log("Options after update:", options);
                 optionsProvider
                     .setOptions(options)
                     .then(() => {
-                        console.log("Successfully saved options to storage");
                         resolve();
                     })
                     .catch((error) => {
@@ -259,17 +253,14 @@ async function startOAuth2Flow(optionsProvider: UserOptionsProvider): Promise<vo
             // };
 
             // Poll the API server for authentication status
-            console.log("Starting API polling for OAuth result with state:", state);
             const statusPolling = setInterval(async () => {
                 try {
                     const response = await fetch(`http://localhost:3000/auth/status/${state}`);
                     if (response.ok) {
                         const result = await response.json();
-                        console.log("Authentication successful! Received JWT from API");
                         handleOAuthSuccess(result.jwt);
                     } else if (response.status === 404) {
                         // Authentication not complete yet, continue polling
-                        console.log("Authentication not complete yet, continuing to poll...");
                     } else {
                         console.error("Error polling authentication status:", response.status);
                     }

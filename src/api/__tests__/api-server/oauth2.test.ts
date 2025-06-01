@@ -96,7 +96,7 @@ describe("ApiServer OAuth2", () => {
             const response = await request(app).get("/auth/callback").query({ code: "test-code", state: "test-state" });
 
             expect(response.status).toBe(200);
-            expect(response.text).toContain("OAuth authentication successful");
+            expect(response.text).toContain("Authentication successful!");
             expect(response.text).toContain("window.close()");
             expect(mockedAxios.post).toHaveBeenCalledWith(
                 "https://discord.com/api/oauth2/token",

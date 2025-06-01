@@ -285,7 +285,6 @@ export class ApiServer {
                 // Show success page that closes itself
                 res.set("Content-Type", "text/html").send(`
                     <script>
-                        console.log('OAuth authentication successful - closing window');
                         // Close the window immediately
                         window.close();
                         // Fallback: if window.close() doesn't work, show a message
