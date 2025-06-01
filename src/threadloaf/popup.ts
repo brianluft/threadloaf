@@ -114,11 +114,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Update UI based on login status
     function updateLoginUI(): void {
         if (options.isLoggedIn) {
-            loginStatus.textContent = "logged in";
+            loginStatus.textContent = "Logged in";
             loginButton.textContent = "Log out";
             threadRepliesSlider.disabled = false;
         } else {
-            loginStatus.textContent = "not logged in";
+            loginStatus.textContent = "Not logged in";
             loginButton.textContent = "Log in";
             threadRepliesSlider.disabled = true;
         }

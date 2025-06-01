@@ -1,6 +1,6 @@
-- [ ] UI improvements to the browser extension's user options popup, in the new Chatty@Home API section
-    - [ ] Remove the "Login:" label and simply write "Not logged in" or "Logged in" with the button.
-    - [ ] Capitalize "Discord"
-    - [ ] Make the instructions ("Members of the...") more succinct. One sentence only.
+- [x] UI improvements to the browser extension's user options popup, in the new Chatty@Home API section
+    - [x] Remove the "Login:" label and simply write "Not logged in" or "Logged in" with the button.
+    - [x] Capitalize "Discord"
+    - [x] Make the instructions ("Members of the...") more succinct. One sentence only.
 - [ ] OAuth2 debugging
     - [ ] When I click the log in button, the login window doesn't appear, and this is logged to the console: "Cross-Origin Request Blocked: The Same Originl Policy disallows reading the remote resource at http://localhost:3000/auth/config. (Reason: CORS header 'Access-Control-Allow-Origin' missing). Status code: 200.
