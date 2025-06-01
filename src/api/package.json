@@ -14,7 +14,9 @@
   "author": "Threadloaf",
   "license": "MIT",
   "dependencies": {
+    "@types/cors": "^2.8.18",
     "axios": "^1.7.9",
+    "cors": "^2.8.5",
     "discord.js": "^14.18.0",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",

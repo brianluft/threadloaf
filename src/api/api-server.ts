@@ -4,6 +4,7 @@
  */
 
 import express, { Request, Response, NextFunction } from "express";
+import cors from "cors";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 import { DataStore, StoredMessage } from "./data-store";
@@ -63,6 +64,27 @@ export class ApiServer {
      * Setup middleware for the Express app
      */
     private setupMiddleware(): void {
+        // Configure CORS to allow requests from browser extensions and localhost
+        this.app.use(
+            cors({
+                origin: (origin, callback) => {
+                    // Allow requests from browser extensions, localhost, or no origin (for testing)
+                    if (
+                        !origin ||
+                        origin.startsWith("chrome-extension://") ||
+                        origin.startsWith("moz-extension://") ||
+                        origin.startsWith("http://localhost:") ||
+                        origin.startsWith("https://localhost:")
+                    ) {
+                        callback(null, true);
+                    } else {
+                        callback(new Error("Not allowed by CORS"));
+                    }
+                },
+                credentials: true,
+            }),
+        );
+
         // Parse JSON request bodies
         this.app.use(express.json());
 
