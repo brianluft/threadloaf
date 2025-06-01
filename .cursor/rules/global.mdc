@@ -9,7 +9,7 @@ We have a Discord bot to give us quick access to the last 24 hours of messages v
 
 All npm commands must be run from `src/threadloaf` or `src/api`, not the root.
 The absolute path of the workspace root is `/workspaces/threadloaf/`. Use absolute paths in command executions.
-`src/threadloaf` is the extension. Run `cd /workspaces/threadloaf/src/threadloaf && npm run build` to build.
+`src/threadloaf` is the extension. Run `/workspaces/threadloaf/scripts/build-threadloaf.sh` to build.
 `src/api` is the API/bot. Run `/workspaces/threadloaf/scripts/test-api.sh` to build and test.
 
 # Browser Extension
