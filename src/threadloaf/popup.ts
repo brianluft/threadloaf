@@ -108,8 +108,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Setup Chatty@Home API group box
     const loginStatus = document.getElementById("loginStatus") as HTMLElement;
     const loginButton = document.getElementById("loginButton") as HTMLButtonElement;
+    const loginError = document.getElementById("loginError") as HTMLElement;
     const threadRepliesSlider = document.getElementById("threadRepliesSlider") as HTMLInputElement;
     const threadRepliesValue = document.getElementById("threadRepliesValue") as HTMLElement;
+
+    // Show/hide login error message
+    function showLoginError(message: string): void {
+        loginError.textContent = message;
+        loginError.style.display = "block";
+    }
+
+    function hideLoginError(): void {
+        loginError.style.display = "none";
+    }
 
     // Update UI based on login status
     function updateLoginUI(): void {
@@ -117,6 +128,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             loginStatus.textContent = "Logged in";
             loginButton.textContent = "Log out";
             threadRepliesSlider.disabled = false;
+            hideLoginError(); // Hide any previous error message
         } else {
             loginStatus.textContent = "Not logged in";
             loginButton.textContent = "Log in";
@@ -139,12 +151,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             updateLoginUI();
         } else {
             // Log in - start OAuth2 flow
+            hideLoginError(); // Hide any previous error message
             try {
                 await startOAuth2Flow(options, optionsProvider);
                 updateLoginUI();
             } catch (error) {
                 console.error("Login failed:", error);
-                alert(`Login failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+                showLoginError(`Login failed: ${error instanceof Error ? error.message : "Unknown error"}`);
             }
         }
     });

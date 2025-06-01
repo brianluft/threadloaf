@@ -19,10 +19,10 @@ PID=$!
 
 # Give it a few seconds to crash at startup, if it wants to do that.
 sleep 3
+cat api_log
 
 # Is PID still running?
 if ! ps -p $PID > /dev/null; then
-    cat api_log
     echo "API failed to start!"
     exit 1
 fi

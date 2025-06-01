@@ -1,1 +1,1 @@
-- [x] In the extension user options popup, if the user clicks Log In button, and request for /auth/config fails, show an error message. *Something* must happen when clicking the button, either the login window appears or an error does. An alert is fine as this is rare. 
+- [x] We have an alert() in our extension's user options popup. eslint doesn't like that and it fails the build. Replace it with a red error label underneath the line containing the Log In button.
