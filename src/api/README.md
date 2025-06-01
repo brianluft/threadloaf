@@ -70,9 +70,9 @@ For the Threadloaf Bot app, you should have this information saved in your passw
 
 ### OAuth2 Application Setup (for Browser Extension Authentication)
 
-For browser extension authentication, you'll need a separate OAuth2 application:
+For browser extension authentication, you'll need two *more* OAuth2 applications: one for production and one for development.
 
-1. Create a **second** Discord application at [Discord Developer Portal](https://discord.com/developers/applications) (separate from the bot)
+1. Create a Discord application at [Discord Developer Portal](https://discord.com/developers/applications) (separate from the bot)
 1. Under **General Information**:
    - Add icon.
    - Name: "Threadloaf" (production) or "Threadloaf Dev" (development)
