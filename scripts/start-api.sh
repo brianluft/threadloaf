@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$( dirname "${BASH_SOURCE[0]}" )"
 
 # If the API is already running, stop it
-./stop-api.sh
+pkill -f "node dist/index.js" || true
 
 # cd to src/api
 cd ../src/api
