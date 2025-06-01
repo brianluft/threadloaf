@@ -65,3 +65,7 @@ This gives the user a quick at-a-glance preview of each thread's recent activity
     - [x] When I click the log in button, the login window doesn't appear, and this is logged to the console: "Cross-Origin Request Blocked: The Same Originl Policy disallows reading the remote resource at http://localhost:3000/auth/config. (Reason: CORS header 'Access-Control-Allow-Origin' missing). Status code: 200.
 - [x] In the extension user options popup, if the user clicks Log In button, and request for /auth/config fails, show an error message. *Something* must happen when clicking the button, either the login window appears or an error does. An alert is fine as this is rare. 
 - [x] We have an alert() in our extension's user options popup. eslint doesn't like that and it fails the build. Replace it with a red error label underneath the line containing the Log In button.
+- [x] After clicking "Log in" in the extension's user options popup and then completing Discord's OAuth2 login flow, we redirect to http://localhost:3000/auth/callback. This is just a blank page and logs the following to the console. The user options don't get updated to show that we are logged in.
+    Uncaught TypeError: window.opener is null
+        <anonymous> http://localhost:3000/auth/callback?code=pfkQfc2ozQJinIXEAifakIJEf3lPk8&state=bb4841d0-dbe9-4f23-85fa-f7ed1c987885:3
+    callback:3:25
