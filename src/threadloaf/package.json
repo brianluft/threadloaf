@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "build": "tsc --noEmit && npm run lint && npm run bundle && cp -rf manifest.json styles.css threadloaf-16.png threadloaf-32.png threadloaf-48.png threadloaf-128.png popup.html test-data ../../dist/ && npm run format",
+    "build": "tsc --noEmit && npm run lint && npm run bundle && cp -rf manifest.json styles.css threadloaf-16.png threadloaf-32.png threadloaf-48.png threadloaf-128.png popup.html test-data ../../dist/",
     "bundle": "esbuild content_script.ts --bundle --outfile=../../dist/content_script.js --format=iife --platform=browser --sourcemap && esbuild popup.ts --bundle --outfile=../../dist/popup.js --format=iife --platform=browser --sourcemap",
     "format": "prettier --write \"**/*.ts\"",
     "lint": "eslint .",
