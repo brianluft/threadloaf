@@ -103,6 +103,59 @@ export class DomParser {
                         (node.matches('li[class*="card_"]') || node.querySelector('li[class*="card_"]')),
                 );
 
+                // Also check for attribute changes on existing thread list containers
+                // This catches cases where Discord shows/hides previously loaded thread lists
+                const hasThreadListAttributeChanges = ((): boolean => {
+                    if (mutation.type === "attributes" && mutation.target instanceof HTMLElement) {
+                        const target = mutation.target;
+                        // Check if the target or its ancestors contain thread list elements
+                        const hasThreadListElements =
+                            target.matches('li[class*="card_"]') ||
+                            target.querySelector('li[class*="card_"]') ||
+                            target.closest('div[class*="list_"]') ||
+                            target.matches('div[class*="list_"]');
+                        if (hasThreadListElements) {
+                            return true;
+                        }
+                    }
+                    return false;
+                })();
+
+                // Check for changes to thread list containers (divs with list_ class)
+                const hasThreadListContainerChanges = changedNodes.some(
+                    (node) =>
+                        node instanceof HTMLElement &&
+                        (node.matches('div[class*="list_"]') || node.querySelector('div[class*="list_"]')),
+                );
+
+                // Broader fallback: check for any changes that might affect forum channels
+                // Look for changes involving common forum/channel container classes
+                const hasPotentialForumChanges = ((): boolean => {
+                    const target = mutation.target as HTMLElement;
+                    const hasForumRelatedClass =
+                        target.className &&
+                        (target.className.includes("list_") ||
+                            target.className.includes("card_") ||
+                            target.className.includes("forum") ||
+                            target.className.includes("channel") ||
+                            target.className.includes("content_"));
+
+                    if (hasForumRelatedClass) {
+                        return true;
+                    }
+
+                    return changedNodes.some((node) => {
+                        if (!(node instanceof HTMLElement)) return false;
+                        const className = node.className || "";
+                        return (
+                            className.includes("list_") ||
+                            className.includes("card_") ||
+                            className.includes("forum") ||
+                            className.includes("channel")
+                        );
+                    });
+                })();
+
                 if (
                     hasMessageChanges ||
                     hasReactionChanges ||
@@ -113,7 +166,12 @@ export class DomParser {
                     shouldRerender = true;
                 }
 
-                if (hasThreadListChanges) {
+                if (
+                    hasThreadListChanges ||
+                    hasThreadListAttributeChanges ||
+                    hasThreadListContainerChanges ||
+                    hasPotentialForumChanges
+                ) {
                     shouldCheckThreadList = true;
                 }
 

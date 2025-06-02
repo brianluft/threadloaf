@@ -91,7 +91,7 @@ export class ThreadListReplyFetcher {
                 // Request was cancelled, this is expected
                 return;
             }
-            console.error("[Threadloaf] Error fetching thread replies:", error);
+            console.error("[ThreadListReplyFetcher] Error fetching thread replies:", error);
         } finally {
             this.currentAbortController = null;
         }
@@ -131,11 +131,11 @@ export class ThreadListReplyFetcher {
 
         // Extract guild ID from current URL
         const guildId = this.extractGuildId();
+
         if (!guildId) {
             throw new Error("Could not determine guild ID from URL");
         }
 
-        // Use message passing to background script to avoid CSP issues
         return new Promise((resolve, reject) => {
             // Handle abort signal
             const abortHandler = (): void => {

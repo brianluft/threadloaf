@@ -73,6 +73,24 @@ export class Threadloaf {
                 lastUrl = currentUrl;
                 // Reset the first call flag to ensure quick loading of replies when returning to forum channels
                 this.threadListReplyFetcher.resetFirstCallFlag();
+
+                // Reinitialize mutation observer to ensure it's still working after navigation
+                if (this.state.observer) {
+                    this.state.observer.disconnect();
+                }
+                this.domParser.setupMutationObserver(
+                    () => this.threadRenderer.renderThread(),
+                    () => this.threadListReplyFetcher.handleThreadListChange(),
+                );
+
+                // Manually trigger thread list change check after navigation
+                // This handles cases where Discord reuses cached DOM elements without triggering mutations
+                setTimeout(() => {
+                    this.threadListReplyFetcher.handleThreadListChange();
+                }, 100);
+
+                // Reset attempt counter to give the new page time to load
+                attempts = 0;
             }
 
             if (newThreadContainer && newThreadContainer !== this.state.threadContainer) {
