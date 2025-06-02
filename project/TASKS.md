@@ -26,4 +26,4 @@
     - [x] One dimension: the instance ID. There's only one volume so we don't need a dimension for that.
     - [x] Alarm when either of the two metrics surpasses 90%. Alarm will send an email to `threadloaf@threadloaf.com`. Missing data = breach.
 - [x] You are using Ubuntu 22.04, change it to 24.04. Ensure the cloud-init script still works on 24.
-- [ ] Add an IAM user that I can use for read/write access to threadloaf-terraform-prod and threadloaf-files-prod buckets, for terraform apply and uploading the release zip files.
+- [x] Add an IAM user that I can use for read/write access to threadloaf-terraform-prod and threadloaf-files-prod buckets, for terraform apply and uploading the release zip files.

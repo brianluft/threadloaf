@@ -33,9 +33,14 @@ output "env_parameter_name" {
   value       = aws_ssm_parameter.env_file.name
 }
 
-output "release_url_parameter_name" {
-  description = "Parameter Store parameter name for release URL"
-  value       = aws_ssm_parameter.release_url.name
+output "release_path_parameter_name" {
+  description = "Parameter Store parameter name for release path"
+  value       = aws_ssm_parameter.release_path.name
+}
+
+output "manual_ops_user_name" {
+  description = "IAM user name for manual operations (terraform apply and uploading releases)"
+  value       = aws_iam_user.manual_ops.name
 }
 
 output "api_url" {

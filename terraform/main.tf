@@ -84,7 +84,7 @@ resource "aws_s3_bucket_public_access_block" "files" {
 resource "aws_ssm_parameter" "env_file" {
   name  = var.env_parameter_name
   type  = "SecureString"
-  value = "placeholder"  # Will be set manually in AWS Console
+  value = "placeholder" # Will be set manually in AWS Console
 
   tags = {
     Name = "threadloaf-env"
@@ -98,7 +98,7 @@ resource "aws_ssm_parameter" "env_file" {
 resource "aws_ssm_parameter" "release_path" {
   name  = var.release_path_parameter_name
   type  = "String"
-  value = "placeholder"  # Will be set manually in AWS Console
+  value = "placeholder" # Will be set manually in AWS Console
 
   tags = {
     Name = "threadloaf-release-path"
@@ -350,4 +350,74 @@ resource "aws_cloudwatch_metric_alarm" "disk_usage" {
   tags = {
     Name = "threadloaf-disk-alarm"
   }
+}
+
+# IAM User for Manual Operations
+resource "aws_iam_user" "manual_ops" {
+  name = "threadloaf-manual-ops"
+
+  tags = {
+    Name = "threadloaf-manual-ops"
+  }
+}
+
+# Policy for read/write access to terraform state bucket
+resource "aws_iam_policy" "terraform_bucket_access" {
+  name        = "threadloaf-terraform-bucket-access"
+  description = "Allow read/write access to Threadloaf terraform state bucket"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          "arn:aws:s3:::threadloaf-terraform-prod",
+          "arn:aws:s3:::threadloaf-terraform-prod/*"
+        ]
+      }
+    ]
+  })
+}
+
+# Policy for read/write access to files bucket
+resource "aws_iam_policy" "files_bucket_access" {
+  name        = "threadloaf-files-bucket-access"
+  description = "Allow read/write access to Threadloaf files bucket"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          aws_s3_bucket.files.arn,
+          "${aws_s3_bucket.files.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+# Attach policies to the manual ops user
+resource "aws_iam_user_policy_attachment" "manual_ops_terraform_bucket" {
+  user       = aws_iam_user.manual_ops.name
+  policy_arn = aws_iam_policy.terraform_bucket_access.arn
+}
+
+resource "aws_iam_user_policy_attachment" "manual_ops_files_bucket" {
+  user       = aws_iam_user.manual_ops.name
+  policy_arn = aws_iam_policy.files_bucket_access.arn
 } 
