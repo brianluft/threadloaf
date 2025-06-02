@@ -1,4 +1,5 @@
 import { ThreadListReplyFetcher } from "./ThreadListReplyFetcher";
+import { UserOptionsProvider } from "./UserOptionsProvider";
 
 /**
  * Manages the "Refresh Previews" button in thread lists.
@@ -7,13 +8,15 @@ import { ThreadListReplyFetcher } from "./ThreadListReplyFetcher";
  */
 export class ThreadListRefreshButton {
     private threadListReplyFetcher: ThreadListReplyFetcher;
+    private userOptionsProvider: UserOptionsProvider;
     private currentButton: HTMLElement | null = null;
     private isButtonDisabled = false;
     private disableTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    public constructor(threadListReplyFetcher: ThreadListReplyFetcher) {
+    public constructor(threadListReplyFetcher: ThreadListReplyFetcher, userOptionsProvider: UserOptionsProvider) {
         console.log("[ThreadListRefreshButton] Constructor called, setting up callback");
         this.threadListReplyFetcher = threadListReplyFetcher;
+        this.userOptionsProvider = userOptionsProvider;
 
         // Set up callback to be notified when API operations complete
         this.threadListReplyFetcher.setApiCompleteCallback(() => {
@@ -24,16 +27,36 @@ export class ThreadListRefreshButton {
                 console.error("[ThreadListRefreshButton] Error in handleApiComplete:", error);
             }
         });
+
+        // Listen for option changes to update button visibility
+        this.userOptionsProvider.addChangeListener(() => {
+            console.log("[ThreadListRefreshButton] Options changed, updating button");
+            this.updateRefreshButton();
+        });
+
         console.log("[ThreadListRefreshButton] Constructor completed, callback set up");
     }
 
     /**
      * Adds or updates the refresh button in thread lists.
      * Should be called when thread list DOM changes.
+     * Only shows the button if user is logged in and has threadRepliesCount > 0.
      */
     public updateRefreshButton(): void {
         // Remove existing button if present
         this.removeButton();
+
+        // Check if button should be shown
+        const options = this.userOptionsProvider.getOptions();
+        if (!options.isLoggedIn || options.threadRepliesCount === 0) {
+            console.log(
+                "[ThreadListRefreshButton] Not showing button - isLoggedIn:",
+                options.isLoggedIn,
+                "threadRepliesCount:",
+                options.threadRepliesCount,
+            );
+            return;
+        }
 
         // Find the thread list header
         const headerRow = document.querySelector('div[class*="headerRow_"][class*="card_"]');

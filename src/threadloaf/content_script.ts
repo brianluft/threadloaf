@@ -25,7 +25,7 @@ import { ThreadListRefreshButton } from "./ThreadListRefreshButton";
     const domParser = new DomParser(state);
     const scrollButtonManager = new ScrollButtonManager();
     const threadListReplyFetcher = new ThreadListReplyFetcher(userOptionsProvider);
-    const threadListRefreshButton = new ThreadListRefreshButton(threadListReplyFetcher);
+    const threadListRefreshButton = new ThreadListRefreshButton(threadListReplyFetcher, userOptionsProvider);
     const threadRenderer = new ThreadRenderer(
         state,
         domParser,
