@@ -52,6 +52,16 @@ Use fake timeouts and delays. Don't make tests wait for real delays.
 
 ALWAYS use `sed -n '8,8p' filename` to find the code at a particular line number. Your tools lie to you about line numbers; use sed.
 
+# Import Rules
+
+NEVER use conditional imports. This includes:
+- Dynamic imports with `import()` syntax
+- Import statements inside if blocks, try/catch blocks, or other conditional logic
+- Imports based on environment variables or runtime conditions
+- Using require() conditionally (except in test files for Jest mocking)
+
+Always use static imports at the top of files. If you need conditional logic, import the module statically and then conditionally use its exports.
+
 # Verification
 
 Refer to me as "boss" so I know you've read this.

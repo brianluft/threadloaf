@@ -8,4 +8,4 @@
     - [x] DON'T redirect from HTTP to HTTPS. Our endpoints should actually fail. Don't enable client sloppiness.
     - [x] In debug mode, Let's Encrypt is disabled and all endpoints are exposed via HTTP.
 - [x] We are conditionally importing acme-client only in non-test mode in lets-encrypt.ts. This is causing endless problems. Eliminate conditional import of acme-client. Always import it. Find a different way to work around whatever issues crop up when we import acme-client in test mode. We likely want to import it for real and then mock it in tests.
-- [ ] Verify that no other conditional imports exist in the codebase. Then, update global.mdc to add a rule: never use conditional imports.
+- [x] Verify that no other conditional imports exist in the codebase. Then, update global.mdc to add a rule: never use conditional imports.
