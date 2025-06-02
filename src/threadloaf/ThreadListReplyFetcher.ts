@@ -21,6 +21,7 @@ export class ThreadListReplyFetcher {
     private currentAbortController: AbortController | null = null;
     private debounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private isFirstThreadListCall = true;
+    private repliesCache = new Map<string, ApiMessage[]>();
 
     public constructor(userOptionsProvider: UserOptionsProvider) {
         this.userOptionsProvider = userOptionsProvider;
@@ -56,6 +57,7 @@ export class ThreadListReplyFetcher {
 
     /**
      * Fetches replies for all visible threads and displays them.
+     * Shows cached replies immediately if available, then updates with fresh data from API.
      */
     private async fetchAndDisplayReplies(): Promise<void> {
         const options = this.userOptionsProvider.getOptions();
@@ -71,6 +73,10 @@ export class ThreadListReplyFetcher {
             return;
         }
 
+        // First, display cached replies immediately for quick reaction
+        this.displayCachedReplies(threadIds);
+
+        // Then always fetch fresh data from the API to update the cache
         // Cancel previous request if still in flight
         if (this.currentAbortController) {
             this.currentAbortController.abort();
@@ -85,6 +91,11 @@ export class ThreadListReplyFetcher {
                 options.threadRepliesCount,
                 this.currentAbortController.signal,
             );
+
+            // Update cache with fresh data
+            this.updateCache(messages);
+
+            // Display the fresh replies
             this.displayReplies(messages);
         } catch (error) {
             if (error instanceof Error && error.name === "AbortError") {
@@ -94,6 +105,34 @@ export class ThreadListReplyFetcher {
             console.error("[ThreadListReplyFetcher] Error fetching thread replies:", error);
         } finally {
             this.currentAbortController = null;
+        }
+    }
+
+    /**
+     * Displays cached replies immediately for visible threads.
+     */
+    private displayCachedReplies(threadIds: string[]): void {
+        const cachedMessages: ApiMessagesResponse = {};
+
+        for (const threadId of threadIds) {
+            const cachedReplies = this.repliesCache.get(threadId);
+            if (cachedReplies) {
+                cachedMessages[threadId] = cachedReplies;
+            }
+        }
+
+        // Only display if we have some cached data
+        if (Object.keys(cachedMessages).length > 0) {
+            this.displayReplies(cachedMessages);
+        }
+    }
+
+    /**
+     * Updates the replies cache with fresh data from the API.
+     */
+    private updateCache(messagesData: ApiMessagesResponse): void {
+        for (const [threadId, messages] of Object.entries(messagesData)) {
+            this.repliesCache.set(threadId, messages);
         }
     }
 
