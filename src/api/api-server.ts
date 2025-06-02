@@ -326,9 +326,11 @@ export class ApiServer {
                     const result: MultiChannelMessagesResponse = {};
                     for (const channelId of channelIds) {
                         const allMessages = dataStore.getMessagesForChannel(channelId);
+                        // Sort messages by timestamp to ensure chronological order (oldest first)
+                        const sortedMessages = allMessages.slice().sort((a, b) => a.timestamp - b.timestamp);
                         // Get the most recent messages up to the limit
                         const limitedMessages =
-                            maxMessagesPerChannel === 0 ? [] : allMessages.slice(-maxMessagesPerChannel);
+                            maxMessagesPerChannel === 0 ? [] : sortedMessages.slice(-maxMessagesPerChannel);
                         result[channelId] = limitedMessages;
                     }
 

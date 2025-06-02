@@ -1,7 +1,7 @@
 # Bugs
 - [x] In the thread list, our thread reply preview list is currently newest-first. It needs to be oldest-first. We are showing the most recent N replies, with the most recent one at the bottom. Yet, when we hit Refresh and get new posts, _those_ show up at the bottom. Make sure the replies preview list is _always_ sorted in ascending chronological order.
 - [x] Our "Refresh Previews" button has an SVG icon, replace it with the ↻ symbol. Make sure the symbol and the text are always on a single line; right now the SVG is on the first line and the text is on a second line, making the button taller than intended.
-- [ ] The API's {{baseUrl}}/{{guildId}}/messages endpoint is returning the _oldest_ N messages per channel. It needs to return the _newest_ N messages per channel. Prove it to yourself:
+- [x] The API's {{baseUrl}}/{{guildId}}/messages endpoint is returning the _oldest_ N messages per channel. It needs to return the _newest_ N messages per channel. Prove it to yourself:
     - Run the server with scripts/start-api.sh
     - Test this; we expect this to return the 1 most recent post.
         ```
