@@ -425,11 +425,13 @@ body.threadloaf-visible div[class*="messagesWrapper_"] div[class*="scrollerConte
 
 /* Refresh Previews button in thread lists */
 .threadloaf-refresh-button {
-    margin-left: 8px;
     background: var(--button-secondary-background);
-    border: 1px solid var(--button-outline-brand-border);
-    color: var(--interactive-normal);
+    border: 1px solid var(--border-subtle);
+    color: var(--button-secondary-text);
+    margin-left: 8px;
     transition: background-color 0.15s ease-out, color 0.15s ease-out, opacity 0.15s ease-out;
+    padding: 5.5px 10px 5.5px 10px;
+    border-radius: var(--radius-xl);
 }
 
 .threadloaf-refresh-button:hover:not(:disabled) {

@@ -81,37 +81,13 @@ export class ThreadListRefreshButton {
         const contents = document.createElement("div");
         contents.className = "contents__201d5";
 
-        // Add refresh icon (using Discord's refresh icon)
-        const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        icon.setAttribute("aria-hidden", "true");
-        icon.setAttribute("role", "img");
-        icon.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-        icon.setAttribute("width", "16");
-        icon.setAttribute("height", "16");
-        icon.setAttribute("fill", "none");
-        icon.setAttribute("viewBox", "0 0 24 24");
-
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("fill", "currentColor");
-        path.setAttribute(
-            "d",
-            "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.19 0 2.34-.21 3.41-.6.39-.14.59-.55.45-.94-.14-.39-.55-.59-.94-.45-.89.32-1.85.49-2.92.49-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8c0 .55.45 1 1 1s1-.45 1-1c0-5.52-4.48-10-10-10z",
-        );
-        icon.appendChild(path);
-
-        const path2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path2.setAttribute("fill", "currentColor");
-        path2.setAttribute("d", "M16.5 7.5l-2.5 2.5 2.5 2.5 1-1-1.5-1.5 1.5-1.5z");
-        icon.appendChild(path2);
-
-        contents.appendChild(icon);
-
-        // Add text
+        // Add text with refresh symbol
         const text = document.createElement("div");
         text.className = "text-sm/medium_cf4812";
         text.style.color = "var(--interactive-normal)";
         text.setAttribute("data-text-variant", "text-sm/medium");
-        text.textContent = "Refresh Previews";
+        text.style.whiteSpace = "nowrap";
+        text.textContent = "↻ Refresh Previews";
         contents.appendChild(text);
 
         button.appendChild(contents);
