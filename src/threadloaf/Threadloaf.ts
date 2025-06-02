@@ -101,8 +101,12 @@ export class Threadloaf {
 
                 // Manually trigger thread list change check after navigation
                 // This handles cases where Discord reuses cached DOM elements without triggering mutations
+                // Only do this if there are actually visible thread cards
                 setTimeout(() => {
-                    this.handleThreadListChange();
+                    const hasVisibleThreadCards = document.querySelectorAll('li[class*="card_"]').length > 0;
+                    if (hasVisibleThreadCards) {
+                        this.handleThreadListChange();
+                    }
                 }, 100);
 
                 // Reset attempt counter to give the new page time to load

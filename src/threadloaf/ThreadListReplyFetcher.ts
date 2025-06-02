@@ -55,6 +55,17 @@ export class ThreadListReplyFetcher {
      * Debounces calls and fetches replies for visible threads.
      */
     public handleThreadListChange(): void {
+        // Early check: if there are no visible thread cards, don't even start the debounce timer
+        const hasVisibleThreadCards = document.querySelectorAll('li[class*="card_"]').length > 0;
+        if (!hasVisibleThreadCards) {
+            // Clear any existing timeout and return early
+            if (this.debounceTimeout !== null) {
+                clearTimeout(this.debounceTimeout);
+                this.debounceTimeout = null;
+            }
+            return;
+        }
+
         // Clear existing debounce timeout
         if (this.debounceTimeout !== null) {
             clearTimeout(this.debounceTimeout);
