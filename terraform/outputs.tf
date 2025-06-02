@@ -51,4 +51,14 @@ output "api_url" {
 output "session_manager_command" {
   description = "AWS CLI command to connect via Session Manager"
   value       = "aws ssm start-session --target ${aws_instance.api.id}"
+}
+
+output "efs_file_system_id" {
+  description = "ID of the EFS filesystem for Let's Encrypt certificates"
+  value       = aws_efs_file_system.letsencrypt_certs.id
+}
+
+output "efs_mount_target_id" {
+  description = "ID of the EFS mount target"
+  value       = aws_efs_mount_target.letsencrypt_certs.id
 } 

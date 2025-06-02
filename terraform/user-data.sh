@@ -6,7 +6,7 @@ apt-get update
 apt-get upgrade -y
 
 # Install required packages
-apt-get install -y curl unzip
+apt-get install -y curl unzip nfs-common
 
 # Install AWS CLI v2 for ARM64
 curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
@@ -55,6 +55,15 @@ EOF
 
 # Start CloudWatch Agent
 /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+
+# Create and mount EFS filesystem for Let's Encrypt certificates
+mkdir -p /mnt/efs-letsencrypt
+echo "${efs_file_system_id}.efs.${region}.amazonaws.com:/ /mnt/efs-letsencrypt nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport,_netdev 0 0" >> /etc/fstab
+mount /mnt/efs-letsencrypt
+
+# Set proper permissions for Let's Encrypt certificates directory
+chown root:root /mnt/efs-letsencrypt
+chmod 755 /mnt/efs-letsencrypt
 
 # Create threadloaf user
 useradd -m -s /bin/bash threadloaf

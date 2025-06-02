@@ -27,7 +27,7 @@
     - [x] Alarm when either of the two metrics surpasses 90%. Alarm will send an email to `threadloaf@threadloaf.com`. Missing data = breach.
 - [x] You are using Ubuntu 22.04, change it to 24.04. Ensure the cloud-init script still works on 24.
 - [x] Add an IAM user that I can use for read/write access to threadloaf-terraform-prod and threadloaf-files-prod buckets, for terraform apply and uploading the release zip files.
-- [ ] Create an EFS filesystem for storing the Let's Encrypt certs dir. The cheapest EFS filesystem possible since it will hold less than 1MB of nearly static data.
-    - [ ] Give the instance profile permission to access the filesystem, if needed
-    - [ ] Update the EC2 instance terraform to mount the EFS filesystem
-    - [ ] Update env.example to include the correct mount path for EFS for LETS_ENCRYPT_CERTS_DIR
+- [x] Create an EFS filesystem for storing the Let's Encrypt certs dir. The cheapest EFS filesystem possible since it will hold less than 1MB of nearly static data.
+    - [x] Give the instance profile permission to access the filesystem, if needed
+    - [x] Update the EC2 instance terraform to mount the EFS filesystem
+    - [x] Update env.example to include the correct mount path for EFS for LETS_ENCRYPT_CERTS_DIR

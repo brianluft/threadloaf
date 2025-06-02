@@ -237,6 +237,7 @@ locals {
     release_path_parameter_name = var.release_path_parameter_name
     region                      = "us-east-2"
     s3_bucket                   = aws_s3_bucket.files.bucket
+    efs_file_system_id          = aws_efs_file_system.letsencrypt_certs.id
   }))
 }
 
@@ -350,6 +351,82 @@ resource "aws_cloudwatch_metric_alarm" "disk_usage" {
   tags = {
     Name = "threadloaf-disk-alarm"
   }
+}
+
+# EFS Filesystem for Let's Encrypt certificates
+resource "aws_efs_file_system" "letsencrypt_certs" {
+  creation_token = "threadloaf-letsencrypt-certs"
+  
+  # Performance mode - generalPurpose is default and sufficient for small files
+  performance_mode = "generalPurpose"
+  
+  # Throughput mode - provisioned not needed for small static files
+  throughput_mode = "bursting"
+  
+  # Encryption at rest
+  encrypted = true
+
+  tags = {
+    Name = "threadloaf-letsencrypt-certs"
+  }
+}
+
+resource "aws_efs_mount_target" "letsencrypt_certs" {
+  file_system_id  = aws_efs_file_system.letsencrypt_certs.id
+  subnet_id       = aws_subnet.main.id
+  security_groups = [aws_security_group.efs.id]
+}
+
+# Security group for EFS
+resource "aws_security_group" "efs" {
+  name        = "threadloaf-efs-sg"
+  description = "Security group for EFS filesystem"
+  vpc_id      = aws_vpc.main.id
+
+  # Allow NFS traffic from the API security group
+  ingress {
+    from_port       = 2049
+    to_port         = 2049
+    protocol        = "tcp"
+    security_groups = [aws_security_group.api.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "threadloaf-efs-sg"
+  }
+}
+
+# IAM Policy for EFS access
+resource "aws_iam_policy" "efs_access" {
+  name        = "threadloaf-efs-access"
+  description = "Allow access to EFS filesystem for Let's Encrypt certificates"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "elasticfilesystem:ClientMount",
+          "elasticfilesystem:ClientWrite",
+          "elasticfilesystem:ClientRoot"
+        ]
+        Resource = aws_efs_file_system.letsencrypt_certs.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "efs_access" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = aws_iam_policy.efs_access.arn
 }
 
 # IAM User for Manual Operations
