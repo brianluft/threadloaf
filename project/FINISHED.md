@@ -103,3 +103,16 @@ This gives the user a quick at-a-glance preview of each thread's recent activity
 - [x] The "Refresh Previews" button currently has no feedback when it's disabled. It should visibly gray out, the border should lighten, and the cursor should be the default instead of the hand.
 - [x] The "Refresh Previews" button should only appear when the user is logged into our API from the user options and they have set the number of thread replies > 0.
 - [x] Read project/FINISHED.md to remind yourself about when we fixed an issue where the replies list would stop appearing when switching away from a forum channel and then switching back. That's still OK, but there's a related issue. If I switch from a forum channel to a _thread_, then no forum channel _on that server_ ever shows the replies list or the "Refresh Previews" button again, and no API call is made. But forum channels on _other_ servers do continue to work and those API calls are made. You may need my help with Dev Tools for this; if so, add console logging, tell me how to test it, and I'll give you the log.
+
+# HTTPS support with Let's Encrypt
+- [x] Add Let's Encrypt support to the api.
+    - [x] HTTP-01 challenge method
+    - [x] In production the domain is api.threadloaf.com
+    - [x] Add Let's Encrypt credentials and configuration to .env / example.env
+    - [x] Make it optional. When debugging locally we want HTTP only with Let's Encrypt functionality disabled.
+    - [x] In production, our API endpoints must mandate HTTPS. If the user makes such a request via plaintext HTTP, return a 4xx error with a stern message without taking any action.
+    - [x] In production, only the Let's Encrypt acme challenge endpoint should be exposed via HTTP since that is required.
+    - [x] DON'T redirect from HTTP to HTTPS. Our endpoints should actually fail. Don't enable client sloppiness.
+    - [x] In debug mode, Let's Encrypt is disabled and all endpoints are exposed via HTTP.
+- [x] We are conditionally importing acme-client only in non-test mode in lets-encrypt.ts. This is causing endless problems. Eliminate conditional import of acme-client. Always import it. Find a different way to work around whatever issues crop up when we import acme-client in test mode. We likely want to import it for real and then mock it in tests.
+- [x] Verify that no other conditional imports exist in the codebase. Then, update global.mdc to add a rule: never use conditional imports.
