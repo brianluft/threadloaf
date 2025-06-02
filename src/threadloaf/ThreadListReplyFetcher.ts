@@ -281,6 +281,9 @@ export class ThreadListReplyFetcher {
             return;
         }
 
+        // Sort messages by timestamp in ascending chronological order (oldest first)
+        const sortedMessages = [...messages].sort((a, b) => a.timestamp - b.timestamp);
+
         // Create replies container
         const repliesContainer = document.createElement("div");
         repliesContainer.classList.add("threadloaf-thread-replies");
@@ -296,8 +299,8 @@ export class ThreadListReplyFetcher {
             }
         });
 
-        // Add each message
-        for (const message of messages) {
+        // Add each message in sorted order
+        for (const message of sortedMessages) {
             const messageElement = this.createMessageElement(message);
 
             // Add click handler to individual reply
