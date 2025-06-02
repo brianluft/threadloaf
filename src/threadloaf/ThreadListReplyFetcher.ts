@@ -20,6 +20,7 @@ export class ThreadListReplyFetcher {
     private userOptionsProvider: UserOptionsProvider;
     private currentAbortController: AbortController | null = null;
     private debounceTimeout: ReturnType<typeof setTimeout> | null = null;
+    private isFirstThreadListCall = true;
 
     public constructor(userOptionsProvider: UserOptionsProvider) {
         this.userOptionsProvider = userOptionsProvider;
@@ -35,10 +36,14 @@ export class ThreadListReplyFetcher {
             clearTimeout(this.debounceTimeout);
         }
 
-        // Debounce for 1 second
+        // Use shorter debounce for the very first call in a page session
+        const debounceTime = this.isFirstThreadListCall ? 50 : 500;
+
         this.debounceTimeout = setTimeout(() => {
             this.fetchAndDisplayReplies();
-        }, 1000);
+            // After the first call, set flag to false for subsequent calls
+            this.isFirstThreadListCall = false;
+        }, debounceTime);
     }
 
     /**
@@ -203,9 +208,29 @@ export class ThreadListReplyFetcher {
         const repliesContainer = document.createElement("div");
         repliesContainer.classList.add("threadloaf-thread-replies");
 
+        // Find the main thread card for click delegation
+        const mainCard = cardElement.querySelector('div[class*="mainCard_"]') as HTMLElement;
+
+        // Add click handler to the replies container
+        repliesContainer.addEventListener("click", (event) => {
+            event.stopPropagation();
+            if (mainCard) {
+                mainCard.click();
+            }
+        });
+
         // Add each message
         for (const message of messages) {
             const messageElement = this.createMessageElement(message);
+
+            // Add click handler to individual reply
+            messageElement.addEventListener("click", (event) => {
+                event.stopPropagation();
+                if (mainCard) {
+                    mainCard.click();
+                }
+            });
+
             repliesContainer.appendChild(messageElement);
         }
 
@@ -230,7 +255,7 @@ export class ThreadListReplyFetcher {
         contentSpan.classList.add("threadloaf-reply-content");
         contentSpan.textContent = message.content || "";
 
-        // Create separator
+        // Create separator with space after colon
         const separator = document.createElement("span");
         separator.classList.add("threadloaf-reply-separator");
         separator.textContent = ": ";

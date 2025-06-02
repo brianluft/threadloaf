@@ -272,7 +272,7 @@ export class ApiServer {
                 // Make the error available to the extension content script via DOM
                 res.set("Content-Type", "text/html").send(`
                     <!-- Hidden data for extension content script -->
-                    <div id="threadloaf-oauth-data" style="display: none;" data-error="Authentication failed" data-state="${state || "unknown"}" data-status="error"></div>
+                    <div id="threadloaf-oauth-data" style="display: none;" data-error="Authentication failed" data-state="${state}" data-status="error"></div>
                     <h2>Authentication failed!</h2>
                     <p>Please close this window and try again.</p>
                 `);

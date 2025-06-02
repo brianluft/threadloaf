@@ -381,11 +381,12 @@ body.threadloaf-visible div[class*="messagesWrapper_"] div[class*="scrollerConte
 
 /* Thread list replies - recent replies shown underneath threads */
 .threadloaf-thread-replies {
-    margin-top: 8px;
-    padding: 8px 12px;
+    margin-top: 0;
+    padding: 8px 12px 8px 20px;
     background: color-mix(in oklab, var(--background-primary) 95%, var(--text-normal) 5%);
     border-radius: 8px;
     border-left: 3px solid var(--brand-500);
+    cursor: pointer;
 }
 
 .threadloaf-thread-reply {
@@ -394,6 +395,7 @@ body.threadloaf-visible div[class*="messagesWrapper_"] div[class*="scrollerConte
     line-height: 1.4;
     display: flex;
     gap: 0;
+    cursor: pointer;
 }
 
 .threadloaf-thread-reply:last-child {
