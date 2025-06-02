@@ -8,9 +8,23 @@ import { ThreadListReplyFetcher } from "./ThreadListReplyFetcher";
 export class ThreadListRefreshButton {
     private threadListReplyFetcher: ThreadListReplyFetcher;
     private currentButton: HTMLElement | null = null;
+    private isButtonDisabled = false;
+    private disableTimeout: ReturnType<typeof setTimeout> | null = null;
 
     public constructor(threadListReplyFetcher: ThreadListReplyFetcher) {
+        console.log("[ThreadListRefreshButton] Constructor called, setting up callback");
         this.threadListReplyFetcher = threadListReplyFetcher;
+
+        // Set up callback to be notified when API operations complete
+        this.threadListReplyFetcher.setApiCompleteCallback(() => {
+            console.log("[ThreadListRefreshButton] API operation completed, starting 1-second delay");
+            try {
+                this.handleApiComplete();
+            } catch (error) {
+                console.error("[ThreadListRefreshButton] Error in handleApiComplete:", error);
+            }
+        });
+        console.log("[ThreadListRefreshButton] Constructor completed, callback set up");
     }
 
     /**
@@ -55,15 +69,30 @@ export class ThreadListRefreshButton {
      * Updates the button's enabled/disabled state based on whether an API call is in progress.
      */
     public updateButtonState(): void {
+        console.log("[ThreadListRefreshButton] updateButtonState() called");
+
         if (!this.currentButton) {
+            console.log("[ThreadListRefreshButton] No current button, returning");
             return;
         }
 
         const isApiInProgress = this.threadListReplyFetcher.isApiInProgress();
-        const button = this.currentButton.querySelector("button");
 
-        if (button) {
-            button.disabled = isApiInProgress;
+        console.log("[ThreadListRefreshButton] API in progress:", isApiInProgress);
+        console.log("[ThreadListRefreshButton] Button manually disabled:", this.isButtonDisabled);
+
+        const shouldDisable = isApiInProgress || this.isButtonDisabled;
+        console.log("[ThreadListRefreshButton] Should disable button:", shouldDisable);
+
+        // this.currentButton IS the button element itself
+        if (this.currentButton instanceof HTMLButtonElement) {
+            this.currentButton.disabled = shouldDisable;
+            console.log("[ThreadListRefreshButton] Button disabled set to:", this.currentButton.disabled);
+        } else {
+            console.log(
+                "[ThreadListRefreshButton] currentButton is not a button element, type:",
+                this.currentButton.tagName,
+            );
         }
     }
 
@@ -105,15 +134,50 @@ export class ThreadListRefreshButton {
      * Handles the refresh button click.
      */
     private handleRefreshClick(): void {
+        console.log("[ThreadListRefreshButton] Refresh button clicked");
+
+        // Clear any existing timeout
+        if (this.disableTimeout) {
+            console.log("[ThreadListRefreshButton] Clearing existing disable timeout");
+            clearTimeout(this.disableTimeout);
+            this.disableTimeout = null;
+        }
+
+        // Disable button immediately
+        this.isButtonDisabled = true;
+        console.log("[ThreadListRefreshButton] Set isButtonDisabled to true");
+
         // Update button state immediately to show it's disabled
         this.updateButtonState();
 
         // Trigger the same functionality as the DOM watcher
+        console.log("[ThreadListRefreshButton] Calling handleThreadListChange()");
         this.threadListReplyFetcher.handleThreadListChange();
 
         // Update button state again after a short delay to ensure it reflects the API call status
         setTimeout(() => {
+            console.log("[ThreadListRefreshButton] Delayed updateButtonState() after 100ms");
             this.updateButtonState();
         }, 100);
+    }
+
+    /**
+     * Handles API completion by starting the 1-second delay.
+     */
+    private handleApiComplete(): void {
+        console.log("[ThreadListRefreshButton] handleApiComplete() called, setting 1-second timeout");
+
+        // Clear any existing timeout
+        if (this.disableTimeout) {
+            clearTimeout(this.disableTimeout);
+        }
+
+        // Keep button disabled for an additional 1 second
+        this.disableTimeout = setTimeout(() => {
+            console.log("[ThreadListRefreshButton] 1-second delay completed, re-enabling button");
+            this.isButtonDisabled = false;
+            this.updateButtonState();
+            this.disableTimeout = null;
+        }, 1000);
     }
 }

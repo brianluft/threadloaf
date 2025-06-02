@@ -40,13 +40,19 @@ export class ThreadListReplyFetcher {
      * Returns whether an API call is currently in progress.
      */
     public isApiInProgress(): boolean {
-        return this.currentAbortController !== null;
+        const inProgress = this.currentAbortController !== null;
+        console.log("[ThreadListReplyFetcher] isApiInProgress() called, returning:", inProgress);
+        return inProgress;
     }
 
     /**
      * Sets a callback to be called when API operations complete.
      */
     public setApiCompleteCallback(callback: (() => void) | null): void {
+        console.log(
+            "[ThreadListReplyFetcher] setApiCompleteCallback() called with callback:",
+            callback ? "function" : "null",
+        );
         this.apiCompleteCallback = callback;
     }
 
@@ -55,9 +61,12 @@ export class ThreadListReplyFetcher {
      * Debounces calls and fetches replies for visible threads.
      */
     public handleThreadListChange(): void {
+        console.log("[ThreadListReplyFetcher] handleThreadListChange() called");
+
         // Early check: if there are no visible thread cards, don't even start the debounce timer
         const hasVisibleThreadCards = document.querySelectorAll('li[class*="card_"]').length > 0;
         if (!hasVisibleThreadCards) {
+            console.log("[ThreadListReplyFetcher] No visible thread cards, returning early");
             // Clear any existing timeout and return early
             if (this.debounceTimeout !== null) {
                 clearTimeout(this.debounceTimeout);
@@ -68,13 +77,16 @@ export class ThreadListReplyFetcher {
 
         // Clear existing debounce timeout
         if (this.debounceTimeout !== null) {
+            console.log("[ThreadListReplyFetcher] Clearing existing debounce timeout");
             clearTimeout(this.debounceTimeout);
         }
 
         // Use shorter debounce for the very first call in a page session
         const debounceTime = this.isFirstThreadListCall ? 50 : 500;
+        console.log("[ThreadListReplyFetcher] Setting debounce timeout for", debounceTime, "ms");
 
         this.debounceTimeout = setTimeout(() => {
+            console.log("[ThreadListReplyFetcher] Debounce timeout fired, calling fetchAndDisplayReplies()");
             this.fetchAndDisplayReplies();
             // After the first call, set flag to false for subsequent calls
             this.isFirstThreadListCall = false;
@@ -86,18 +98,24 @@ export class ThreadListReplyFetcher {
      * Shows cached replies immediately if available, then updates with fresh data from API.
      */
     private async fetchAndDisplayReplies(): Promise<void> {
+        console.log("[ThreadListReplyFetcher] fetchAndDisplayReplies() called");
+
         const options = this.userOptionsProvider.getOptions();
 
         // Only proceed if logged in and count > 0
         if (!options.isLoggedIn || options.threadRepliesCount === 0) {
+            console.log("[ThreadListReplyFetcher] Not logged in or count is 0, returning");
             return;
         }
 
         // Collect all visible thread IDs
         const threadIds = this.collectVisibleThreadIds();
         if (threadIds.length === 0) {
+            console.log("[ThreadListReplyFetcher] No thread IDs found, returning");
             return;
         }
+
+        console.log("[ThreadListReplyFetcher] Found", threadIds.length, "thread IDs");
 
         // First, display cached replies immediately for quick reaction
         this.displayCachedReplies(threadIds);
@@ -105,11 +123,13 @@ export class ThreadListReplyFetcher {
         // Then always fetch fresh data from the API to update the cache
         // Cancel previous request if still in flight
         if (this.currentAbortController) {
+            console.log("[ThreadListReplyFetcher] Aborting previous request");
             this.currentAbortController.abort();
         }
 
         // Create new abort controller for this request
         this.currentAbortController = new AbortController();
+        console.log("[ThreadListReplyFetcher] Created new AbortController, API is now in progress");
 
         try {
             const messages = await this.fetchMessages(
@@ -118,6 +138,8 @@ export class ThreadListReplyFetcher {
                 this.currentAbortController.signal,
             );
 
+            console.log("[ThreadListReplyFetcher] API request completed successfully");
+
             // Update cache with fresh data
             this.updateCache(messages);
 
@@ -125,15 +147,24 @@ export class ThreadListReplyFetcher {
             this.displayReplies(messages);
         } catch (error) {
             if (error instanceof Error && error.name === "AbortError") {
+                console.log("[ThreadListReplyFetcher] Request was cancelled (aborted)");
                 // Request was cancelled, this is expected
                 return;
             }
             console.error("[ThreadListReplyFetcher] Error fetching thread replies:", error);
         } finally {
+            console.log("[ThreadListReplyFetcher] Setting currentAbortController to null, API no longer in progress");
             this.currentAbortController = null;
             // Notify callback that API operation is complete
             if (this.apiCompleteCallback) {
-                this.apiCompleteCallback();
+                console.log("[ThreadListReplyFetcher] Calling API complete callback");
+                try {
+                    this.apiCompleteCallback();
+                } catch (error) {
+                    console.error("[ThreadListReplyFetcher] Error in API complete callback:", error);
+                }
+            } else {
+                console.log("[ThreadListReplyFetcher] No API complete callback set");
             }
         }
     }

@@ -35,13 +35,8 @@ export class Threadloaf {
         this.threadListReplyFetcher = threadListReplyFetcher;
         this.threadListRefreshButton = threadListRefreshButton;
 
-        // Set up callback to update button state when API operations complete
-        this.threadListReplyFetcher.setApiCompleteCallback(() => {
-            // Keep the button disabled for an additional 1 second after API response
-            setTimeout(() => {
-                this.threadListRefreshButton.updateButtonState();
-            }, 1000);
-        });
+        // Note: ThreadListRefreshButton sets up its own API complete callback
+        // to handle the 1-second delay and re-enabling the button
 
         this.initialize();
     }
