@@ -3,6 +3,7 @@ import { DataStore } from "../../data-store";
 import { LetsEncryptConfig } from "../../lets-encrypt";
 import { createShared } from "./shared";
 import * as http from "http";
+import request from "supertest";
 
 jest.mock("../../data-store");
 jest.mock("../../lets-encrypt");
@@ -330,5 +331,57 @@ describe("ApiServer start", () => {
         initializeSpy.mockRestore();
         createHttpsServerSpy.mockRestore();
         requestCertificateSpy.mockRestore();
+    });
+
+    test("should throw error when startWithHttps is called without letsEncryptManager", async () => {
+        // Create a Map with the test DataStore
+        const dataStoresByGuild = new Map<string, DataStore>();
+        dataStoresByGuild.set("test-guild-id", dataStore);
+
+        const discordClientsByGuild = new Map();
+
+        // Create server WITHOUT letsEncryptConfig (so letsEncryptManager will be null)
+        const server = new ApiServer(3456, dataStoresByGuild, discordClientsByGuild, false);
+
+        // Manually set letsEncryptManager to null to simulate the error condition
+        (server as any).letsEncryptManager = null;
+
+        // Try to call the private startWithHttps method directly and expect it to throw
+        await expect((server as any).startWithHttps()).rejects.toThrow("Let's Encrypt manager not initialized");
+    });
+
+    test("should enforce HTTPS middleware when Let's Encrypt is enabled", async () => {
+        // Create a Map with the test DataStore
+        const dataStoresByGuild = new Map<string, DataStore>();
+        dataStoresByGuild.set("test-guild-id", dataStore);
+
+        const discordClientsByGuild = new Map();
+
+        // Create LetsEncrypt config with enabled: true
+        const letsEncryptConfig: LetsEncryptConfig = {
+            enabled: true,
+            email: "test@example.com",
+            domain: "test.example.com",
+            acmeDirectory: "https://acme-staging-v02.api.letsencrypt.org/directory",
+            certsDir: "/tmp/certs",
+        };
+
+        // Create server with LetsEncrypt config to enable HTTPS middleware
+        const server = new ApiServer(3456, dataStoresByGuild, discordClientsByGuild, false, letsEncryptConfig);
+
+        // Test that non-secure requests to regular endpoints are blocked
+        const response1 = await request(server.app).get("/health").expect(400);
+
+        expect(response1.body).toEqual({
+            error: "HTTPS required. This API only accepts secure connections.",
+        });
+
+        // Test that ACME challenge requests are allowed through (even without HTTPS)
+        const response2 = await request(server.app).get("/.well-known/acme-challenge/test-challenge").expect(404); // 404 because no actual ACME challenge is set up, but it passes the HTTPS middleware
+
+        // Test that requests with HTTPS headers are allowed through
+        const response3 = await request(server.app).get("/health").set("X-Forwarded-Proto", "https").expect(200);
+
+        expect(response3.body).toEqual({ status: "ok" });
     });
 });
