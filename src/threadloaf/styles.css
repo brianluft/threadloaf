@@ -382,7 +382,8 @@ body.threadloaf-visible div[class*="messagesWrapper_"] div[class*="scrollerConte
 /* Thread list replies - recent replies shown underneath threads */
 .threadloaf-thread-replies {
     margin-top: 0;
-    padding: 8px 12px 8px 20px;
+    margin-left: 16px;
+    padding: 8px 12px;
     background: color-mix(in oklab, var(--background-primary) 95%, var(--text-normal) 5%);
     border-radius: 8px;
     border-left: 3px solid var(--brand-500);
