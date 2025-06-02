@@ -61,9 +61,19 @@ export class Threadloaf {
     private setupPolling(): void {
         let attempts = 0;
         const maxAttempts = 30; // Try for 30 seconds
+        let lastUrl = window.location.href;
+
         const interval = setInterval(() => {
             attempts++;
             const newThreadContainer = this.domParser.findThreadContainer();
+            const currentUrl = window.location.href;
+
+            // Check if we've navigated to a new channel/thread
+            if (currentUrl !== lastUrl) {
+                lastUrl = currentUrl;
+                // Reset the first call flag to ensure quick loading of replies when returning to forum channels
+                this.threadListReplyFetcher.resetFirstCallFlag();
+            }
 
             if (newThreadContainer && newThreadContainer !== this.state.threadContainer) {
                 this.state.threadContainer = newThreadContainer;

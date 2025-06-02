@@ -27,6 +27,14 @@ export class ThreadListReplyFetcher {
     }
 
     /**
+     * Resets the first thread list call flag. This should be called when navigating to a new channel
+     * to ensure reply previews load quickly when returning to forum channels.
+     */
+    public resetFirstCallFlag(): void {
+        this.isFirstThreadListCall = true;
+    }
+
+    /**
      * Handles new thread list entries being added to the DOM.
      * Debounces calls and fetches replies for visible threads.
      */
