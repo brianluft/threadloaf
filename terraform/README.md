@@ -15,7 +15,7 @@ This Terraform configuration deploys the Threadloaf API to AWS with a complete i
 
 1. AWS CLI configured with appropriate credentials
 2. Terraform >= 1.0 installed
-3. S3 bucket named `threadloaf-terraform` created for state storage
+3. S3 bucket named `threadloaf-terraform-prod` created for state storage
 
 ## Usage
 

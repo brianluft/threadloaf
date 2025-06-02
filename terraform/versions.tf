@@ -9,7 +9,7 @@ terraform {
   }
   
   backend "s3" {
-    bucket = "threadloaf-terraform"
+    bucket = "threadloaf-terraform-prod"
     key    = "api/terraform.tfstate"
     region = "us-east-1"
   }
