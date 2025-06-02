@@ -5,43 +5,32 @@
 
 ### Variables
 @baseUrl = http://localhost:3000
-@guildId = test-guild-id
-@channelId = 1334738913197293621
+@guildId = 1334738912756895836
+@channelId = 1378262084390883328
 
 ###
 # Health Check Endpoint
 # Tests if the API server is running
-GET {{baseUrl}}/health
-
-###
-# Get Messages for Multiple Channels/Threads
-# Replace the guildId and channelIds with actual Discord guild/channel IDs
-POST {{baseUrl}}/{{guildId}}/messages
-Content-Type: application/json
-
-{
-  "channelIds": ["{{channelId}}", "1334738913197293622", "1334738913197293623"],
-  "maxMessagesPerChannel": 10
-}
+GET http://localhost:3000/health
 
 ###
 # Get Messages for Single Channel (using array with one element)
-POST {{baseUrl}}/{{guildId}}/messages
+POST http://localhost:3000/1334738912756895836/messages
 Content-Type: application/json
 
 {
-  "channelIds": ["{{channelId}}"],
-  "maxMessagesPerChannel": 5
+  "channelIds": ["1378262084390883328"],
+  "maxMessagesPerChannel": 1
 }
 
 ###
 # Get All Forum Threads for a Guild
 # Returns all forum threads with their latest replies for the specified guild
-GET {{baseUrl}}/{{guildId}}/forum-threads
+GET http://localhost:3000/1334738912756895836/forum-threads
 
 ###
 # Test Error Handling - Invalid Guild ID
-POST {{baseUrl}}/invalid-guild-id/messages
+POST http://localhost:3000/invalid-guild-id/messages
 Content-Type: application/json
 
 {
@@ -51,7 +40,7 @@ Content-Type: application/json
 
 ###
 # Test Error Handling - Missing channelIds
-POST {{baseUrl}}/{{guildId}}/messages
+POST http://localhost:3000/1334738912756895836/messages
 Content-Type: application/json
 
 {
@@ -60,7 +49,7 @@ Content-Type: application/json
 
 ###
 # Test Error Handling - Invalid maxMessagesPerChannel
-POST {{baseUrl}}/{{guildId}}/messages
+POST http://localhost:3000/1334738912756895836/messages
 Content-Type: application/json
 
 {
@@ -70,4 +59,4 @@ Content-Type: application/json
 
 ###
 # Test Non-existent Endpoint
-GET {{baseUrl}}/non-existent-endpoint 
+GET http://localhost:3000/non-existent-endpoint 
