@@ -3,6 +3,7 @@ import { ThreadloafState } from "./ThreadloafState";
 import { ThreadRenderer } from "./ThreadRenderer";
 import { DomMutator } from "./DomMutator";
 import { ThreadListReplyFetcher } from "./ThreadListReplyFetcher";
+import { ThreadListRefreshButton } from "./ThreadListRefreshButton";
 
 /**
  * Main entry point and controller for the Threadloaf extension.
@@ -17,6 +18,7 @@ export class Threadloaf {
     private domMutator: DomMutator;
     private threadRenderer: ThreadRenderer;
     private threadListReplyFetcher: ThreadListReplyFetcher;
+    private threadListRefreshButton: ThreadListRefreshButton;
 
     public constructor(
         state: ThreadloafState,
@@ -24,12 +26,20 @@ export class Threadloaf {
         domMutator: DomMutator,
         threadRenderer: ThreadRenderer,
         threadListReplyFetcher: ThreadListReplyFetcher,
+        threadListRefreshButton: ThreadListRefreshButton,
     ) {
         this.state = state;
         this.domParser = domParser;
         this.domMutator = domMutator;
         this.threadRenderer = threadRenderer;
         this.threadListReplyFetcher = threadListReplyFetcher;
+        this.threadListRefreshButton = threadListRefreshButton;
+
+        // Set up callback to update button state when API operations complete
+        this.threadListReplyFetcher.setApiCompleteCallback(() => {
+            this.threadListRefreshButton.updateButtonState();
+        });
+
         this.initialize();
     }
 
@@ -43,7 +53,7 @@ export class Threadloaf {
         this.domMutator.injectStyles();
         this.domParser.setupMutationObserver(
             () => this.threadRenderer.renderThread(),
-            () => this.threadListReplyFetcher.handleThreadListChange(),
+            () => this.handleThreadListChange(),
         );
         this.setupPolling();
 
@@ -55,6 +65,12 @@ export class Threadloaf {
             this.state.threadContainer.style.display = "block";
             this.threadRenderer.renderThread(); // This will create the button in chat view mode
         }
+    }
+
+    // Handle thread list changes by updating both reply fetcher and refresh button
+    private handleThreadListChange(): void {
+        this.threadListReplyFetcher.handleThreadListChange();
+        this.threadListRefreshButton.updateRefreshButton();
     }
 
     // Fallback: Polling to handle delayed loading or missed events
@@ -80,13 +96,13 @@ export class Threadloaf {
                 }
                 this.domParser.setupMutationObserver(
                     () => this.threadRenderer.renderThread(),
-                    () => this.threadListReplyFetcher.handleThreadListChange(),
+                    () => this.handleThreadListChange(),
                 );
 
                 // Manually trigger thread list change check after navigation
                 // This handles cases where Discord reuses cached DOM elements without triggering mutations
                 setTimeout(() => {
-                    this.threadListReplyFetcher.handleThreadListChange();
+                    this.handleThreadListChange();
                 }, 100);
 
                 // Reset attempt counter to give the new page time to load

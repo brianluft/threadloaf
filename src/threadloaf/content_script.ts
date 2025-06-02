@@ -10,6 +10,7 @@ import { UserOptionsProvider } from "./UserOptionsProvider";
 import { ScrollButtonManager } from "./ScrollButtonManager";
 import { MessageSelector } from "./MessageSelector";
 import { ThreadListReplyFetcher } from "./ThreadListReplyFetcher";
+import { ThreadListRefreshButton } from "./ThreadListRefreshButton";
 
 (async function (): Promise<void> {
     const userOptions = await UserOptionsProvider.loadInitialOptions();
@@ -24,6 +25,7 @@ import { ThreadListReplyFetcher } from "./ThreadListReplyFetcher";
     const domParser = new DomParser(state);
     const scrollButtonManager = new ScrollButtonManager();
     const threadListReplyFetcher = new ThreadListReplyFetcher(userOptionsProvider);
+    const threadListRefreshButton = new ThreadListRefreshButton(threadListReplyFetcher);
     const threadRenderer = new ThreadRenderer(
         state,
         domParser,
@@ -40,5 +42,5 @@ import { ThreadListReplyFetcher } from "./ThreadListReplyFetcher";
         uncollapseBottomPane: () => threadRenderer.uncollapseBottomPane(),
     });
 
-    new Threadloaf(state, domParser, domMutator, threadRenderer, threadListReplyFetcher);
+    new Threadloaf(state, domParser, domMutator, threadRenderer, threadListReplyFetcher, threadListRefreshButton);
 })();

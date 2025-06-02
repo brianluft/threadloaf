@@ -422,3 +422,26 @@ body.threadloaf-visible div[class*="messagesWrapper_"] div[class*="scrollerConte
     flex: 1;
     min-width: 0;
 }
+
+/* Refresh Previews button in thread lists */
+.threadloaf-refresh-button {
+    margin-left: 8px;
+    background: var(--button-secondary-background);
+    border: 1px solid var(--button-outline-brand-border);
+    color: var(--interactive-normal);
+    transition: background-color 0.15s ease-out, color 0.15s ease-out, opacity 0.15s ease-out;
+}
+
+.threadloaf-refresh-button:hover:not(:disabled) {
+    background: var(--button-secondary-background-hover);
+    color: var(--interactive-hover);
+}
+
+.threadloaf-refresh-button:disabled {
+    cursor: not-allowed;
+}
+
+.threadloaf-refresh-button .contents__201d5 {
+    gap: 6px;
+    align-items: center;
+}

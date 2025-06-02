@@ -22,6 +22,7 @@ export class ThreadListReplyFetcher {
     private debounceTimeout: ReturnType<typeof setTimeout> | null = null;
     private isFirstThreadListCall = true;
     private repliesCache = new Map<string, ApiMessage[]>();
+    private apiCompleteCallback: (() => void) | null = null;
 
     public constructor(userOptionsProvider: UserOptionsProvider) {
         this.userOptionsProvider = userOptionsProvider;
@@ -33,6 +34,20 @@ export class ThreadListReplyFetcher {
      */
     public resetFirstCallFlag(): void {
         this.isFirstThreadListCall = true;
+    }
+
+    /**
+     * Returns whether an API call is currently in progress.
+     */
+    public isApiInProgress(): boolean {
+        return this.currentAbortController !== null;
+    }
+
+    /**
+     * Sets a callback to be called when API operations complete.
+     */
+    public setApiCompleteCallback(callback: (() => void) | null): void {
+        this.apiCompleteCallback = callback;
     }
 
     /**
@@ -105,6 +120,10 @@ export class ThreadListReplyFetcher {
             console.error("[ThreadListReplyFetcher] Error fetching thread replies:", error);
         } finally {
             this.currentAbortController = null;
+            // Notify callback that API operation is complete
+            if (this.apiCompleteCallback) {
+                this.apiCompleteCallback();
+            }
         }
     }
 
