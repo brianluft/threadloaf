@@ -440,7 +440,10 @@ body.threadloaf-visible div[class*="messagesWrapper_"] div[class*="scrollerConte
 }
 
 .threadloaf-refresh-button:disabled {
-    cursor: not-allowed;
+    cursor: default;
+    background: var(--button-secondary-background-disabled, color-mix(in oklab, var(--button-secondary-background) 50%, var(--background-primary) 50%));
+    border-color: var(--border-faint, color-mix(in oklab, var(--border-subtle) 50%, var(--background-primary) 50%));
+    color: var(--text-muted);
 }
 
 .threadloaf-refresh-button .contents__201d5 {

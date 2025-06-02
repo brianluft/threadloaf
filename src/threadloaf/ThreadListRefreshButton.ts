@@ -64,7 +64,6 @@ export class ThreadListRefreshButton {
 
         if (button) {
             button.disabled = isApiInProgress;
-            button.style.opacity = isApiInProgress ? "0.6" : "1";
         }
     }
 
