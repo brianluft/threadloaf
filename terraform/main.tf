@@ -381,6 +381,13 @@ resource "aws_iam_policy" "terraform_bucket_access" {
           "arn:aws:s3:::threadloaf-terraform-prod",
           "arn:aws:s3:::threadloaf-terraform-prod/*"
         ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListAllMyBuckets"
+        ]
+        Resource = "*"
       }
     ]
   })
