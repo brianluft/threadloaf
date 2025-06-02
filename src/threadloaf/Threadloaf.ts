@@ -19,6 +19,7 @@ export class Threadloaf {
     private threadRenderer: ThreadRenderer;
     private threadListReplyFetcher: ThreadListReplyFetcher;
     private threadListRefreshButton: ThreadListRefreshButton;
+    private navigationInterval: ReturnType<typeof setInterval> | null = null;
 
     public constructor(
         state: ThreadloafState,
@@ -73,13 +74,10 @@ export class Threadloaf {
 
     // Fallback: Polling to handle delayed loading or missed events
     private setupPolling(): void {
-        let attempts = 0;
-        const maxAttempts = 30; // Try for 30 seconds
         let lastUrl = window.location.href;
 
-        const interval = setInterval(() => {
-            attempts++;
-            const newThreadContainer = this.domParser.findThreadContainer();
+        // Set up continuous navigation monitoring
+        this.navigationInterval = setInterval(() => {
             const currentUrl = window.location.href;
 
             // Check if we've navigated to a new channel/thread
@@ -106,19 +104,25 @@ export class Threadloaf {
                         this.handleThreadListChange();
                     }
                 }, 100);
-
-                // Reset attempt counter to give the new page time to load
-                attempts = 0;
             }
+        }, 1000);
+
+        // Set up initial thread container detection with limited attempts
+        let attempts = 0;
+        const maxAttempts = 30; // Try for 30 seconds
+        const initializationInterval = setInterval(() => {
+            attempts++;
+            const newThreadContainer = this.domParser.findThreadContainer();
 
             if (newThreadContainer && newThreadContainer !== this.state.threadContainer) {
                 this.state.threadContainer = newThreadContainer;
                 this.threadRenderer.renderThread();
             }
 
-            // Only stop polling if we've found messages or exceeded max attempts
+            // Only stop initialization polling if we've found messages or exceeded max attempts
+            // Navigation polling continues indefinitely
             if ((newThreadContainer && newThreadContainer.children.length > 0) || attempts >= maxAttempts) {
-                clearInterval(interval);
+                clearInterval(initializationInterval);
             }
         }, 1000);
     }
