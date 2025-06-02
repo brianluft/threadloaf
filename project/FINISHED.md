@@ -83,3 +83,6 @@ This gives the user a quick at-a-glance preview of each thread's recent activity
 # Bugs
 - [x] The first time I open the thread list for a forum channel, our reply previews show correctly. If I switch to a chat channel and then return to the forum channel, our reply previews do not show. The reply previews never return after that. No further API calls are made. I have Dev Tools and can poke around if you need.
 - [x] *Every* time we get a (debounced) "new thread in the thread list" event, we need to send the API call for *all* visible threads. Even if we've seen them all before. Keep a cache for quick reaction so the replies appear immediately, but always update that cache from the server on this event and update the previews asynchronously when the response comes in.
+
+# Thread list reply previews
+- [x] When a thread list is visible, show a "Refresh Previews" button to the right of the existing "Sort & View" button. Read context/THREAD_LIST_EXAMPLE.html for the HTML. The button will do the same thing that our DOM watcher's "new thread list element" event does: it collects all the visible thread IDs, issues the API call, and when the API call comes back it updates the displayed thread replies. The button itself is disabled while the API call is in flight so the user can't keep clicking it.
