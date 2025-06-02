@@ -86,3 +86,6 @@ This gives the user a quick at-a-glance preview of each thread's recent activity
 
 # Thread list reply previews
 - [x] When a thread list is visible, show a "Refresh Previews" button to the right of the existing "Sort & View" button. Read context/THREAD_LIST_EXAMPLE.html for the HTML. The button will do the same thing that our DOM watcher's "new thread list element" event does: it collects all the visible thread IDs, issues the API call, and when the API call comes back it updates the displayed thread replies. The button itself is disabled while the API call is in flight so the user can't keep clicking it.
+
+# Bugs
+- [x] Read project/FINISHED.md to remember what we did about the debounce of the "new thread in thread list" event from the DOM observer. Now, we are issuing the API call _every_ 500 milliseconds, even when the user is idle. We only want to issue the API call on some kind of user-driven transition, where either a new thread div is created, or an existing hidden one is shown.
