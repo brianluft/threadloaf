@@ -8,16 +8,7 @@ import * as path from "path";
 import * as https from "https";
 import * as crypto from "crypto";
 import { Express } from "express";
-
-// Conditional import to avoid issues in test environments
-let acme: any = null;
-try {
-    if (process.env.NODE_ENV !== "test") {
-        acme = require("acme-client");
-    }
-} catch (error) {
-    console.warn("acme-client not available, Let's Encrypt functionality disabled");
-}
+import * as acme from "acme-client";
 
 export interface LetsEncryptConfig {
     enabled: boolean;
@@ -35,7 +26,7 @@ export interface CertificateFiles {
 
 export class LetsEncryptManager {
     private config: LetsEncryptConfig;
-    private client?: any; // acme.Client when available
+    private client?: acme.Client;
     private challengeTokens = new Map<string, string>(); // token -> keyAuth
 
     constructor(config: LetsEncryptConfig) {
@@ -48,11 +39,6 @@ export class LetsEncryptManager {
     async initialize(): Promise<void> {
         if (!this.config.enabled) {
             console.log("Let's Encrypt is disabled");
-            return;
-        }
-
-        if (!acme) {
-            console.log("acme-client not available, skipping Let's Encrypt initialization");
             return;
         }
 
@@ -138,7 +124,7 @@ export class LetsEncryptManager {
      * Request a new certificate using HTTP-01 challenge
      */
     async requestCertificate(): Promise<CertificateFiles | null> {
-        if (!this.config.enabled || !this.client || !acme) {
+        if (!this.config.enabled || !this.client) {
             return null;
         }
 

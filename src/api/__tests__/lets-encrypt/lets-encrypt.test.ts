@@ -11,15 +11,24 @@ const mockFs = fs as jest.Mocked<typeof fs>;
 jest.mock("path");
 const mockPath = path as jest.Mocked<typeof path>;
 
+// Mock acme-client module
+jest.mock("acme-client", () => ({
+    crypto: {
+        createPrivateKey: jest.fn(),
+        createCsr: jest.fn(),
+    },
+    Client: jest.fn(),
+}));
+
+import * as acme from "acme-client";
+const mockAcme = acme as jest.Mocked<typeof acme>;
+
 describe("LetsEncryptManager", () => {
     let config: LetsEncryptConfig;
-    let originalNodeEnv: string | undefined;
+    let mockClient: any;
 
     beforeEach(() => {
         jest.clearAllMocks();
-
-        // Save original NODE_ENV
-        originalNodeEnv = process.env.NODE_ENV;
 
         config = {
             enabled: true,
@@ -31,15 +40,23 @@ describe("LetsEncryptManager", () => {
 
         // Mock path.join to return predictable paths
         mockPath.join.mockImplementation((...args) => args.join("/"));
-    });
 
-    afterEach(() => {
-        // Restore original NODE_ENV
-        if (originalNodeEnv !== undefined) {
-            process.env.NODE_ENV = originalNodeEnv;
-        } else {
-            delete process.env.NODE_ENV;
-        }
+        // Set up mock ACME client
+        mockClient = {
+            createAccount: jest.fn().mockResolvedValue({}),
+            createOrder: jest.fn(),
+            getAuthorizations: jest.fn(),
+            getChallengeKeyAuthorization: jest.fn(),
+            verifyChallenge: jest.fn(),
+            completeChallenge: jest.fn(),
+            waitForValidStatus: jest.fn(),
+            finalizeOrder: jest.fn(),
+            getCertificate: jest.fn(),
+        };
+
+        mockAcme.Client.mockImplementation(() => mockClient);
+        (mockAcme.crypto.createPrivateKey as jest.Mock).mockResolvedValue(Buffer.from("test-key"));
+        (mockAcme.crypto.createCsr as jest.Mock).mockResolvedValue([Buffer.from("test-key"), Buffer.from("test-csr")]);
     });
 
     describe("constructor", () => {
@@ -50,19 +67,8 @@ describe("LetsEncryptManager", () => {
     });
 
     describe("initialize", () => {
-        test("should log initial message when enabled and acme available", async () => {
-            // Set NODE_ENV to production to enable acme-client
-            process.env.NODE_ENV = "production";
-
-            // Mock a minimal acme module that won't cause errors
-            jest.doMock("acme-client", () => ({
-                crypto: { createPrivateKey: jest.fn().mockResolvedValue(Buffer.from("test-key")) },
-                Client: jest.fn(() => ({ createAccount: jest.fn().mockResolvedValue({}) })),
-            }));
-            jest.resetModules();
-
-            const { LetsEncryptManager: TestManager } = require("../../lets-encrypt");
-            const manager = new TestManager(config);
+        test("should log initial message when enabled", async () => {
+            const manager = new LetsEncryptManager(config);
 
             // Mock fs operations
             mockFs.existsSync.mockReturnValue(true); // All files exist
@@ -73,31 +79,14 @@ describe("LetsEncryptManager", () => {
 
             await manager.initialize();
 
-            // Just verify that initialization started (this covers line 59)
             expect(consoleLogSpy).toHaveBeenCalledWith("Initializing Let's Encrypt ACME client...");
+            expect(consoleLogSpy).toHaveBeenCalledWith("Let's Encrypt ACME client initialized successfully");
 
             consoleLogSpy.mockRestore();
-            jest.dontMock("acme-client");
         });
 
         test("should create new account key when one doesn't exist", async () => {
-            // Set NODE_ENV to production BEFORE any module loading
-            const originalNodeEnv = process.env.NODE_ENV;
-            process.env.NODE_ENV = "production";
-
-            // Mock acme-client before requiring the module
-            jest.doMock("acme-client", () => ({
-                crypto: { createPrivateKey: jest.fn().mockResolvedValue(Buffer.from("new-test-key")) },
-                Client: jest.fn().mockImplementation(() => ({
-                    createAccount: jest.fn().mockResolvedValue({}),
-                })),
-            }));
-
-            // Clear module cache and import fresh
-            jest.resetModules();
-            const { LetsEncryptManager: TestManager } = require("../../lets-encrypt");
-
-            const manager = new TestManager(config);
+            const manager = new LetsEncryptManager(config);
 
             // Mock fs operations - certs dir exists but account key file doesn't exist
             mockFs.existsSync.mockImplementation((filePath) => {
@@ -113,15 +102,29 @@ describe("LetsEncryptManager", () => {
 
             await manager.initialize();
 
-            // Verify we took the "create new key" path
             expect(consoleLogSpy).toHaveBeenCalledWith("Creating new ACME account key...");
-            // expect(mockFs.writeFileSync).toHaveBeenCalledWith("./test-certs/account.key", Buffer.from("new-test-key"));
+            expect(mockAcme.crypto.createPrivateKey).toHaveBeenCalled();
+            expect(mockFs.writeFileSync).toHaveBeenCalledWith("./test-certs/account.key", Buffer.from("test-key"));
 
-            // Restore NODE_ENV
-            process.env.NODE_ENV = originalNodeEnv;
             consoleLogSpy.mockRestore();
-            jest.dontMock("acme-client");
-            jest.resetModules();
+        });
+
+        test("should create certificates directory if it doesn't exist", async () => {
+            const manager = new LetsEncryptManager(config);
+
+            // Mock certs directory doesn't exist
+            mockFs.existsSync.mockImplementation((filePath) => {
+                if (filePath === "./test-certs") {
+                    return false; // Directory doesn't exist
+                }
+                return true; // Account key file exists
+            });
+            mockFs.mkdirSync.mockImplementation();
+            mockFs.readFileSync.mockReturnValue(Buffer.from("existing-key"));
+
+            await manager.initialize();
+
+            expect(mockFs.mkdirSync).toHaveBeenCalledWith("./test-certs", { recursive: true });
         });
     });
 
@@ -155,66 +158,6 @@ describe("LetsEncryptManager", () => {
             expect(setIntervalSpy).not.toHaveBeenCalled();
 
             setIntervalSpy.mockRestore();
-        });
-    });
-
-    describe("test environment", () => {
-        test("should skip initialization when acme-client not available", async () => {
-            // Set NODE_ENV to test to simulate acme not being available
-            process.env.NODE_ENV = "test";
-
-            const manager = new LetsEncryptManager(config);
-            const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
-
-            await manager.initialize();
-
-            expect(consoleLogSpy).toHaveBeenCalledWith(
-                "acme-client not available, skipping Let's Encrypt initialization",
-            );
-
-            consoleLogSpy.mockRestore();
-        });
-
-        test("should return null when acme client not available", async () => {
-            process.env.NODE_ENV = "test";
-            const manager = new LetsEncryptManager(config);
-
-            const result = await manager.requestCertificate();
-
-            expect(result).toBeNull();
-        });
-    });
-
-    describe("module import errors", () => {
-        test("should handle acme-client require error gracefully", () => {
-            // Mock console.warn to capture the warning
-            const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation();
-
-            // Set NODE_ENV to non-test to trigger the require path
-            process.env.NODE_ENV = "production";
-
-            // Mock acme-client to throw an error when required
-            jest.doMock("acme-client", () => {
-                throw new Error("Module not found");
-            });
-
-            // Clear module cache and re-import to trigger the error
-            jest.resetModules();
-
-            // This should trigger the catch block and console.warn
-            const { LetsEncryptManager: TestManager } = require("../../lets-encrypt");
-
-            const manager = new TestManager(config);
-            expect(manager).toBeInstanceOf(TestManager);
-
-            expect(consoleWarnSpy).toHaveBeenCalledWith(
-                "acme-client not available, Let's Encrypt functionality disabled",
-            );
-
-            // Clean up
-            jest.dontMock("acme-client");
-            jest.resetModules();
-            consoleWarnSpy.mockRestore();
         });
     });
 
@@ -284,6 +227,39 @@ describe("LetsEncryptManager", () => {
             consoleLogSpy.mockRestore();
         });
 
+        test("should return certificate files without chain when chain file doesn't exist", () => {
+            const manager = new LetsEncryptManager(config);
+            mockFs.existsSync.mockImplementation((filePath) => {
+                return (
+                    filePath === "./test-certs/api.example.com.crt" || filePath === "./test-certs/api.example.com.key"
+                    // chain file doesn't exist
+                );
+            });
+
+            mockFs.readFileSync.mockImplementation((filePath) => {
+                if (filePath === "./test-certs/api.example.com.crt") {
+                    return "-----BEGIN CERTIFICATE-----\ntest cert\n-----END CERTIFICATE-----";
+                }
+                if (filePath === "./test-certs/api.example.com.key") {
+                    return "-----BEGIN PRIVATE KEY-----\ntest key\n-----END PRIVATE KEY-----";
+                }
+                return "";
+            });
+
+            const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
+
+            const result = manager.getCertificateFiles();
+
+            expect(result).toEqual({
+                cert: "./test-certs/api.example.com.crt",
+                key: "./test-certs/api.example.com.key",
+                chain: undefined, // chain should be undefined when file doesn't exist
+            });
+            expect(consoleLogSpy).toHaveBeenCalledWith("Certificate files found and appear valid");
+
+            consoleLogSpy.mockRestore();
+        });
+
         test("should return null when certificate content is invalid", () => {
             const manager = new LetsEncryptManager(config);
             mockFs.existsSync.mockImplementation((filePath) => {
@@ -330,6 +306,122 @@ describe("LetsEncryptManager", () => {
 
             expect(result).toBeNull();
             expect(consoleErrorSpy).toHaveBeenCalledWith("Error reading certificate:", expect.any(Error));
+
+            consoleErrorSpy.mockRestore();
+        });
+    });
+
+    describe("requestCertificate", () => {
+        test("should return null when disabled", async () => {
+            const disabledConfig = { ...config, enabled: false };
+            const manager = new LetsEncryptManager(disabledConfig);
+
+            const result = await manager.requestCertificate();
+
+            expect(result).toBeNull();
+        });
+
+        test("should return null when client not initialized", async () => {
+            const manager = new LetsEncryptManager(config);
+            // Don't call initialize, so client should be undefined
+
+            const result = await manager.requestCertificate();
+
+            expect(result).toBeNull();
+        });
+
+        test("should successfully request certificate", async () => {
+            const manager = new LetsEncryptManager(config);
+
+            // Initialize manager first
+            mockFs.existsSync.mockReturnValue(true);
+            mockFs.readFileSync.mockReturnValue(Buffer.from("existing-key"));
+            await manager.initialize();
+
+            // Mock the certificate request flow
+            const mockOrder = { id: "order-123" };
+            const mockChallenge = {
+                type: "http-01",
+                token: "challenge-token",
+            };
+            const mockAuth = {
+                challenges: [mockChallenge],
+            };
+
+            mockClient.createOrder.mockResolvedValue(mockOrder);
+            mockClient.getAuthorizations.mockResolvedValue([mockAuth]);
+            mockClient.getChallengeKeyAuthorization.mockResolvedValue("key-auth");
+            mockClient.verifyChallenge.mockResolvedValue({});
+            mockClient.completeChallenge.mockResolvedValue({});
+            mockClient.waitForValidStatus.mockResolvedValue({});
+            mockClient.finalizeOrder.mockResolvedValue({});
+            mockClient.getCertificate.mockResolvedValue(
+                "-----BEGIN CERTIFICATE-----\ncert content\n-----END CERTIFICATE-----",
+            );
+
+            const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
+
+            const result = await manager.requestCertificate();
+
+            expect(result).toEqual({
+                cert: "./test-certs/api.example.com.crt",
+                key: "./test-certs/api.example.com.key",
+            });
+
+            expect(consoleLogSpy).toHaveBeenCalledWith("Requesting certificate for domain: api.example.com");
+            expect(consoleLogSpy).toHaveBeenCalledWith("Certificate successfully obtained and saved");
+
+            consoleLogSpy.mockRestore();
+        });
+
+        test("should handle certificate request errors", async () => {
+            const manager = new LetsEncryptManager(config);
+
+            // Initialize manager first
+            mockFs.existsSync.mockReturnValue(true);
+            mockFs.readFileSync.mockReturnValue(Buffer.from("existing-key"));
+            await manager.initialize();
+
+            // Mock error during certificate request
+            mockClient.createOrder.mockRejectedValue(new Error("ACME server error"));
+
+            const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+
+            const result = await manager.requestCertificate();
+
+            expect(result).toBeNull();
+            expect(consoleErrorSpy).toHaveBeenCalledWith("Error requesting certificate:", expect.any(Error));
+
+            consoleErrorSpy.mockRestore();
+        });
+
+        test("should handle missing HTTP-01 challenge", async () => {
+            const manager = new LetsEncryptManager(config);
+
+            // Initialize manager first
+            mockFs.existsSync.mockReturnValue(true);
+            mockFs.readFileSync.mockReturnValue(Buffer.from("existing-key"));
+            await manager.initialize();
+
+            // Mock certificate request flow without HTTP-01 challenge
+            const mockOrder = { id: "order-123" };
+            const mockChallenge = {
+                type: "dns-01", // Different challenge type, not HTTP-01
+                token: "challenge-token",
+            };
+            const mockAuth = {
+                challenges: [mockChallenge],
+            };
+
+            mockClient.createOrder.mockResolvedValue(mockOrder);
+            mockClient.getAuthorizations.mockResolvedValue([mockAuth]);
+
+            const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+
+            const result = await manager.requestCertificate();
+
+            expect(result).toBeNull();
+            expect(consoleErrorSpy).toHaveBeenCalledWith("Error requesting certificate:", expect.any(Error));
 
             consoleErrorSpy.mockRestore();
         });
