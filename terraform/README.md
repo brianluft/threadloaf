@@ -37,7 +37,7 @@ terraform apply
 After deployment, manually set these Parameter Store values in the AWS Console:
 
 1. **`/threadloaf/api/env`** (SecureString): Complete .env file content for the API
-2. **`/threadloaf/api/release-url`** (String): URL to download the API release zip file
+2. **`/threadloaf/api/release-path`** (String): S3 path to download the API release zip file
 
 ### Deployment Process
 
