@@ -79,3 +79,7 @@ This gives the user a quick at-a-glance preview of each thread's recent activity
     - [x] Remove margin above the reply list and below the thread, we want the reply list (with its purple left border) to actually touch the thread box to ensure the user can visually see that they go together.
     - [x] In each reply we have "author:text" jammed together just like that; add space after the colon.
     - [x] The replies should all be clickable, they open the thread just like clicking on the main thread list element for a thread does.
+
+# Bugs
+- [x] The first time I open the thread list for a forum channel, our reply previews show correctly. If I switch to a chat channel and then return to the forum channel, our reply previews do not show. The reply previews never return after that. No further API calls are made. I have Dev Tools and can poke around if you need.
+- [x] *Every* time we get a (debounced) "new thread in the thread list" event, we need to send the API call for *all* visible threads. Even if we've seen them all before. Keep a cache for quick reaction so the replies appear immediately, but always update that cache from the server on this event and update the previews asynchronously when the response comes in.
