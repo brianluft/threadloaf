@@ -25,3 +25,4 @@ Thumbs.db
 
 .env
 api_log
+.terraform/
