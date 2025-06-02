@@ -11,10 +11,10 @@ terraform {
   backend "s3" {
     bucket = "threadloaf-terraform-prod"
     key    = "api/terraform.tfstate"
-    region = "us-east-1"
+    region = "us-east-2"
   }
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = "us-east-2"
 } 

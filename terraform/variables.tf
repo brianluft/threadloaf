@@ -1,7 +1,7 @@
 variable "availability_zone" {
   description = "The availability zone to deploy resources in"
   type        = string
-  default     = "us-east-1c"
+  default     = "us-east-2c"
 }
 
 variable "instance_type" {

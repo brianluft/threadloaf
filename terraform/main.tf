@@ -235,7 +235,7 @@ locals {
   user_data = base64encode(templatefile("${path.module}/user-data.sh", {
     env_parameter_name          = var.env_parameter_name
     release_path_parameter_name = var.release_path_parameter_name
-    region                      = "us-east-1"
+    region                      = "us-east-2"
     s3_bucket                   = aws_s3_bucket.files.bucket
   }))
 }

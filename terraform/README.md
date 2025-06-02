@@ -4,7 +4,7 @@ This Terraform configuration deploys the Threadloaf API to AWS with a complete i
 
 ## Architecture
 
-- **VPC**: Custom VPC with public subnet in us-east-1c
+- **VPC**: Custom VPC with public subnet in us-east-2c
 - **EC2**: t4g.micro Ubuntu ARM64 instance with Elastic IP
 - **IAM**: Instance role with Session Manager and Parameter Store access
 - **Security**: Security group allowing HTTP/HTTPS traffic only

@@ -1,5 +1,5 @@
 - [x] Add an AWS terraform configuration for the api. Absolutely everything required, so it can be deployed to a fresh blank AWS account. Do not deploy it; only create the configuration in a `terraform/` folder. You can initialize the terraform configuration and run `terraform plan` but do not apply.
-    - [x] us-east-1c
+    - [x] us-east-2c
     - [x] Terraform S3 backend, bucket name "threadloaf-terraform-prod".
     - [x] VPC
     - [x] Parameter Store parameter for the .env file (secret). I will set the real value manually in AWS Management Console.
