@@ -8,10 +8,9 @@
 
 ## Development
 
-- Use the VSCode dev container in WSL.
-- `npm install`
-- `npm run build`
-- In Edge, add the unpacked extension via `\\wsl$\Ubuntu\home\your-username\threadloaf\dist`
+- Use the VSCode dev container.
+- `scripts/init.sh`
+- If you plan to use Terraform, `aws configure`.
 
 ## Release procedure
 
