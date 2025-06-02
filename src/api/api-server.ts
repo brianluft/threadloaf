@@ -3,12 +3,15 @@
  * Exposes HTTP endpoints for retrieving messages and forum threads
  */
 
-import express, { Request, Response, NextFunction } from "express";
+import express, { Request, Response, NextFunction, Express } from "express";
 import cors from "cors";
 import axios from "axios";
 import jwt from "jsonwebtoken";
+import * as http from "http";
+import * as https from "https";
 import { DataStore, StoredMessage } from "./data-store";
 import { DiscordClient } from "./discord-client";
+import { LetsEncryptManager, LetsEncryptConfig } from "./lets-encrypt";
 
 // Type definitions for the new multi-channel messages endpoint
 type MultiChannelMessagesRequest = {
@@ -29,19 +32,32 @@ type AuthCacheEntry = {
 };
 
 export class ApiServer {
-    private app = express();
+    private _app = express();
     private port: number;
     private dataStoresByGuild: Map<string, DataStore>;
     private discordClientsByGuild: Map<string, DiscordClient>;
     private authCache = new Map<string, AuthCacheEntry>(); // key: "userId:guildId"
 
     private authenticationEnabled: boolean;
+    private letsEncryptManager: LetsEncryptManager | null = null;
+    private httpServer?: http.Server;
+    private httpsServer?: https.Server;
+
+    // Expose app for testing
+    public get app() {
+        return this._app;
+    }
+
+    public set app(app: any) {
+        this._app = app;
+    }
 
     constructor(
         port: number,
         dataStoresByGuild: Map<string, DataStore>,
         discordClientsByGuild: Map<string, DiscordClient>,
         authenticationEnabled?: boolean,
+        letsEncryptConfig?: LetsEncryptConfig,
     ) {
         this.port = port;
         this.dataStoresByGuild = dataStoresByGuild;
@@ -56,18 +72,79 @@ export class ApiServer {
             this.authenticationEnabled = !testingMode;
         }
 
+        // Initialize Let's Encrypt if configuration provided
+        if (letsEncryptConfig && letsEncryptConfig.enabled) {
+            this.letsEncryptManager = new LetsEncryptManager(letsEncryptConfig);
+        }
+
         this.setupMiddleware();
         this.setupRoutes();
         this.setupErrorHandling();
     }
 
     /**
-     * Start the API server
+     * Start the API server with optional HTTPS support
      */
-    start(): void {
-        this.app.listen(this.port, () => {
-            console.log(`API server listening on port ${this.port}`);
+    async start(): Promise<void> {
+        if (this.letsEncryptManager) {
+            await this.startWithHttps();
+        } else {
+            this.startHttpOnly();
+        }
+    }
+
+    /**
+     * Start HTTP-only server (debug mode)
+     */
+    private startHttpOnly(): void {
+        this._app.listen(this.port, () => {
+            console.log(`API server listening on HTTP port ${this.port} (debug mode)`);
         });
+    }
+
+    /**
+     * Start server with HTTPS support (production mode)
+     */
+    private async startWithHttps(): Promise<void> {
+        if (!this.letsEncryptManager) {
+            throw new Error("Let's Encrypt manager not initialized");
+        }
+
+        // Initialize Let's Encrypt
+        await this.letsEncryptManager.initialize();
+
+        // Create HTTP server for ACME challenges only
+        this.httpServer = http.createServer(this._app);
+        const httpPort = 80;
+        this.httpServer.listen(httpPort, () => {
+            console.log(`HTTP server listening on port ${httpPort} (ACME challenges only)`);
+        });
+
+        // Try to get existing certificate or request a new one
+        let httpsServer = this.letsEncryptManager.createHttpsServer(this._app);
+
+        if (!httpsServer) {
+            console.log("No valid certificate found, requesting new certificate...");
+            const certFiles = await this.letsEncryptManager.requestCertificate();
+
+            if (certFiles) {
+                httpsServer = this.letsEncryptManager.createHttpsServer(this._app);
+            }
+        }
+
+        if (httpsServer) {
+            const httpsPort = 443;
+            this.httpsServer = httpsServer;
+            this.httpsServer.listen(httpsPort, () => {
+                console.log(`HTTPS server listening on port ${httpsPort}`);
+            });
+
+            // Schedule automatic certificate renewal
+            this.letsEncryptManager.scheduleRenewal();
+        } else {
+            console.error("Failed to start HTTPS server - no valid certificate available");
+            console.log("Continuing with HTTP-only server for ACME challenges");
+        }
     }
 
     /**
@@ -75,7 +152,7 @@ export class ApiServer {
      */
     private setupMiddleware(): void {
         // Configure CORS to allow requests from browser extensions and localhost
-        this.app.use(
+        this._app.use(
             cors({
                 origin: (origin, callback) => {
                     // Allow requests from browser extensions, localhost, or no origin (for testing)
@@ -96,10 +173,30 @@ export class ApiServer {
         );
 
         // Parse JSON request bodies
-        this.app.use(express.json());
+        this._app.use(express.json());
+
+        // HTTPS enforcement middleware (production only)
+        if (this.letsEncryptManager) {
+            this._app.use((req, res, next) => {
+                // Allow ACME challenge endpoint on HTTP
+                if (req.path.startsWith("/.well-known/acme-challenge/")) {
+                    next();
+                    return;
+                }
+
+                // In production with Let's Encrypt enabled, mandate HTTPS
+                if (!req.secure && req.get("X-Forwarded-Proto") !== "https") {
+                    res.status(400).json({
+                        error: "HTTPS required. This API only accepts secure connections.",
+                    });
+                    return;
+                }
+                next();
+            });
+        }
 
         // Basic logging middleware
-        this.app.use((req, _, next) => {
+        this._app.use((req, _, next) => {
             console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
             next();
         });
@@ -110,7 +207,7 @@ export class ApiServer {
      */
     private setupErrorHandling(): void {
         // Error handling middleware - must be registered after routes
-        this.app.use(this.errorHandler.bind(this));
+        this._app.use(this.errorHandler.bind(this));
     }
 
     /**
@@ -204,8 +301,12 @@ export class ApiServer {
      * Setup API routes
      */
     private setupRoutes(): void {
+        // Setup Let's Encrypt ACME challenge route
+        if (this.letsEncryptManager) {
+            this.letsEncryptManager.setupChallengeRoute(this._app);
+        }
         // OAuth2 callback endpoint
-        this.app.get("/auth/callback", async (req: Request, res: Response): Promise<void> => {
+        this._app.get("/auth/callback", async (req: Request, res: Response): Promise<void> => {
             const { code, state } = req.query;
 
             try {
@@ -280,7 +381,7 @@ export class ApiServer {
         });
 
         // Get messages for multiple channels
-        this.app.post(
+        this._app.post(
             "/:guildId/messages",
             this.requireGuildMember.bind(this),
             async (
@@ -343,7 +444,7 @@ export class ApiServer {
         );
 
         // Get all forum threads with their latest replies
-        this.app.get(
+        this._app.get(
             "/:guildId/forum-threads",
             this.requireGuildMember.bind(this),
             async (req: AuthorizedRequest<{ guildId: string }>, res: Response): Promise<void> => {
@@ -397,7 +498,7 @@ export class ApiServer {
         );
 
         // OAuth2 configuration endpoint (no auth required - needed for login flow)
-        this.app.get("/auth/config", (_, res: Response): void => {
+        this._app.get("/auth/config", (_, res: Response): void => {
             res.json({
                 clientId: process.env.DISCORD_CLIENT_ID!,
                 redirectUri: process.env.DISCORD_REDIRECT_URI!,
@@ -405,7 +506,7 @@ export class ApiServer {
         });
 
         // Health check endpoint
-        this.app.get("/health", (_, res) => {
+        this._app.get("/health", (_, res) => {
             res.json({ status: "ok" });
         });
     }

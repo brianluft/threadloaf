@@ -1,12 +1,12 @@
-- [ ] Add Let's Encrypt support to the api.
-    - [ ] HTTP-01 challenge method
-    - [ ] In production the domain is api.threadloaf.com
-    - [ ] Add Let's Encrypt credentials and configuration to .env / example.env
-    - [ ] Make it optional. When debugging locally we want HTTP only with Let's Encrypt functionality disabled.
-    - [ ] In production, our API endpoints must mandate HTTPS. If the user makes such a request via plaintext HTTP, return a 4xx error with a stern message without taking any action.
-    - [ ] In production, only the Let's Encrypt acme challenge endpoint should be exposed via HTTP since that is required.
-    - [ ] DON'T redirect from HTTP to HTTPS. Our endpoints should actually fail. Don't enable client sloppiness.
-    - [ ] In debug mode, Let's Encrypt is disabled and all endpoints are exposed via HTTP.
+- [x] Add Let's Encrypt support to the api.
+    - [x] HTTP-01 challenge method
+    - [x] In production the domain is api.threadloaf.com
+    - [x] Add Let's Encrypt credentials and configuration to .env / example.env
+    - [x] Make it optional. When debugging locally we want HTTP only with Let's Encrypt functionality disabled.
+    - [x] In production, our API endpoints must mandate HTTPS. If the user makes such a request via plaintext HTTP, return a 4xx error with a stern message without taking any action.
+    - [x] In production, only the Let's Encrypt acme challenge endpoint should be exposed via HTTP since that is required.
+    - [x] DON'T redirect from HTTP to HTTPS. Our endpoints should actually fail. Don't enable client sloppiness.
+    - [x] In debug mode, Let's Encrypt is disabled and all endpoints are exposed via HTTP.
 - [ ] Add an AWS terraform configuration for the api. Absolutely everything required, so it can be deployed to a fresh blank AWS account. Do not deploy it; only create the configuration in a `terraform/` folder. You can run terraform commands EXCEPT apply. 
     - [ ] us-east-1c
     - [ ] Terraform S3 backend, bucket name "threadloaf-terraform".
