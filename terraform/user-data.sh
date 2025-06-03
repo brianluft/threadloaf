@@ -61,12 +61,12 @@ mkdir -p /mnt/efs-letsencrypt
 echo "${efs_file_system_id}.efs.${region}.amazonaws.com:/ /mnt/efs-letsencrypt nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport,_netdev 0 0" >> /etc/fstab
 mount /mnt/efs-letsencrypt
 
-# Set proper permissions for Let's Encrypt certificates directory
-chown root:root /mnt/efs-letsencrypt
-chmod 755 /mnt/efs-letsencrypt
-
 # Create threadloaf user
 useradd -m -s /bin/bash threadloaf
+
+# Set proper permissions for Let's Encrypt certificates directory
+chown -R threadloaf:threadloaf /mnt/efs-letsencrypt
+chmod 755 /mnt/efs-letsencrypt
 
 # Create application directory
 mkdir -p /opt/threadloaf
@@ -97,7 +97,7 @@ After=network.target
 Type=simple
 User=threadloaf
 WorkingDirectory=/opt/threadloaf
-ExecStart=/usr/bin/node dist/api-server.js
+ExecStart=/usr/bin/node dist/index.js
 Restart=always
 RestartSec=10
 Environment=NODE_ENV=production
@@ -108,6 +108,9 @@ PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 ReadWritePaths=/opt/threadloaf
+
+# Allow binding to privileged ports (80, 443)
+AmbientCapabilities=CAP_NET_BIND_SERVICE
 
 [Install]
 WantedBy=multi-user.target
