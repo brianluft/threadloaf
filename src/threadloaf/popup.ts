@@ -1,6 +1,9 @@
 import { UserOptionsProvider } from "./UserOptionsProvider";
 import { ThreadListAppearance } from "./ThreadListAppearance";
 
+// This will be replaced at build time via esbuild --define
+declare const API_BASE_URL: string;
+
 document.addEventListener("DOMContentLoaded", async () => {
     const userOptions = await UserOptionsProvider.loadInitialOptions();
     const optionsProvider = UserOptionsProvider.getInstance(userOptions);
@@ -185,11 +188,11 @@ async function startOAuth2Flow(): Promise<void> {
             // Fetch OAuth2 configuration from the API
             let configResponse: Response;
             try {
-                configResponse = await fetch("http://localhost:3000/auth/config");
+                configResponse = await fetch(`${API_BASE_URL}/auth/config`);
             } catch (fetchError) {
                 // This typically happens with CORS or network errors
                 throw new Error(
-                    `Cannot connect to API server. Make sure it's running on localhost:3000. Error: ${fetchError instanceof Error ? fetchError.message : "Network error"}`,
+                    `Cannot connect to API server. Make sure it's running on ${API_BASE_URL}. Error: ${fetchError instanceof Error ? fetchError.message : "Network error"}`,
                 );
             }
 

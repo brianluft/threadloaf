@@ -1,3 +1,6 @@
+// This will be replaced at build time via esbuild --define
+declare const API_BASE_URL: string;
+
 interface ApiMessage {
     id: string;
     content: string;
@@ -47,7 +50,7 @@ chrome.runtime.onMessage.addListener(
 );
 
 async function handleFetchMessages(request: FetchMessagesRequest): Promise<ApiMessagesResponse> {
-    const response = await fetch(`http://localhost:3000/${request.guildId}/messages`, {
+    const response = await fetch(`${API_BASE_URL}/${request.guildId}/messages`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

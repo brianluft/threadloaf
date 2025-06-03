@@ -22,9 +22,9 @@ echo "📚 Creating source archive..."
 cd "$ROOT_DIR"
 zip -r publish/source.zip . -x "publish/*" "*.git*"
 
-echo "🔨 Building extension..."
+echo "🔨 Building extension for production..."
 cd "$SCRIPT_DIR"
-npm run build
+npm run build:prod
 
 echo "📦 Creating extension archive..."
 cd "$ROOT_DIR/dist"
