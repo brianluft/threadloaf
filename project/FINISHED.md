@@ -171,3 +171,4 @@ This gives the user a quick at-a-glance preview of each thread's recent activity
     - [x] In release.sh, build both versions and zip them separately. Only Firefox needs the source zip.
   - [x] By environment: We have "http://localhost" for development and "https://api.threadloaf.com" for production. Development builds should only have the former and production builds should only have the latter.
   - [x] Find a way to manage this without making four duplicate copies of the whole manifest.json. There are only minor differences between these configurations with most of the content being identical between all four.
+- [x] In the thread reply previews, we once already tried to fix the lack of space in between "author:" and their post body. It comes up as "author:text" still. Add padding between the colon and the text.
