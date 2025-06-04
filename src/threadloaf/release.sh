@@ -20,7 +20,7 @@ npm install
 
 echo "📚 Creating source archive..."
 cd "$ROOT_DIR"
-zip -r publish/source.zip . -x "publish/*" "*.git*"
+zip -r publish/source.zip . -x "publish/*" "*.git*" "terraform/*" "src/api/*"
 
 echo "🔨 Building extension for production..."
 cd "$SCRIPT_DIR"
