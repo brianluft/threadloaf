@@ -395,7 +395,7 @@ body.threadloaf-visible div[class*="messagesWrapper_"] div[class*="scrollerConte
     font-size: 12px;
     line-height: 1.4;
     display: flex;
-    gap: 0;
+    gap: 2px;
     cursor: pointer;
 }
 
