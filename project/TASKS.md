@@ -1,1 +1,1 @@
-- [ ] In the extension's user options, set the default "Recent thread replies to show" to 5 (currently 0).
+- [x] In the extension's user options, set the default "Recent thread replies to show" to 5 (currently 0).

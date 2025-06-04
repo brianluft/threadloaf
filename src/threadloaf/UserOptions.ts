@@ -13,7 +13,7 @@ export class UserOptions {
     public threadListAppearance = ThreadListAppearance.Compact;
     public isLoggedIn = false;
     public authToken = "";
-    public threadRepliesCount = 0;
+    public threadRepliesCount = 5;
 
     public constructor(init?: Partial<UserOptions>) {
         Object.assign(this, init);
