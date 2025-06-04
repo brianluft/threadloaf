@@ -1,13 +1,21 @@
 {
   "scripts": {
     "build": "npm run build:dev",
-    "build:dev": "tsc --noEmit && npm run lint && npm run bundle:dev && cp -rf manifest.json styles.css threadloaf-16.png threadloaf-32.png threadloaf-48.png threadloaf-128.png popup.html test-data ../../dist/",
-    "build:prod": "tsc --noEmit && npm run lint && npm run bundle:prod && cp -rf manifest.json styles.css threadloaf-16.png threadloaf-32.png threadloaf-48.png threadloaf-128.png popup.html test-data ../../dist/",
+    "build:dev": "npm run build:dev:chrome",
+    "build:dev:chrome": "tsc --noEmit && npm run lint && npm run bundle:dev && npm run generate:manifest:chrome:dev && cp -rf manifest.json styles.css threadloaf-16.png threadloaf-32.png threadloaf-48.png threadloaf-128.png popup.html test-data ../../dist/",
+    "build:dev:firefox": "tsc --noEmit && npm run lint && npm run bundle:dev && npm run generate:manifest:firefox:dev && cp -rf manifest.json styles.css threadloaf-16.png threadloaf-32.png threadloaf-48.png threadloaf-128.png popup.html test-data ../../dist/",
+    "build:prod:chrome": "tsc --noEmit && npm run lint && npm run bundle:prod && npm run generate:manifest:chrome:prod && cp -rf manifest.json styles.css threadloaf-16.png threadloaf-32.png threadloaf-48.png threadloaf-128.png popup.html test-data ../../dist/",
+    "build:prod:firefox": "tsc --noEmit && npm run lint && npm run bundle:prod && npm run generate:manifest:firefox:prod && cp -rf manifest.json styles.css threadloaf-16.png threadloaf-32.png threadloaf-48.png threadloaf-128.png popup.html test-data ../../dist/",
+    "build:prod": "npm run build:prod:chrome",
     "bundle": "npm run bundle:dev",
     "bundle:dev": "esbuild content_script.ts --bundle --outfile=../../dist/content_script.js --format=iife --platform=browser --sourcemap --define:API_BASE_URL='\"http://localhost:3000\"' && esbuild popup.ts --bundle --outfile=../../dist/popup.js --format=iife --platform=browser --sourcemap --define:API_BASE_URL='\"http://localhost:3000\"' && esbuild oauth_callback.ts --bundle --outfile=../../dist/oauth_callback.js --format=iife --platform=browser --sourcemap --define:API_BASE_URL='\"http://localhost:3000\"' && esbuild background.ts --bundle --outfile=../../dist/background.js --format=iife --platform=browser --sourcemap --define:API_BASE_URL='\"http://localhost:3000\"'",
     "bundle:prod": "esbuild content_script.ts --bundle --outfile=../../dist/content_script.js --format=iife --platform=browser --sourcemap --define:API_BASE_URL='\"https://api.threadloaf.com\"' && esbuild popup.ts --bundle --outfile=../../dist/popup.js --format=iife --platform=browser --sourcemap --define:API_BASE_URL='\"https://api.threadloaf.com\"' && esbuild oauth_callback.ts --bundle --outfile=../../dist/oauth_callback.js --format=iife --platform=browser --sourcemap --define:API_BASE_URL='\"https://api.threadloaf.com\"' && esbuild background.ts --bundle --outfile=../../dist/background.js --format=iife --platform=browser --sourcemap --define:API_BASE_URL='\"https://api.threadloaf.com\"'",
     "format": "prettier --write \"**/*.ts\"",
     "lint": "eslint .",
+    "generate:manifest:chrome:dev": "node --loader ts-node/esm generate-manifest.ts chrome development manifest.json",
+    "generate:manifest:chrome:prod": "node --loader ts-node/esm generate-manifest.ts chrome production manifest.json",
+    "generate:manifest:firefox:dev": "node --loader ts-node/esm generate-manifest.ts firefox development manifest.json",
+    "generate:manifest:firefox:prod": "node --loader ts-node/esm generate-manifest.ts firefox production manifest.json",
     "bundle-tests": "mkdir -p ../temp && esbuild runTests.ts --bundle --outfile=../temp/runTests.js --format=iife --platform=browser && cp test.html ../temp/",
     "test": "npm run bundle-tests && node --loader ts-node/esm runTestsHeadless.ts"
   },

@@ -35,6 +35,7 @@ jobs:
       with:
         name: release-artifacts
         path: |
-          publish/extension.zip
-          publish/source.zip
+          publish/extension-chrome.zip
+          publish/extension-firefox.zip
+          publish/source-firefox.zip
         if-no-files-found: error

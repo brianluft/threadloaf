@@ -18,17 +18,25 @@ echo "📦 Installing dependencies..."
 cd "$SCRIPT_DIR"
 npm install
 
-echo "📚 Creating source archive..."
-cd "$ROOT_DIR"
-zip -r publish/source.zip . -x "publish/*" "*.git*" "terraform/*" "src/api/*"
-
-echo "🔨 Building extension for production..."
+echo "🔨 Building Chrome extension for production..."
 cd "$SCRIPT_DIR"
-npm run build:prod
+npm run build:prod:chrome
 
-echo "📦 Creating extension archive..."
+echo "📦 Creating Chrome extension archive..."
 cd "$ROOT_DIR/dist"
-zip -r ../publish/extension.zip .
+zip -r ../publish/extension-chrome.zip .
+
+echo "🔨 Building Firefox extension for production..."
+cd "$SCRIPT_DIR"
+npm run build:prod:firefox
+
+echo "📦 Creating Firefox extension archive..."
+cd "$ROOT_DIR/dist"
+zip -r ../publish/extension-firefox.zip .
+
+echo "📚 Creating Firefox source archive..."
+cd "$ROOT_DIR"
+zip -r publish/source-firefox.zip . -x "publish/*" "*.git*" "terraform/*" "src/api/*"
 
 echo "✨ Done! Release artifacts are in the publish/ directory:"
 cd "$ROOT_DIR"

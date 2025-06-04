@@ -1,51 +1,47 @@
 {
-    "manifest_version": 3,
-    "name": "Threadloaf",
-    "version": "1.1.0",
-    "description": "Enhances Discord with a threaded discussion view",
-    "browser_specific_settings": {
-      "gecko": {
-        "id": "{6384c57b-f03b-4de7-b146-d0159cde0ca2}",
-        "strict_min_version": "130.0"
-      }
+  "manifest_version": 3,
+  "name": "Threadloaf",
+  "version": "1.1.0",
+  "description": "Enhances Discord with a threaded discussion view",
+  "icons": {
+    "16": "threadloaf-16.png",
+    "32": "threadloaf-32.png",
+    "48": "threadloaf-48.png",
+    "128": "threadloaf-128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "threadloaf-16.png",
+      "32": "threadloaf-32.png",
+      "48": "threadloaf-48.png",
+      "128": "threadloaf-128.png"
+    }
+  },
+  "permissions": [
+    "storage"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://discord.com/channels/*"
+      ],
+      "js": [
+        "content_script.js"
+      ]
     },
-    "icons": {
-        "16": "threadloaf-16.png",
-        "32": "threadloaf-32.png",
-        "48": "threadloaf-48.png",
-        "128": "threadloaf-128.png"
-    },
-    "action": {
-        "default_popup": "popup.html",
-        "default_icon": {
-            "16": "threadloaf-16.png",
-            "32": "threadloaf-32.png",
-            "48": "threadloaf-48.png",
-            "128": "threadloaf-128.png"
-        }
-    },
-    "permissions": ["storage"],
-    "host_permissions": [
-        "http://localhost/*",
-        "https://api.threadloaf.com/*"
-    ],
-    "background": {
-        "service_worker": "background.js"
-    },
-    "content_scripts": [
-      {
-        "matches": ["*://discord.com/channels/*"],
-        "js": ["content_script.js"]
-      },
-      {
-        "matches": [
-          "http://localhost/auth/callback*",
-          "https://api.threadloaf.com/auth/callback*"
-        ],
-        "js": ["oauth_callback.js"]
-      }
-    ],
-    "web_accessible_resources": [{
+    {
+      "matches": [
+        "http://localhost/auth/callback*",
+        "https://api.threadloaf.com/auth/callback*"
+      ],
+      "js": [
+        "oauth_callback.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
       "resources": [
         "styles.css",
         "threadloaf-16.png",
@@ -57,7 +53,16 @@
         "popup.js.map",
         "oauth_callback.js.map"
       ],
-      "matches": ["*://discord.com/*"]
-    }]
-  }
-  
+      "matches": [
+        "*://discord.com/*"
+      ]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "host_permissions": [
+    "http://localhost/*",
+    "https://api.threadloaf.com/*"
+  ]
+}
