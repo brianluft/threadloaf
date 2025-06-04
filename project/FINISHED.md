@@ -154,3 +154,6 @@ This gives the user a quick at-a-glance preview of each thread's recent activity
     - [x] The mem_used_percent metric is appearing with a host dimension, with a name like "ip-10-0-1-200". We want "instance id" as the sole dimension.
     - [x] The disk_used_percent metric is appearing with device, fstype, host, and path dimensions. We want "instance id" and "path" as the two dimensions.
     - [x] Update the CloudWatch alarms accordingly; they are pointing at nonexistent metrics right now.
+
+# Bugs
+- [x] In the extension's user options, set the default "Recent thread replies to show" to 5 (currently 0).
