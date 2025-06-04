@@ -32,4 +32,10 @@ zip -r ../publish/extension.zip .
 
 echo "✨ Done! Release artifacts are in the publish/ directory:"
 cd "$ROOT_DIR"
+
+# Are we root?
+if [ $(id -u) -eq 0 ]; then
+    chown -R 1000:1000 publish/
+fi
+
 ls -l publish/ 
