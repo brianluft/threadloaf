@@ -48,6 +48,9 @@ cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << EOF
           "/"
         ]
       }
+    },
+    "append_dimensions": {
+      "InstanceId": "\$${aws:InstanceId}"
     }
   }
 }

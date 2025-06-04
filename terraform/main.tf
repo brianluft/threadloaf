@@ -250,6 +250,10 @@ resource "aws_instance" "api" {
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
   user_data_base64       = local.user_data
 
+  credit_specification {
+    cpu_credits = "standard"
+  }
+
   tags = {
     Name = var.instance_name
   }
@@ -343,7 +347,7 @@ resource "aws_cloudwatch_metric_alarm" "disk_usage" {
 
   dimensions = {
     InstanceId = aws_instance.api.id
-    device     = "/dev/root"
+    device     = "nvme0n1p1"
     fstype     = "ext4"
     path       = "/"
   }

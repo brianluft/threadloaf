@@ -31,7 +31,7 @@
     - [x] Give the instance profile permission to access the filesystem, if needed
     - [x] Update the EC2 instance terraform to mount the EFS filesystem
     - [x] Update env.example to include the correct mount path for EFS for LETS_ENCRYPT_CERTS_DIR
-- [ ] The CloudWatch Agent configuration in user-data.sh is wrong.
-    - [ ] The mem_used_percent metric is appearing with a host dimension, with a name like "ip-10-0-1-200". We want "instance id" as the sole dimension.
-    - [ ] The disk_used_percent metric is appearing with device, fstype, host, and path dimensions. We want "instance id" and "path" as the two dimensions.
-    - [ ] Update the CloudWatch alarms accordingly; they are pointing at nonexistent metrics right now.
+- [x] The CloudWatch Agent configuration in user-data.sh is wrong.
+    - [x] The mem_used_percent metric is appearing with a host dimension, with a name like "ip-10-0-1-200". We want "instance id" as the sole dimension.
+    - [x] The disk_used_percent metric is appearing with device, fstype, host, and path dimensions. We want "instance id" and "path" as the two dimensions.
+    - [x] Update the CloudWatch alarms accordingly; they are pointing at nonexistent metrics right now.
