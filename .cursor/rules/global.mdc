@@ -9,7 +9,7 @@ We have a Discord bot to give us quick access to the last 24 hours of messages v
 
 All npm commands must be run from `src/threadloaf` or `src/api`, not the root.
 The absolute path of the workspace root is `/workspaces/threadloaf/`. Use absolute paths in command executions.
-`src/threadloaf` is the extension. Run `/workspaces/threadloaf/scripts/build-threadloaf.sh` to build the extension.
+`src/threadloaf` is the extension. Run `/workspaces/threadloaf/scripts/build.sh` to build everything.
 `src/api` is the API/bot. Run `/workspaces/threadloaf/scripts/test-api.sh` to build and run unit tests.
 
 Run `/workspaces/threadloaf/scripts/start-api.sh` (in the FOREGROUND! not the background) to build and run the API.
@@ -42,7 +42,7 @@ Discord dynamically generates unique suffixes for all classes and IDs.
 
 # Threadloaf browser extension testing
 
-Run `/workspaces/threadloaf/scripts/build-threadloaf.sh` to build the extension and see linter errors.
+Run `/workspaces/threadloaf/scripts/build.sh` to build the extension and see linter errors.
 
 # API Testing
 
