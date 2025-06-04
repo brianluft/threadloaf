@@ -85,12 +85,12 @@ This gives the user a quick at-a-glance preview of each thread's recent activity
 - [x] *Every* time we get a (debounced) "new thread in the thread list" event, we need to send the API call for *all* visible threads. Even if we've seen them all before. Keep a cache for quick reaction so the replies appear immediately, but always update that cache from the server on this event and update the previews asynchronously when the response comes in.
 
 # Thread list reply previews
-- [x] When a thread list is visible, show a "Refresh Previews" button to the right of the existing "Sort & View" button. Read context/THREAD_LIST_EXAMPLE.html for the HTML. The button will do the same thing that our DOM watcher's "new thread list element" event does: it collects all the visible thread IDs, issues the API call, and when the API call comes back it updates the displayed thread replies. The button itself is disabled while the API call is in flight so the user can't keep clicking it.
+- [x] When a thread list is visible, show a "Refresh Replies" button to the right of the existing "Sort & View" button. Read context/THREAD_LIST_EXAMPLE.html for the HTML. The button will do the same thing that our DOM watcher's "new thread list element" event does: it collects all the visible thread IDs, issues the API call, and when the API call comes back it updates the displayed thread replies. The button itself is disabled while the API call is in flight so the user can't keep clicking it.
 
 # Bugs
 - [x] Read project/FINISHED.md to remember what we did about the debounce of the "new thread in thread list" event from the DOM observer. Now, we are issuing the API call _every_ 500 milliseconds, even when the user is idle. We only want to issue the API call on some kind of user-driven transition, where either a new thread div is created, or an existing hidden one is shown.
 - [x] In the thread list, our thread reply preview list is currently newest-first. It needs to be oldest-first. We are showing the most recent N replies, with the most recent one at the bottom. Yet, when we hit Refresh and get new posts, _those_ show up at the bottom. Make sure the replies preview list is _always_ sorted in ascending chronological order.
-- [x] Our "Refresh Previews" button has an SVG icon, replace it with the ↻ symbol. Make sure the symbol and the text are always on a single line; right now the SVG is on the first line and the text is on a second line, making the button taller than intended.
+- [x] Our "Refresh Replies" button has an SVG icon, replace it with the ↻ symbol. Make sure the symbol and the text are always on a single line; right now the SVG is on the first line and the text is on a second line, making the button taller than intended.
 - [x] The API's {{baseUrl}}/{{guildId}}/messages endpoint is returning the _oldest_ N messages per channel. It needs to return the _newest_ N messages per channel. Prove it to yourself:
     - Run the server with scripts/start-api.sh
     - Test this; we expect this to return the 1 most recent post.
@@ -99,10 +99,10 @@ This gives the user a quick at-a-glance preview of each thread's recent activity
         ```
     - Now test it again with `"maxMessagesPerChannel": 2`. We expect to get the same 1 most recent post plus one _older_ post. But look at the timestamps! The additional post we get is _newer_ than the one we got before.
     - FYI: The oldest message is "Testing, testing, 1, 2, 3". The second-oldest message is "Another message". The _newest_ message is "Testing 5" which does not appear. You should see "Testing 5" appear when requesting the 1 most recent message.
-- [x] The "Refresh Previews" API request is super fast. We disable the button while the request is in flight, but it's so fast that the user doesn't see it. Keep the button disabled for an additional 1 second after the response comes in.
-- [x] The "Refresh Previews" button currently has no feedback when it's disabled. It should visibly gray out, the border should lighten, and the cursor should be the default instead of the hand.
-- [x] The "Refresh Previews" button should only appear when the user is logged into our API from the user options and they have set the number of thread replies > 0.
-- [x] Read project/FINISHED.md to remind yourself about when we fixed an issue where the replies list would stop appearing when switching away from a forum channel and then switching back. That's still OK, but there's a related issue. If I switch from a forum channel to a _thread_, then no forum channel _on that server_ ever shows the replies list or the "Refresh Previews" button again, and no API call is made. But forum channels on _other_ servers do continue to work and those API calls are made. You may need my help with Dev Tools for this; if so, add console logging, tell me how to test it, and I'll give you the log.
+- [x] The "Refresh Replies" API request is super fast. We disable the button while the request is in flight, but it's so fast that the user doesn't see it. Keep the button disabled for an additional 1 second after the response comes in.
+- [x] The "Refresh Replies" button currently has no feedback when it's disabled. It should visibly gray out, the border should lighten, and the cursor should be the default instead of the hand.
+- [x] The "Refresh Replies" button should only appear when the user is logged into our API from the user options and they have set the number of thread replies > 0.
+- [x] Read project/FINISHED.md to remind yourself about when we fixed an issue where the replies list would stop appearing when switching away from a forum channel and then switching back. That's still OK, but there's a related issue. If I switch from a forum channel to a _thread_, then no forum channel _on that server_ ever shows the replies list or the "Refresh Replies" button again, and no API call is made. But forum channels on _other_ servers do continue to work and those API calls are made. You may need my help with Dev Tools for this; if so, add console logging, tell me how to test it, and I'll give you the log.
 
 # HTTPS support with Let's Encrypt
 - [x] Add Let's Encrypt support to the api.
@@ -157,3 +157,17 @@ This gives the user a quick at-a-glance preview of each thread's recent activity
 
 # Bugs
 - [x] In the extension's user options, set the default "Recent thread replies to show" to 5 (currently 0).
+- [x] Testing in Chrome, logged in, recent thread replies set to non-zero, I get this error in the console.
+      This all works perfectly in Firefox. There are no known bugs in Firefox, but it's totally broke in Chrome.
+      We use a background script to perform HTTP calls and I suspect the background script isn't running; I don't know how to tell.
+        ```
+        [ThreadListReplyFetcher] Error fetching thread replies: Error: Chrome runtime error: Could not establish connection. Receiving end does not exist.
+            at ThreadListReplyFetcher.ts:259:32
+        fetchAndDisplayReplies	@	ThreadListReplyFetcher.ts:154
+        ```
+- [x] We have a single static manifest.json, but we actually need four different configurations, varying by browser and by environment, with two choices each.
+  - [x] By browser: Firefox and Chrome seem mutually incompatible. Firefox has this error: "background.service_worker is currently disabled. Add background.scripts." Meanwhile, background.scripts doesn't work in Chrome and we need to use service_worker there. So it seems a single manifest.json won't work in both browsers.
+    - [x] Split our single manifest.json into two: one for Chrome and one for Firefox, our two supported browsers. Fix the issue with scripts vs. service_worker.
+    - [x] In release.sh, build both versions and zip them separately. Only Firefox needs the source zip.
+  - [x] By environment: We have "http://localhost" for development and "https://api.threadloaf.com" for production. Development builds should only have the former and production builds should only have the latter.
+  - [x] Find a way to manage this without making four duplicate copies of the whole manifest.json. There are only minor differences between these configurations with most of the content being identical between all four.
