@@ -2,7 +2,7 @@ import { ThreadListReplyFetcher } from "./ThreadListReplyFetcher";
 import { UserOptionsProvider } from "./UserOptionsProvider";
 
 /**
- * Manages the "Refresh Previews" button in thread lists.
+ * Manages the "Refresh Replies" button in thread lists.
  * The button appears next to the "Sort & View" button and allows users to manually
  * refresh thread reply previews.
  */
@@ -99,7 +99,7 @@ export class ThreadListRefreshButton {
      */
     private createRefreshButton(): HTMLElement {
         const button = document.createElement("button");
-        button.setAttribute("aria-label", "Refresh Previews");
+        button.setAttribute("aria-label", "Refresh Replies");
         button.setAttribute("type", "button");
         button.className = "threadloaf-refresh-button button__201d5 lookFilled__201d5 sizeMin__201d5 grow__201d5";
 
@@ -113,7 +113,7 @@ export class ThreadListRefreshButton {
         text.style.color = "var(--interactive-normal)";
         text.setAttribute("data-text-variant", "text-sm/medium");
         text.style.whiteSpace = "nowrap";
-        text.textContent = "↻ Refresh Previews";
+        text.textContent = "↻ Refresh Replies";
         contents.appendChild(text);
 
         button.appendChild(contents);

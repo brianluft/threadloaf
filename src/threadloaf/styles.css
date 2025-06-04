@@ -423,7 +423,7 @@ body.threadloaf-visible div[class*="messagesWrapper_"] div[class*="scrollerConte
     min-width: 0;
 }
 
-/* Refresh Previews button in thread lists */
+/* Refresh Replies button in thread lists */
 .threadloaf-refresh-button {
     background: var(--button-secondary-background);
     border: 1px solid var(--border-subtle);
