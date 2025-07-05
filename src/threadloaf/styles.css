@@ -3,7 +3,7 @@
     left: 0;
     right: 0;
     height: 24px;
-    background: color-mix(in oklab, var(--background-primary) 90%, var(--text-normal) 10%);
+    background: color-mix(in oklab, var(--bg-overlay-4,var(--background-base-low)) 90%, var(--text-default) 10%);
     cursor: row-resize;
     transition: background-color 0.1s;
     display: flex;
@@ -26,7 +26,7 @@
 }
 
 #threadloaf-splitter .collapse-button {
-    color: var(--text-normal);
+    color: var(--text-default);
     transition: opacity 0.2s, color 0.2s;
     padding: 2px;
     border-radius: 4px;
@@ -43,13 +43,13 @@
 }
 
 #threadloaf-splitter .collapse-button:hover:not([style*="opacity: 0.3"]) {
-    background: color-mix(in oklab, var(--background-primary) 80%, var(--text-normal) 20%);
+    background: color-mix(in oklab, var(--bg-overlay-4,var(--background-base-low)) 80%, var(--text-default) 20%);
 }
 
 #threadloaf-container {
     padding: 0;
     font-family: "gg sans", "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    color: var(--text-normal);
+    color: var(--text-default);
     position: absolute;
     top: 0;
     left: 0;
@@ -104,7 +104,7 @@ div[class*="chat_"] {
 }
 
 .preview-container:hover {
-    background: color-mix(in oklab, var(--background-primary) 90%, var(--text-normal) 10%);
+    background: color-mix(in oklab, var(--bg-overlay-4,var(--background-base-low)) 90%, var(--text-default) 10%);
 }
 
 .message-content.preview {
@@ -124,11 +124,11 @@ div[class*="chat_"] {
 }
 
 .message-author.highlight-own-name {
-    color: color-mix(in oklab, var(--brand-500), var(--text-normal) 50%) !important;
+    color: color-mix(in oklab, var(--brand-500), var(--text-default) 50%) !important;
 }
 
 .separator {
-    color: var(--text-normal);
+    color: var(--text-default);
     flex: 0 0 auto;
 }
 
@@ -177,13 +177,13 @@ div[class*="chat_"] {
 
 /* Light background behind reactions in the thread view */
 div.threadloaf-message span.message-reactions img {
-    background: color-mix(in oklab, var(--background-primary) 90%, var(--text-normal) 10%);
+    background: color-mix(in oklab, var(--bg-overlay-4,var(--background-base-low)) 90%, var(--text-default) 10%);
     border-radius: 2px;
     vertical-align: middle;
 }
 
 div.threadloaf-message span.message-reactions .reaction-container {
-    background: color-mix(in oklab, var(--background-primary) 90%, var(--text-normal) 10%);
+    background: color-mix(in oklab, var(--bg-overlay-4,var(--background-base-low)) 90%, var(--text-default) 10%);
     padding: 0 5px;
     border-radius: 2px;
     display: inline-flex;
@@ -204,7 +204,7 @@ div.threadloaf-message span.message-reactions .reaction-count {
     justify-content: center;
     font-family: monospace;
     line-height: 1;
-    color: color-mix(in oklab, var(--text-normal), var(--background-primary) 70%);
+    color: color-mix(in oklab, var(--text-default), var(--bg-overlay-4,var(--background-base-low)) 70%);
     text-align: right;
     font-size: 22px;
     height: 0; /* Ensure we don't cause the preview container to grow taller */
@@ -225,7 +225,7 @@ div.threadloaf-message span.message-reactions .reaction-count {
 
 /* Fix the background of the thread view when open in the split view */
 div[class^="chatLayerWrapper_"] div#threadloaf-container {
-    background: var(--bg-overlay-chat, var(--background-primary));
+    background: var(--bg-overlay-4,var(--background-base-low));
 }
 
 /* Thread list */
@@ -254,7 +254,7 @@ body.threadloaf-thread-list-compact-or-ultra-compact div[class^="list_"] li[clas
     /* Move it up to condense the card */
     margin-top: -31px;
     /* We overlap the message text so we need a background */
-    background: var(--bg-base-primary);
+    background: var(--bg-overlay-4,var(--background-base-low));
     padding: 4px;
     border-radius: 20px; 
 }
@@ -336,9 +336,9 @@ body.threadloaf-visible div[class*="embedProvider_"] {
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: var(--background-primary);
-    border: 1px solid var(--background-modifier-accent);
-    color: var(--text-normal);
+    background: var(--bg-overlay-4,var(--background-base-low));
+    border: 1px solid var(--bg-surface-raised);
+    color: var(--text-default);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -384,7 +384,7 @@ body.threadloaf-visible div[class*="messagesWrapper_"] div[class*="scrollerConte
     margin-top: 0;
     margin-left: 16px;
     padding: 8px 12px;
-    background: color-mix(in oklab, var(--background-primary) 95%, var(--text-normal) 5%);
+    background: color-mix(in oklab, var(--bg-overlay-4,var(--background-base-low)) 95%, var(--text-default) 5%);
     border-radius: 8px;
     border-left: 3px solid var(--brand-500);
     cursor: pointer;
@@ -415,7 +415,7 @@ body.threadloaf-visible div[class*="messagesWrapper_"] div[class*="scrollerConte
 }
 
 .threadloaf-reply-content {
-    color: var(--text-normal);
+    color: var(--text-default);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -441,8 +441,8 @@ body.threadloaf-visible div[class*="messagesWrapper_"] div[class*="scrollerConte
 
 .threadloaf-refresh-button:disabled {
     cursor: default;
-    background: var(--button-secondary-background-disabled, color-mix(in oklab, var(--button-secondary-background) 50%, var(--background-primary) 50%));
-    border-color: var(--border-faint, color-mix(in oklab, var(--border-subtle) 50%, var(--background-primary) 50%));
+    background: var(--button-secondary-background-disabled, color-mix(in oklab, var(--button-secondary-background) 50%, var(--bg-overlay-4,var(--background-base-low)) 50%));
+    border-color: var(--border-faint, color-mix(in oklab, var(--border-subtle) 50%, var(--bg-overlay-4,var(--background-base-low)) 50%));
     color: var(--text-muted);
 }
 

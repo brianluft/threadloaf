@@ -194,7 +194,7 @@ export class DomMutator {
         const authorSpan = document.createElement("span");
         authorSpan.classList.add("message-author");
         authorSpan.textContent = message.author;
-        authorSpan.style.color = message.authorColor || "var(--text-normal)";
+        authorSpan.style.color = message.authorColor || "var(--text-default)";
         if (isBold) {
             authorSpan.style.fontWeight = "bold";
         }

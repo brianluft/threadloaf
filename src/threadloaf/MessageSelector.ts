@@ -126,10 +126,10 @@ export class MessageSelector {
         // Create CSS rules for both thread view and chat view
         styleEl.textContent = `
             div.threadloaf-message[data-msg-id="${this.state.selectedMessageId}"] {
-                background-color: color-mix(in oklab, var(--text-normal) 10%, transparent) !important;
+                background-color: color-mix(in oklab, var(--text-default) 10%, transparent) !important;
             }
             div[class*="message_"][aria-labelledby*="message-content-${this.state.selectedMessageId}"] {
-                background-color: color-mix(in oklab, var(--text-normal) 10%, transparent) !important;
+                background-color: color-mix(in oklab, var(--text-default) 10%, transparent) !important;
             }
         `;
     }

@@ -379,18 +379,18 @@ export class ThreadRenderer {
             let color;
             if (index === 0) {
                 // Newest message gets text-normal color and bold
-                color = "var(--text-normal)";
+                color = "var(--text-default)";
                 messageColors.set(msg.id, color);
                 messageBold.set(msg.id, true);
             } else if (index < numGradientMessages) {
                 // Next messages get a gradient blend between text-normal and background-primary
                 const ratio = Math.min(50, Math.round((index / numGradientMessages) * 100));
-                color = `color-mix(in oklab, var(--text-normal), var(--background-primary) ${ratio}%)`;
+                color = `color-mix(in oklab, var(--text-default), var(--bg-overlay-4,var(--background-base-low)) ${ratio}%)`;
                 messageColors.set(msg.id, color);
                 messageBold.set(msg.id, false);
             } else {
                 // Older messages get 50% blend
-                color = "color-mix(in oklab, var(--text-normal), var(--background-primary) 50%)";
+                color = "color-mix(in oklab, var(--text-default), var(--bg-overlay-4,var(--background-base-low)) 50%)";
                 messageColors.set(msg.id, color);
                 messageBold.set(msg.id, false);
             }
@@ -413,8 +413,8 @@ export class ThreadRenderer {
         loadMoreButton.style.margin = "8px 0";
         loadMoreButton.style.border = "none";
         loadMoreButton.style.borderRadius = "4px";
-        loadMoreButton.style.backgroundColor = "var(--background-modifier-accent)";
-        loadMoreButton.style.color = "var(--text-normal)";
+        loadMoreButton.style.backgroundColor = "var(--bg-surface-raised)";
+        loadMoreButton.style.color = "var(--text-default)";
         loadMoreButton.style.cursor = hasFirstMessage ? "default" : "pointer";
         loadMoreButton.style.opacity = hasFirstMessage ? "0.5" : "1";
         loadMoreButton.style.transition = "background-color 0.1s ease, opacity 0.1s ease";
@@ -427,7 +427,7 @@ export class ThreadRenderer {
         });
         loadMoreButton.addEventListener("mouseleave", () => {
             if (!loadMoreButton.disabled) {
-                loadMoreButton.style.backgroundColor = "var(--background-modifier-accent)";
+                loadMoreButton.style.backgroundColor = "var(--bg-surface-raised)";
             }
         });
         loadMoreButton.addEventListener("mousedown", () => {
