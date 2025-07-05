@@ -80,6 +80,12 @@
             padding: 0 0.5em;
         }
 
+        #loginStatus {
+            font-weight: bold;
+            background: whitesmoke;
+            padding: 6px;
+        }
+
         #loginButton {
             margin-left: 0.5em;
             padding: 4px 8px;
@@ -88,6 +94,7 @@
             background-color: #f8f8f8;
             cursor: pointer;
             font-size: 0.9em;
+            padding: 3px;
         }
 
         #loginButton:hover {
@@ -150,11 +157,15 @@
     </div>
 
     <fieldset id="apiGroupBox">
-        <legend>Chatty@Home API</legend>
-        <p>Members of the Chatty@Home Discord server can log in to access extra features via our online API.</p>
+        <legend>Cloud Features</legend>
+        <p>Discord servers with <b>Threadloaf Bot</b> have access to extra features via our online API.</p>
+        <p>Join the <a href="https://discord.gg/r35ekgekmy" target="_blank">Threadloaf Testing</a> server to see it in action.</p>
+        <p>To invite Threadloaf Bot to your server, ask the server owner to file a <a href="https://github.com/brianluft/threadloaf/issues" target="_blank">GitHub issue</a>.</p>
         
         <div class="option-row">
             <span id="loginStatus">Not logged in</span>
+        </div>
+        <div class="option-row">
             <button type="button" id="loginButton">Log in</button>
         </div>
         <div id="loginError" class="error-message" style="display: none;"></div>
@@ -163,6 +174,10 @@
             <label for="threadRepliesSlider">Recent thread replies to show:</label>
             <input type="range" id="threadRepliesSlider" min="0" max="20" step="1" value="0" disabled>
             <span id="threadRepliesValue">0</span>
+        </div>
+
+        <div class="option-row">
+            <img src="thread-replies-screenshot.png" style="max-width: 70%; text-align: center; opacity: 0.8;">
         </div>
     </fieldset>
 
